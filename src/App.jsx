@@ -111,17 +111,28 @@ const ORDERS = [
 const pct = d => Math.min(100, Math.round((d.joined / d.needed) * 100));
 const disc = d => Math.round(((d.retail - d.group) / d.retail) * 100);
 const pCol = p => p >= 90 ? T.orange : p >= 60 ? T.yellow : T.accent;
+const discBorder = d => { const dd=disc(d); return dd>30?"#ef4444":dd>=20?"#22c55e":"#1a1a2e"; };
 
 // ── Декоративний фон ────────────────────────────────────────────────────────
 function BgDecor() {
   return <div style={{ position:"absolute",top:0,left:0,right:0,bottom:0,overflow:"hidden",pointerEvents:"none",zIndex:0 }}>
-    <div style={{ position:"absolute",top:-60,right:-40,width:220,height:220,borderRadius:"50%",background:`radial-gradient(circle,${T.gradA}10,transparent 70%)` }}/>
-    <div style={{ position:"absolute",top:"40%",left:-60,width:200,height:200,borderRadius:"50%",background:`radial-gradient(circle,${T.gradB}0c,transparent 70%)` }}/>
-    <div style={{ position:"absolute",bottom:100,right:-30,width:180,height:180,borderRadius:"50%",background:`radial-gradient(circle,${T.gradC}0a,transparent 70%)` }}/>
-    <svg style={{ position:"absolute",top:0,left:0,width:"100%",height:"100%",opacity:0.05 }}><defs><linearGradient id="g1" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stopColor={T.gradA}/><stop offset="50%" stopColor={T.gradB}/><stop offset="100%" stopColor={T.gradC}/></linearGradient></defs>
-      <path d="M0 180Q100 130 200 200T400 160" fill="none" stroke="url(#g1)" strokeWidth="2.5"/>
-      <path d="M0 380Q150 320 250 400T400 360" fill="none" stroke="url(#g1)" strokeWidth="2"/>
-      <path d="M0 580Q120 520 220 600T400 560" fill="none" stroke="url(#g1)" strokeWidth="1.5"/>
+    <div style={{ position:"absolute",top:-40,right:-30,width:240,height:240,borderRadius:"50%",background:`radial-gradient(circle,${T.gradA}22,transparent 65%)` }}/>
+    <div style={{ position:"absolute",top:"35%",left:-50,width:220,height:220,borderRadius:"50%",background:`radial-gradient(circle,${T.gradB}1a,transparent 65%)` }}/>
+    <div style={{ position:"absolute",bottom:80,right:-20,width:200,height:200,borderRadius:"50%",background:`radial-gradient(circle,${T.gradC}18,transparent 65%)` }}/>
+    <div style={{ position:"absolute",top:"60%",left:"40%",width:160,height:160,borderRadius:"50%",background:`radial-gradient(circle,${T.gradA}14,transparent 60%)` }}/>
+    <svg style={{ position:"absolute",top:0,left:0,width:"100%",height:"100%",opacity:0.18 }}>
+      <defs>
+        <linearGradient id="g1" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stopColor={T.gradA}/><stop offset="50%" stopColor={T.gradB}/><stop offset="100%" stopColor={T.gradC}/></linearGradient>
+        <linearGradient id="g2" x1="1" y1="0" x2="0" y2="1"><stop offset="0%" stopColor={T.gradC}/><stop offset="50%" stopColor={T.gradA}/><stop offset="100%" stopColor={T.gradB}/></linearGradient>
+      </defs>
+      <path d="M-20 120Q60 60 150 140T300 80Q350 60 420 130" fill="none" stroke="url(#g1)" strokeWidth="2.5" opacity="0.7"/>
+      <path d="M420 220Q340 180 250 260T100 200Q40 170 -20 240" fill="none" stroke="url(#g2)" strokeWidth="2" opacity="0.5"/>
+      <path d="M-20 350Q80 290 170 370T320 310Q380 280 420 360" fill="none" stroke="url(#g1)" strokeWidth="3" opacity="0.6"/>
+      <path d="M420 460Q330 420 240 500T90 440Q20 410 -20 480" fill="none" stroke="url(#g2)" strokeWidth="2" opacity="0.4"/>
+      <path d="M-20 560Q100 500 200 580T360 520Q400 500 420 570" fill="none" stroke="url(#g1)" strokeWidth="2.5" opacity="0.55"/>
+      <path d="M420 660Q300 620 200 700T50 640Q-10 620 -20 680" fill="none" stroke="url(#g2)" strokeWidth="1.5" opacity="0.45"/>
+      <path d="M60 50Q120 20 200 70T340 30" fill="none" stroke="url(#g1)" strokeWidth="1.5" opacity="0.35"/>
+      <path d="M350 150Q280 130 200 170T80 140" fill="none" stroke="url(#g2)" strokeWidth="1" opacity="0.3"/>
     </svg>
   </div>;
 }
@@ -162,11 +173,11 @@ function Input({ value, onChange, placeholder, icon, type="text", area }) {
 const NAV = [["market",I.home,"Маркет"],["my",I.bag,"Мої"],["qr",I.qr,"QR"],["seller",I.chart,"Бізнес"],["wallet",I.wallet,"Гаманець"]];
 
 function Nav({ tab, setTab }) {
-  return <div style={{ position:"absolute",bottom:0,left:0,right:0,height:72,background:T.navBg,backdropFilter:"blur(28px)",WebkitBackdropFilter:"blur(28px)",borderTop:`1px solid rgba(0,0,0,0.03)`,...S.flex,zIndex:100,padding:"0 4px" }}>
+  return <div style={{ position:"absolute",bottom:0,left:0,right:0,height:68,background:"rgba(255,255,255,0.12)",backdropFilter:"blur(32px)",WebkitBackdropFilter:"blur(32px)",borderTop:"1px solid rgba(255,255,255,0.15)",...S.flex,zIndex:100,padding:"0 4px" }}>
     {NAV.map(([t,icon,label])=>(
-      <button key={t} onClick={()=>setTab(t)} style={{ ...S.btn,flex:1,display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",gap:3,background:"transparent",color:tab===t?T.accent:T.navText,transition:"all .25s",transform:tab===t?"scale(1.15)":"scale(1)",opacity:tab===t?1:0.55 }}>
-        {icon}
-        <span style={{ fontSize:9,fontWeight:tab===t?800:600 }}>{label}</span>
+      <button key={t} onClick={()=>setTab(t)} style={{ ...S.btn,flex:1,display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",gap:3,background:"transparent",color:tab===t?T.accent:T.navText,transition:"all .25s",transform:tab===t?"scale(1.15)":"scale(1)" }}>
+        <div style={{ opacity:tab===t?1:0.45 }}>{icon}</div>
+        <span style={{ fontSize:9,fontWeight:tab===t?800:500,opacity:tab===t?1:0.45 }}>{label}</span>
         {tab===t&&<div style={{ width:20,height:3,background:`linear-gradient(90deg,${T.gradA},${T.gradB})`,borderRadius:2,marginTop:-1 }}/>}
       </button>
     ))}
@@ -233,7 +244,8 @@ function RegisterScreen({ onDone }) {
 // ── Картка угоди ────────────────────────────────────────────────────────────
 function DealCard({ deal, onOpen, joined, onJoin }) {
   const p=pct(deal),d=disc(deal),isIn=joined[deal.id],col=pCol(p);
-  return <div onClick={()=>onOpen(deal)} style={{ ...S.card,borderRadius:14,overflow:"hidden",cursor:"pointer",padding:10 }}>
+  const bc=discBorder(deal);
+  return <div onClick={()=>onOpen(deal)} style={{ ...S.card,borderRadius:14,overflow:"hidden",cursor:"pointer",padding:10,border:`1.5px solid ${bc}` }}>
     <div style={{ ...S.flex,gap:8 }}>
       <Ic emoji={deal.avatar} size={38}/>
       <div style={{ flex:1,minWidth:0 }}>
