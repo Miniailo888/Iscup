@@ -1,2 +1,2 @@
 #!/bin/sh
-npx serve@14 -s dist -l ${PORT:-3000}
+node server.js
