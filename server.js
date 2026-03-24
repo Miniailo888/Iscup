@@ -7,7 +7,7 @@ const app = express();
 
 app.use(express.static(join(__dirname, 'dist')));
 
-app.get('/{*path}', (req, res) => {
+app.use((req, res) => {
   res.sendFile(join(__dirname, 'dist', 'index.html'));
 });
 
