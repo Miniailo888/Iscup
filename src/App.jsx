@@ -279,8 +279,8 @@ function DealCard({ deal, onOpen, joined, onJoin }) {
     <div style={{...S.flex,gap:0}}>
       <div style={{width:72,flexShrink:0,padding:"6px 0 6px 6px"}}><DealPhoto deal={deal} h={62}/></div>
       <div style={{flex:1,padding:"6px 8px",minWidth:0}}>
-        <div style={{fontSize:11,fontWeight:700,color:T.text,lineHeight:1.3,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{deal.title}</div>
-        <div style={{fontSize:8,color:T.textMuted,marginTop:1}}>{deal.seller} · {deal.city}</div>
+        <div style={{fontSize:13,fontWeight:700,color:T.text,lineHeight:1.3,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{deal.title}</div>
+        <div style={{fontSize:10,color:T.textMuted,marginTop:1}}>{deal.seller} · {deal.city}</div>
         <div style={{...S.flex,gap:4,marginTop:4}}>
           <div style={{flex:1}}><ProgressBar value={p} color={col} h={2}/></div>
           <span style={{fontSize:7,color:T.textMuted}}>{deal.joined}/{deal.needed}</span>
@@ -289,11 +289,11 @@ function DealCard({ deal, onOpen, joined, onJoin }) {
         </div>
       </div>
       <div style={{flexShrink:0,padding:"6px 8px 6px 0",textAlign:"right",display:"flex",flexDirection:"column",alignItems:"flex-end",justifyContent:"center",gap:3}}>
-        <div style={{fontSize:14,fontWeight:800,color:T.green}}>₴{deal.group}</div>
-        <div style={{fontSize:8,color:T.textMuted,textDecoration:"line-through"}}>₴{deal.retail}</div>
+        <div style={{fontSize:16,fontWeight:800,color:T.green}}>₴{deal.group}</div>
+        <div style={{fontSize:10,color:T.textMuted,textDecoration:"line-through"}}>₴{deal.retail}</div>
         <div style={{...S.flex,gap:3}}>
-          {deal.hot&&<span style={{fontSize:7,fontWeight:800,color:T.orange,background:T.orange+"18",padding:"1px 4px",borderRadius:3}}>HOT</span>}
-          <span style={{fontSize:7,fontWeight:800,color:bc,background:bc+"18",padding:"1px 4px",borderRadius:3}}>-{d}%</span>
+          {deal.hot&&<span style={{fontSize:8,fontWeight:800,color:T.orange,background:T.orange+"18",padding:"2px 5px",borderRadius:3}}>HOT</span>}
+          <span style={{fontSize:8,fontWeight:800,color:bc,background:bc+"18",padding:"2px 5px",borderRadius:3}}>-{d}%</span>
         </div>
       </div>
     </div>
@@ -386,8 +386,8 @@ function HotSlider({ deals, onOpen }) {
           <div style={{ fontSize:13,fontWeight:800,color:T.text,lineHeight:1.3 }}>{d.title}</div>
           <div style={{ fontSize:10,color:T.textSec,marginTop:2 }}>{d.seller} · {d.city}</div>
           <div style={{ ...getS().flex,gap:4,marginTop:4 }}>
-            <span style={{ fontSize:9,color:T.textMuted }}>{d.joined}/{d.needed} учасників</span>
-            <span style={{ fontSize:9,color:T.textMuted }}>· {d.days} дн.</span>
+            <span style={{ fontSize:10,color:T.textMuted }}>{d.joined}/{d.needed} учасників</span>
+            <span style={{ fontSize:10,color:T.textMuted }}>· {d.days} дн.</span>
           </div>
         </div>
         <div style={{ textAlign:"right",flexShrink:0 }}>
@@ -485,7 +485,7 @@ function MarketPage({ deals, joined, onJoin, onOpen, user, onCreateDeal }) {
       </div>
     </div>}
 
-    <div style={{padding:"0 16px 4px",fontSize:9,color:T.textMuted}}>{list.length} оголошень</div>
+    <div style={{padding:"0 16px 4px",fontSize:10,color:T.textMuted}}>{list.length} оголошень</div>
     <div style={{ padding:"0 16px 90px",display:"flex",flexDirection:"column",gap:10 }}>
       {list.map(d=><DealCard key={d.id} deal={d} onOpen={onOpen} joined={joined} onJoin={onJoin}/>)}
       {list.length===0&&<div style={{ textAlign:"center",padding:60,color:T.textMuted }}>Нічого не знайдено</div>}
@@ -496,57 +496,50 @@ function MarketPage({ deals, joined, onJoin, onOpen, user, onCreateDeal }) {
 }
 
 // ── Створення оголошення ────────────────────────────────────────────────────
-// ── Карта (імітація) ────────────────────────────────────────────────────────
-function MapView({ pin, onPin, label, height=180 }) {
-  const [p,setP]=useState(pin||{x:50,y:50});
-  const handle=(e)=>{const r=e.currentTarget.getBoundingClientRect();const x=Math.round((e.clientX-r.left)/r.width*100);const y=Math.round((e.clientY-r.top)/r.height*100);setP({x,y});onPin&&onPin({x,y});};
-  const streets=[
-    {d:"M10 30H90",w:3},{d:"M10 55H90",w:2.5},{d:"M10 80H90",w:2},
-    {d:"M25 10V90",w:3},{d:"M50 10V90",w:2.5},{d:"M75 10V90",w:2},
-    {d:"M15 15L85 85",w:1},{d:"M60 10L90 40",w:1},
-  ];
-  return <div style={{ position:"relative",borderRadius:14,overflow:"hidden",height,border:`1px solid ${T.border}44`,cursor:"crosshair" }} onClick={handle} onTouchStart={e=>{const t=e.touches[0];const r=e.currentTarget.getBoundingClientRect();setP({x:Math.round((t.clientX-r.left)/r.width*100),y:Math.round((t.clientY-r.top)/r.height*100)});onPin&&onPin(p);}}>
-    <svg width="100%" height="100%" viewBox="0 0 100 100" preserveAspectRatio="none" style={{ position:"absolute",top:0,left:0 }}>
-      <rect width="100" height="100" fill={T.cardAlt}/>
-      {streets.map((s,i)=><path key={i} d={s.d} stroke={T.card} strokeWidth={s.w} fill="none" opacity="0.8"/>)}
-      {[[20,25,"парк"],[65,70,"озеро"],[80,20,""]].map(([x,y,l],i)=><>
-        <rect key={`b${i}`} x={x-4} y={y-3} width={8} height={6} rx={1} fill={T.textMuted+"33"}/>
-        {l&&<text key={`t${i}`} x={x} y={y+1} textAnchor="middle" fontSize="3" fill={T.textMuted}>{l}</text>}
-      </>)}
-      <circle cx={p.x} cy={p.y} r="4" fill={T.accent} stroke="#fff" strokeWidth="1.5"/>
-      <circle cx={p.x} cy={p.y} r="8" fill={T.accent+"22"} stroke="none"/>
-    </svg>
-    {label&&<div style={{ position:"absolute",bottom:6,left:6,fontSize:9,color:T.text,background:T.card+"cc",padding:"3px 8px",borderRadius:6,fontWeight:700 }}>{label}</div>}
-    <div style={{ position:"absolute",top:6,right:6,fontSize:8,color:T.textSec,background:T.card+"cc",padding:"2px 6px",borderRadius:4 }}>{p.x}°, {p.y}°</div>
+// ── Карта Вінниці (OpenStreetMap) ────────────────────────────────────────────
+const SHOPS=[
+  {name:"Ферма Петренків",lat:49.2331,lng:28.4682,type:"farm"},
+  {name:"Пасіка Коваля",lat:49.2295,lng:28.4785,type:"honey"},
+  {name:"Пекарня Оленки",lat:49.2350,lng:28.4590,type:"food"},
+  {name:"Молочна від Галини",lat:49.2270,lng:28.4720,type:"dairy"},
+  {name:"Кав'ярня Зерно",lat:49.2315,lng:28.4650,type:"cafe"},
+  {name:"Еко-ферма Зелений Гай",lat:49.2380,lng:28.4550,type:"veggies"},
+  {name:"Сироварня Карпат",lat:49.2260,lng:28.4830,type:"dairy"},
+  {name:"Ринок Урожай",lat:49.2340,lng:28.4710,type:"farm"},
+];
+
+function MapView({ label, height=200, shops=true, route }) {
+  const center={lat:49.2328,lng:28.4687};
+  const zoom=route?15:14;
+  const markers=shops?SHOPS.map(s=>`${s.lat},${s.lng},${encodeURIComponent(s.name)}`).join("~"):"";
+  return <div style={{position:"relative",borderRadius:12,overflow:"hidden",height,border:`1px solid ${T.border}33`}}>
+    <iframe
+      title="map"
+      width="100%" height="100%"
+      style={{border:0,filter:"brightness(0.85) contrast(1.1) saturate(0.8)"}}
+      loading="lazy"
+      src={`https://www.openstreetmap.org/export/embed.html?bbox=${center.lng-0.02},${center.lat-0.012},${center.lng+0.02},${center.lat+0.012}&layer=mapnik&marker=${center.lat},${center.lng}`}
+    />
+    {shops&&<div style={{position:"absolute",top:0,left:0,right:0,bottom:0,pointerEvents:"none"}}>
+      {SHOPS.map((s,i)=>{
+        const x=((s.lng-center.lng+0.02)/0.04)*100;
+        const y=((center.lat+0.012-s.lat)/0.024)*100;
+        return <div key={i} style={{position:"absolute",left:`${x}%`,top:`${y}%`,transform:"translate(-50%,-100%)",pointerEvents:"auto",cursor:"pointer"}}>
+          <div style={{width:8,height:8,borderRadius:"50%",background:T.accent,border:"2px solid #fff",boxShadow:"0 1px 4px rgba(0,0,0,0.4)"}}/>
+        </div>;
+      })}
+    </div>}
+    {route&&<div style={{position:"absolute",bottom:6,left:6,right:6,...getS().flex,justifyContent:"space-between"}}>
+      <span style={{fontSize:9,background:T.accent+"dd",color:"#fff",padding:"2px 8px",borderRadius:4}}>Продавець</span>
+      <span style={{fontSize:9,background:T.card+"cc",color:T.textSec,padding:"2px 8px",borderRadius:4}}>{route==="delivering"?"В дорозі ~15хв":route==="ready"?"Доставлено":"Очікує"}</span>
+      <span style={{fontSize:9,background:"#ef4444dd",color:"#fff",padding:"2px 8px",borderRadius:4}}>Ви</span>
+    </div>}
+    {label&&<div style={{position:"absolute",bottom:route?28:6,left:6,fontSize:10,color:"#fff",background:"rgba(0,0,0,0.6)",padding:"3px 10px",borderRadius:6,fontWeight:700}}>{label}</div>}
   </div>;
 }
 
-function RouteMap({ from, to, status }) {
-  const progress=status==="delivering"?0.55:status==="ready"?1:0.2;
-  return <div style={{ position:"relative",borderRadius:14,overflow:"hidden",height:160,border:`1px solid ${T.border}44` }}>
-    <svg width="100%" height="100%" viewBox="0 0 100 100" preserveAspectRatio="none">
-      <rect width="100" height="100" fill={T.cardAlt}/>
-      <path d="M10 30H90" stroke={T.card} strokeWidth="3" fill="none"/>
-      <path d="M10 55H90" stroke={T.card} strokeWidth="2.5" fill="none"/>
-      <path d="M10 80H90" stroke={T.card} strokeWidth="2" fill="none"/>
-      <path d="M25 10V90" stroke={T.card} strokeWidth="3" fill="none"/>
-      <path d="M50 10V90" stroke={T.card} strokeWidth="2.5" fill="none"/>
-      <path d="M75 10V90" stroke={T.card} strokeWidth="2" fill="none"/>
-      {/* Route line */}
-      <path d={`M${from.x} ${from.y}Q50 50 ${to.x} ${to.y}`} stroke={T.accent} strokeWidth="2" fill="none" strokeDasharray="3 2"/>
-      {/* Current position */}
-      <circle cx={from.x+(to.x-from.x)*progress} cy={from.y+(to.y-from.y)*progress} r="3.5" fill={T.orange} stroke="#fff" strokeWidth="1"/>
-      {/* Start */}
-      <circle cx={from.x} cy={from.y} r="3" fill={T.accent} stroke="#fff" strokeWidth="1"/>
-      {/* End */}
-      <circle cx={to.x} cy={to.y} r="3" fill="#ef4444" stroke="#fff" strokeWidth="1"/>
-    </svg>
-    <div style={{ position:"absolute",bottom:6,left:6,right:6,...S.flex,justifyContent:"space-between" }}>
-      <span style={{ fontSize:8,background:T.accent+"dd",color:"#fff",padding:"2px 6px",borderRadius:4 }}>Продавець</span>
-      <span style={{ fontSize:8,background:T.card+"cc",color:T.textSec,padding:"2px 6px",borderRadius:4 }}>{status==="delivering"?"В дорозі ~15хв":status==="ready"?"Доставлено":"Очікує"}</span>
-      <span style={{ fontSize:8,background:"#ef4444dd",color:"#fff",padding:"2px 6px",borderRadius:4 }}>Ви</span>
-    </div>
-  </div>;
+function RouteMap({ status }) {
+  return <MapView height={160} shops={false} route={status==="active"?"delivering":status==="scanned"?"ready":"done"} label="Вінниця, центр"/>;
 }
 
 function CreateDealPage({ onBack, onSave }) {
@@ -555,7 +548,7 @@ function CreateDealPage({ onBack, onSave }) {
   const canSave = title && price && retail && city && desc;
   return <div style={S.page}>
     <BackBtn onClick={onBack}/>
-    <h2 style={{ fontSize:20,fontWeight:900,color:T.text,marginBottom:4 }}>Нове оголошення</h2>
+    <h2 style={{ fontSize:22,fontWeight:900,color:T.text,marginBottom:4 }}>Нове оголошення</h2>
     <p style={{ fontSize:12,color:T.textSec,marginBottom:16 }}>Створіть групову покупку</p>
     <div style={{ display:"flex",flexDirection:"column",gap:12 }}>
       <div>
@@ -606,7 +599,7 @@ function DealDetail({ deal, onBack, joined, onJoin, onBuy }) {
         {deal.hot&&<Badge bg={T.orange} color="#fff">HOT</Badge>}
         <Badge>-{d}%</Badge>
       </div>
-      <h1 style={{ fontSize:20,fontWeight:900,color:T.text,margin:"0 0 14px",lineHeight:1.3 }}>{deal.title}</h1>
+      <h1 style={{ fontSize:22,fontWeight:900,color:T.text,margin:"0 0 14px",lineHeight:1.3 }}>{deal.title}</h1>
       <div style={{ ...S.card,background:T.greenLight,...S.flex,gap:12 }}>
         <Ic emoji={deal.avatar} size={48}/>
         <div style={{ flex:1 }}>
@@ -667,7 +660,7 @@ function DealDetail({ deal, onBack, joined, onJoin, onBuy }) {
 function MyDealsPage({ deals, joined, onOpen }) {
   const my=deals.filter(d=>joined[d.id]);
   return <div style={S.page}>
-    <h2 style={{ color:T.text,fontSize:20,fontWeight:900,marginBottom:4 }}>Мої покупки</h2>
+    <h2 style={{ color:T.text,fontSize:22,fontWeight:900,marginBottom:4 }}>Мої покупки</h2>
     <p style={{ color:T.textSec,fontSize:12,marginBottom:16 }}>{my.length} активних</p>
     {my.length===0?<div style={{ textAlign:"center",padding:60 }}><div style={{ fontSize:48 }}>🛒</div><div style={{ color:T.textMuted,marginTop:12,fontSize:13 }}>Ще нічого немає</div></div>:
     <div style={{ display:"flex",flexDirection:"column",gap:10 }}>{my.map(d=>{const p=pct(d);return <div key={d.id} onClick={()=>onOpen(d)} style={{ ...S.card,cursor:"pointer" }}>
@@ -713,7 +706,7 @@ function BuyerQRPage({ deal, qty, onBack }) {
       </div>
       <div style={{ marginTop:10,marginBottom:10 }}>
         <div style={{ fontSize:11,fontWeight:700,color:T.text,marginBottom:6 }}>Маршрут самовивозу</div>
-        <RouteMap from={{x:25,y:30}} to={{x:75,y:70}} status={status==="active"?"delivering":status==="scanned"?"ready":"done"}/>
+        <RouteMap status={status}/>
       </div>
       <div style={{ display:"flex",gap:8 }}>
         <button onClick={()=>setStatus(status==="active"?"scanned":"done")} style={{ ...S.btn,flex:1,padding:11,borderRadius:10,fontSize:11,background:T.accent,color:"#fff" }}>{status==="active"?"Симуляція: скан":status==="scanned"?"Підтвердити":"Готово"}</button>
@@ -757,13 +750,13 @@ function QRHub() {
   ];
 
   return <div style={S.page}>
-    <h2 style={{ color:T.text,fontSize:20,fontWeight:900,marginBottom:16 }}>QR-центр</h2>
+    <h2 style={{ color:T.text,fontSize:22,fontWeight:900,marginBottom:16 }}>QR-центр</h2>
     <div onClick={()=>setScanning(true)} style={{ ...S.card,...S.flex,gap:14,padding:16,cursor:"pointer",marginBottom:12 }}><Ic emoji="📷" size={44}/><div><div style={{ fontSize:14,fontWeight:800,color:T.text }}>Сканувати QR</div><div style={{ fontSize:11,color:T.textSec }}>Підтвердити видачу товару</div></div></div>
 
     <div style={{ fontSize:13,fontWeight:800,color:T.text,marginBottom:8 }}>Замовлення</div>
     {ORDERS.map(o=><div key={o.id} style={{ ...S.card,...S.flex,gap:10,marginBottom:8 }}>
       <QRCode value={o.id} size={44}/>
-      <div style={{ flex:1 }}><div style={{ fontSize:11,fontWeight:700,color:T.text }}>{o.id}</div><div style={{ fontSize:9,color:T.textSec }}>{o.buyer} · {o.item}</div></div>
+      <div style={{ flex:1 }}><div style={{ fontSize:11,fontWeight:700,color:T.text }}>{o.id}</div><div style={{ fontSize:10,color:T.textSec }}>{o.buyer} · {o.item}</div></div>
       <div style={{ textAlign:"right" }}><div style={{ fontSize:12,fontWeight:800,color:T.green }}>₴{o.amount}</div><Badge bg={o.status==="paid"?"#fef9c3":T.greenLight} color={o.status==="paid"?"#a16207":T.green}>{o.status==="paid"?"Оплачено":"Видано"}</Badge></div>
     </div>)}
 
@@ -773,7 +766,7 @@ function QRHub() {
       <div style={{ fontSize:20,width:36,height:36,borderRadius:10,background:T.cardAlt,...S.flex,justifyContent:"center" }}>{ts.avatar}</div>
       <div style={{ flex:1 }}>
         <div style={{ fontSize:11,fontWeight:700,color:T.text }}>{ts.buyer}</div>
-        <div style={{ fontSize:9,color:T.textSec }}>{ts.item} × {ts.qty} {ts.unit} · ₴{ts.amount}</div>
+        <div style={{ fontSize:10,color:T.textSec }}>{ts.item} × {ts.qty} {ts.unit} · ₴{ts.amount}</div>
       </div>
       <Badge bg={ts.scenario==="success"?T.greenLight:ts.scenario==="expired"?"#fef2f2":ts.scenario==="done"?T.cardAlt:"#fefce8"}
         color={ts.scenario==="success"?T.green:ts.scenario==="expired"?"#ef4444":ts.scenario==="done"?T.textSec:"#a16207"}>
@@ -844,7 +837,7 @@ function ChatPage() {
   }
 
   return <div style={S.page}>
-    <h2 style={{color:T.text,fontSize:20,fontWeight:900,marginBottom:14}}>Повідомлення</h2>
+    <h2 style={{color:T.text,fontSize:22,fontWeight:900,marginBottom:14}}>Повідомлення</h2>
     {chats.map(ch=><div key={ch.id} onClick={()=>setActiveChat(ch.id)} style={{...S.card,...S.flex,gap:10,marginBottom:8,cursor:"pointer",padding:12}}>
       <div style={{position:"relative"}}><Ic emoji={ch.avatar} size={42}/>
         {ch.online&&<div style={{position:"absolute",bottom:0,right:0,width:10,height:10,borderRadius:"50%",background:T.green,border:`2px solid ${T.card}`}}/>}
@@ -852,7 +845,7 @@ function ChatPage() {
       <div style={{flex:1,minWidth:0}}>
         <div style={{...S.flex,justifyContent:"space-between",marginBottom:2}}>
           <span style={{fontSize:13,fontWeight:700,color:T.text}}>{ch.name}</span>
-          <span style={{fontSize:9,color:T.textMuted}}>{ch.time}</span>
+          <span style={{fontSize:10,color:T.textMuted}}>{ch.time}</span>
         </div>
         <div style={{fontSize:11,color:T.textSec,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{ch.last}</div>
       </div>
@@ -890,7 +883,7 @@ function SellerDashboard({ deals, joined, onOpen }) {
       <p style={{color:T.textSec,fontSize:11,marginBottom:14}}>{myDeals.length} активних</p>
       {myDeals.length===0?<div style={{textAlign:"center",padding:50}}><div style={{fontSize:44}}>🛒</div><div style={{color:T.textMuted,marginTop:10,fontSize:12}}>Ще нічого немає</div></div>:
       <div style={{display:"flex",flexDirection:"column",gap:8}}>{myDeals.map(d=>{const p=pct(d);return <div key={d.id} onClick={()=>onOpen&&onOpen(d)} style={{...S.card,cursor:"pointer"}}>
-        <div style={{...S.flex,gap:10,marginBottom:6}}><Ic emoji={d.avatar} size={36}/><div style={{flex:1}}><div style={{fontSize:12,fontWeight:800,color:T.text}}>{d.title}</div><div style={{fontSize:9,color:T.textSec}}>{d.seller}</div></div><div style={{fontSize:15,fontWeight:900,color:T.green}}>₴{d.group}</div></div>
+        <div style={{...S.flex,gap:10,marginBottom:6}}><Ic emoji={d.avatar} size={36}/><div style={{flex:1}}><div style={{fontSize:12,fontWeight:800,color:T.text}}>{d.title}</div><div style={{fontSize:10,color:T.textSec}}>{d.seller}</div></div><div style={{fontSize:15,fontWeight:900,color:T.green}}>₴{d.group}</div></div>
         <div style={{...S.flex,gap:8}}><div style={{flex:1}}><ProgressBar value={p} color={pCol(p)}/></div><Badge>В групі</Badge></div>
       </div>;})}</div>}
     </>:<>
@@ -920,7 +913,7 @@ function SellerDashboard({ deals, joined, onOpen }) {
       {[["1. Створіть оголошення","Вкажіть товар, ціну, мін. кількість учасників"],["2. Збирайте групу","Покупці приєднуються — ви бачите прогрес"],["3. Підтвердіть оплату","Гроші надходять на баланс після оплати"],["4. Видайте товар","Скануйте QR покупця при видачі"],["5. Отримайте кошти","Виведіть на картку, Apple Pay чи крипто"]].map(([t,d],i)=>
         <div key={i} style={{ ...S.flex,gap:10,padding:"6px 0",borderBottom:i<4?`1px solid ${T.border}22`:"none" }}>
           <div style={{ width:24,height:24,borderRadius:8,background:T.accent+"18",...S.flex,justifyContent:"center",fontSize:11,fontWeight:900,color:T.accent,flexShrink:0 }}>{i+1}</div>
-          <div><div style={{ fontSize:11,fontWeight:700,color:T.text }}>{t.slice(3)}</div><div style={{ fontSize:9,color:T.textSec }}>{d}</div></div>
+          <div><div style={{ fontSize:11,fontWeight:700,color:T.text }}>{t.slice(3)}</div><div style={{ fontSize:10,color:T.textSec }}>{d}</div></div>
         </div>
       )}
     </div>
@@ -931,14 +924,14 @@ function SellerDashboard({ deals, joined, onOpen }) {
     <h3 style={{ color:T.text,fontSize:13,fontWeight:800,margin:"14px 0 8px" }}>Очікують видачі ({act2.length})</h3>
     {act2.map(o=><div key={o.id} style={{ ...S.card,...S.flex,gap:10,marginBottom:8 }}>
       <Ic emoji={o.avatar} size={36}/>
-      <div style={{ flex:1 }}><div style={{ fontSize:11,fontWeight:700,color:T.text }}>{o.buyer}</div><div style={{ fontSize:9,color:T.textSec }}>{o.item} × {o.qty} {o.unit}</div></div>
+      <div style={{ flex:1 }}><div style={{ fontSize:11,fontWeight:700,color:T.text }}>{o.buyer}</div><div style={{ fontSize:10,color:T.textSec }}>{o.item} × {o.qty} {o.unit}</div></div>
       <div style={{ textAlign:"right" }}><div style={{ fontSize:13,fontWeight:800,color:T.green }}>₴{o.amount}</div><Badge bg="#fef9c3" color="#a16207">Оплачено</Badge></div>
     </div>)}
 
     <h3 style={{ color:T.text,fontSize:13,fontWeight:800,margin:"14px 0 8px" }}>Видані ({don2.length})</h3>
     {don2.map(o=><div key={o.id} style={{ ...S.card,...S.flex,gap:10,marginBottom:8,opacity:.55 }}>
       <Ic emoji={o.avatar} size={32}/>
-      <div style={{ flex:1 }}><div style={{ fontSize:11,fontWeight:700,color:T.text }}>{o.buyer}</div><div style={{ fontSize:9,color:T.textSec }}>{o.item}</div></div>
+      <div style={{ flex:1 }}><div style={{ fontSize:11,fontWeight:700,color:T.text }}>{o.buyer}</div><div style={{ fontSize:10,color:T.textSec }}>{o.item}</div></div>
       <Badge>Видано</Badge>
     </div>)}
 
