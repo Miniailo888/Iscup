@@ -1179,9 +1179,11 @@ export default function App() {
     }
   }
 
+  const isMobile = window.innerWidth <= 500;
+
   return (
-    <div style={{ minHeight:"100vh", background:"#050505", display:"flex", justifyContent:"center", alignItems:"flex-start", padding:"20px 0", fontFamily:"'Inter', system-ui, sans-serif" }}>
-      <div style={{ width:390, height:820, background:"#0f0f0f", borderRadius:44, overflow:"hidden", boxShadow:"0 60px 120px rgba(0,0,0,0.9), 0 0 0 1px #1a1a1a", position:"relative" }}>
+    <div style={{ minHeight:"100vh", background:"#050505", display:"flex", justifyContent:"center", alignItems: isMobile ? "stretch" : "flex-start", padding: isMobile ? 0 : "20px 0", fontFamily:"'Inter', system-ui, sans-serif" }}>
+      <div style={{ width: isMobile ? "100%" : 390, height: isMobile ? "100vh" : 820, background:"#0f0f0f", borderRadius: isMobile ? 0 : 44, overflow:"hidden", boxShadow: isMobile ? "none" : "0 60px 120px rgba(0,0,0,0.9), 0 0 0 1px #1a1a1a", position:"relative" }}>
         <div style={{ height: showNav ? "calc(100% - 64px)" : "100%", overflowY:"auto" }}>
           {renderContent()}
         </div>
