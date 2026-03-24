@@ -1,6 +1,5 @@
 [build]
-builder = "nixpacks"
-buildCommand = "rm -rf node_modules && npm install --omit=dev && npm run build"
+builder = "dockerfile"
 
 [deploy]
 startCommand = "node server.js"
