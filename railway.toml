@@ -1,7 +1,7 @@
 [build]
 builder = "nixpacks"
-buildCommand = "echo 'skip'"
+buildCommand = "npm install --omit=dev && npm run build"
 
 [deploy]
-startCommand = "sh start.sh"
+startCommand = "node server.js"
 restartPolicyType = "on_failure"
