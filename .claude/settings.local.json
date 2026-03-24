@@ -1,1 +1,10 @@
-{}
+{
+  "permissions": {
+    "allow": [
+      "Bash(mkdir -p \"E:/Users/Roma/Desktop/СпільноКуп/SpilnoKup.xcodeproj\")",
+      "Bash(mkdir -p \"E:/Users/Roma/Desktop/СпільноКуп/SpilnoKup/Views\")",
+      "Bash(mkdir -p \"E:/Users/Roma/Desktop/СпільноКуп/SpilnoKup/Assets.xcassets/AccentColor.colorset\")",
+      "Bash(mkdir -p \"E:/Users/Roma/Desktop/СпільноКуп/SpilnoKup/Assets.xcassets/AppIcon.appiconset\")"
+    ]
+  }
+}
