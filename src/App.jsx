@@ -67,6 +67,7 @@ const I = {
   pin: <svg width="14" height="14" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z"/><circle cx="12" cy="10" r="3"/></svg>,
   clock: <svg width="14" height="14" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>,
   down: <svg width="18" height="18" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>,
+  msg: <svg width="26" height="26" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg>,
 };
 
 // ── Дані ────────────────────────────────────────────────────────────────────
@@ -170,14 +171,15 @@ function Input({ value, onChange, placeholder, icon, type="text", area }) {
 }
 
 // ── Навігація (напівпрозора + анімація) ─────────────────────────────────────
-const NAV = [["market",I.home,"Маркет"],["my",I.bag,"Мої"],["qr",I.qr,"QR"],["seller",I.chart,"Бізнес"],["wallet",I.wallet,"Гаманець"]];
+const NAV = [["market",I.home,"Маркет"],["qr",I.qr,"QR"],["chat",I.msg,"Чат"],["seller",I.chart,"Бізнес"],["wallet",I.wallet,"Гаманець"]];
 
 function Nav({ tab, setTab }) {
+  const isCenter=(t)=>t==="chat";
   return <div style={{ position:"absolute",bottom:0,left:0,right:0,height:68,background:T.navBg,backdropFilter:"blur(32px)",WebkitBackdropFilter:"blur(32px)",borderTop:`1px solid ${T.border}22`,...S.flex,zIndex:100,padding:"0 4px" }}>
     {NAV.map(([t,icon,label])=>(
-      <button key={t} onClick={()=>setTab(t)} style={{ ...S.btn,flex:1,display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",gap:3,background:"transparent",color:tab===t?T.accent:T.navText,transition:"all .25s",transform:tab===t?"scale(1.15)":"scale(1)" }}>
-        <div style={{ opacity:tab===t?1:0.45 }}>{icon}</div>
-        <span style={{ fontSize:9,fontWeight:tab===t?800:500,opacity:tab===t?1:0.45 }}>{label}</span>
+      <button key={t} onClick={()=>setTab(t)} style={{ ...S.btn,flex:1,display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",gap:isCenter(t)?2:3,background:"transparent",color:tab===t?T.accent:T.navText,transition:"all .25s",transform:tab===t?"scale(1.15)":"scale(1)",marginTop:isCenter(t)?-8:0 }}>
+        <div style={{ opacity:tab===t?1:0.45,transform:isCenter(t)?"scale(1.2)":"scale(1)" }}>{icon}</div>
+        <span style={{ fontSize:isCenter(t)?10:9,fontWeight:tab===t?800:500,opacity:tab===t?1:0.45 }}>{label}</span>
         {tab===t&&<div style={{ width:20,height:3,background:`linear-gradient(90deg,${T.gradA},${T.gradB})`,borderRadius:2,marginTop:-1 }}/>}
       </button>
     ))}
@@ -714,7 +716,82 @@ function QRHub() {
 }
 
 // ── Дашборд продавця ────────────────────────────────────────────────────────
-function SellerDashboard() {
+// ── Месенджер ──────────────────────────────────────────────────────────────
+function ChatPage() {
+  const chats=[
+    {id:1,name:"Ферма Петренків",avatar:"🌾",last:"Курчата будуть у четвер, чекайте!",time:"14:22",unread:2,online:true},
+    {id:2,name:"Пасіка Коваля",avatar:"🐝",last:"Дякую за замовлення! Мед вже пакуємо",time:"12:05",unread:0,online:true},
+    {id:3,name:"Пекарня Оленки",avatar:"👩‍🍳",last:"Самовивіз з 10:00 до 18:00",time:"вчора",unread:1,online:false},
+    {id:4,name:"Молочна від Галини",avatar:"🐄",last:"Нова партія сиру буде в п'ятницю",time:"вчора",unread:0,online:false},
+    {id:5,name:"Кав'ярня Зерно",avatar:"☕",last:"Купони активовані, приходьте!",time:"Пн",unread:0,online:true},
+  ];
+  const [activeChat,setActiveChat]=useState(null);
+  const [msg,setMsg]=useState("");
+  const [messages,setMessages]=useState({
+    1:[{from:"them",text:"Привіт! Ваше замовлення на курчата прийнято",time:"10:00"},{from:"me",text:"Дякую! Коли можна забрати?",time:"10:15"},{from:"them",text:"Курчата будуть у четвер, чекайте!",time:"14:22"}],
+    2:[{from:"them",text:"Мед вже готовий до відправки",time:"11:00"},{from:"me",text:"Відправляйте Новою Поштою, будь ласка",time:"11:30"},{from:"them",text:"Дякую за замовлення! Мед вже пакуємо",time:"12:05"}],
+    3:[{from:"them",text:"Ваша випічка готова!",time:"09:00"},{from:"me",text:"О котрій можна забрати?",time:"09:20"},{from:"them",text:"Самовивіз з 10:00 до 18:00",time:"09:25"}],
+  });
+
+  const sendMsg=()=>{
+    if(!msg.trim()||!activeChat) return;
+    const now=new Date();const t=`${now.getHours()}:${String(now.getMinutes()).padStart(2,"0")}`;
+    setMessages(m=>({...m,[activeChat]:[...(m[activeChat]||[]),{from:"me",text:msg,time:t}]}));
+    setMsg("");
+    setTimeout(()=>{
+      const replies=["Зрозумів, дякую!","Добре, чекайте повідомлення","Так, все вірно","Скоро буде готово!","Без проблем!"];
+      const t2=`${now.getHours()}:${String(now.getMinutes()+1).padStart(2,"0")}`;
+      setMessages(m=>({...m,[activeChat]:[...(m[activeChat]||[]),{from:"them",text:replies[Math.floor(Math.random()*replies.length)],time:t2}]}));
+    },1500);
+  };
+
+  if(activeChat){
+    const ch=chats.find(c=>c.id===activeChat);
+    const msgs=messages[activeChat]||[];
+    return <div style={{display:"flex",flexDirection:"column",height:"100%"}}>
+      <div style={{...S.flex,gap:10,padding:"14px 16px",borderBottom:`1px solid ${T.border}22`}}>
+        <button onClick={()=>setActiveChat(null)} style={{...S.btn,background:"none",color:T.accent,padding:0}}>{I.back}</button>
+        <Ic emoji={ch.avatar} size={36}/>
+        <div style={{flex:1}}><div style={{fontSize:13,fontWeight:800,color:T.text}}>{ch.name}</div><div style={{fontSize:9,color:ch.online?T.green:T.textMuted}}>{ch.online?"Онлайн":"Був(ла) нещодавно"}</div></div>
+      </div>
+      <div style={{flex:1,overflowY:"auto",padding:"10px 16px",display:"flex",flexDirection:"column",gap:6}}>
+        {msgs.map((m,i)=><div key={i} style={{alignSelf:m.from==="me"?"flex-end":"flex-start",maxWidth:"78%"}}>
+          <div style={{background:m.from==="me"?T.accent+"22":T.cardAlt,borderRadius:12,padding:"8px 12px",borderBottomRightRadius:m.from==="me"?4:12,borderBottomLeftRadius:m.from==="me"?12:4}}>
+            <div style={{fontSize:12,color:T.text,lineHeight:1.4}}>{m.text}</div>
+          </div>
+          <div style={{fontSize:8,color:T.textMuted,marginTop:2,textAlign:m.from==="me"?"right":"left"}}>{m.time}</div>
+        </div>)}
+      </div>
+      <div style={{...S.flex,gap:8,padding:"10px 16px",borderTop:`1px solid ${T.border}22`}}>
+        <input value={msg} onChange={e=>setMsg(e.target.value)} onKeyDown={e=>e.key==="Enter"&&sendMsg()} placeholder="Повідомлення..."
+          style={{flex:1,background:T.cardAlt,border:"none",borderRadius:20,padding:"10px 16px",color:T.text,fontSize:13,outline:"none",fontFamily:"inherit"}}/>
+        <button onClick={sendMsg} style={{...S.btn,width:38,height:38,borderRadius:"50%",background:msg.trim()?T.accent:T.cardAlt,color:msg.trim()?"#fff":T.textMuted,...S.flex,justifyContent:"center"}}>
+          <svg width="18" height="18" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" viewBox="0 0 24 24"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
+        </button>
+      </div>
+    </div>;
+  }
+
+  return <div style={S.page}>
+    <h2 style={{color:T.text,fontSize:20,fontWeight:900,marginBottom:14}}>Повідомлення</h2>
+    {chats.map(ch=><div key={ch.id} onClick={()=>setActiveChat(ch.id)} style={{...S.card,...S.flex,gap:10,marginBottom:8,cursor:"pointer",padding:12}}>
+      <div style={{position:"relative"}}><Ic emoji={ch.avatar} size={42}/>
+        {ch.online&&<div style={{position:"absolute",bottom:0,right:0,width:10,height:10,borderRadius:"50%",background:T.green,border:`2px solid ${T.card}`}}/>}
+      </div>
+      <div style={{flex:1,minWidth:0}}>
+        <div style={{...S.flex,justifyContent:"space-between",marginBottom:2}}>
+          <span style={{fontSize:13,fontWeight:700,color:T.text}}>{ch.name}</span>
+          <span style={{fontSize:9,color:T.textMuted}}>{ch.time}</span>
+        </div>
+        <div style={{fontSize:11,color:T.textSec,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{ch.last}</div>
+      </div>
+      {ch.unread>0&&<div style={{width:20,height:20,borderRadius:"50%",background:T.accent,...S.flex,justifyContent:"center",fontSize:10,fontWeight:800,color:"#fff",flexShrink:0}}>{ch.unread}</div>}
+    </div>)}
+  </div>;
+}
+
+function SellerDashboard({ deals, joined, onOpen }) {
+  const [subTab,setSubTab]=useState("biz");
   const active=ORDERS.filter(o=>o.status==="paid"),done=ORDERS.filter(o=>o.status==="done"),rev=ORDERS.reduce((s,o)=>s+o.amount,0);
   const allOrders=[...ORDERS,
     {id:"SC-8844",buyer:"Дмитро Шевченко",avatar:"👨‍💼",item:"Картопля молода",qty:10,unit:"кг",amount:170,status:"paid"},
@@ -728,7 +805,25 @@ function SellerDashboard() {
   const weekData=[320,280,450,380,520,410,totalRev/7|0];
   const maxW=Math.max(...weekData);
 
+  const myDeals=deals?deals.filter(d=>joined[d.id]):[];
+
   return <div style={S.page}>
+    <div style={{...S.flex,gap:0,background:T.cardAlt,borderRadius:10,padding:3,marginBottom:14}}>
+      {[["biz","Бізнес"],["my","Мої покупки"]].map(([id,label])=>
+        <button key={id} onClick={()=>setSubTab(id)} style={{...S.btn,flex:1,padding:"8px 0",borderRadius:8,fontSize:11,background:subTab===id?T.card:"transparent",color:subTab===id?T.text:T.textMuted}}>{label}</button>
+      )}
+    </div>
+
+    {subTab==="my"?<>
+      <h2 style={{color:T.text,fontSize:18,fontWeight:900,marginBottom:4}}>Мої покупки</h2>
+      <p style={{color:T.textSec,fontSize:11,marginBottom:14}}>{myDeals.length} активних</p>
+      {myDeals.length===0?<div style={{textAlign:"center",padding:50}}><div style={{fontSize:44}}>🛒</div><div style={{color:T.textMuted,marginTop:10,fontSize:12}}>Ще нічого немає</div></div>:
+      <div style={{display:"flex",flexDirection:"column",gap:8}}>{myDeals.map(d=>{const p=pct(d);return <div key={d.id} onClick={()=>onOpen&&onOpen(d)} style={{...S.card,cursor:"pointer"}}>
+        <div style={{...S.flex,gap:10,marginBottom:6}}><Ic emoji={d.avatar} size={36}/><div style={{flex:1}}><div style={{fontSize:12,fontWeight:800,color:T.text}}>{d.title}</div><div style={{fontSize:9,color:T.textSec}}>{d.seller}</div></div><div style={{fontSize:15,fontWeight:900,color:T.green}}>₴{d.group}</div></div>
+        <div style={{...S.flex,gap:8}}><div style={{flex:1}}><ProgressBar value={p} color={pCol(p)}/></div><Badge>В групі</Badge></div>
+      </div>;})}</div>}
+    </>:<>
+
     <div style={{ background:`linear-gradient(135deg,${T.greenLight},${T.greenBorder})`,borderRadius:T.radius,padding:18,marginBottom:16 }}>
       <div style={{ ...S.flex,gap:10,marginBottom:14 }}><Ic emoji={SELLER.avatar} size={44}/><div><div style={{ fontSize:16,fontWeight:900,color:T.text }}>{SELLER.name}</div><div style={{ ...S.flex,gap:4,fontSize:10,color:T.green }}>{I.pin} {SELLER.city} {I.star} {SELLER.rating}</div></div></div>
       <div style={{ display:"grid",gridTemplateColumns:"repeat(4,1fr)",gap:4 }}>
@@ -775,6 +870,8 @@ function SellerDashboard() {
       <div style={{ flex:1 }}><div style={{ fontSize:11,fontWeight:700,color:T.text }}>{o.buyer}</div><div style={{ fontSize:9,color:T.textSec }}>{o.item}</div></div>
       <Badge>Видано</Badge>
     </div>)}
+
+    </>}
   </div>;
 }
 
@@ -923,9 +1020,9 @@ export default function App() {
     if(page==="createDeal") return <CreateDealPage onBack={()=>setPage(null)} onSave={d=>{setDeals(prev=>[d,...prev]);setPage(null);}}/>;
     switch(tab){
       case"market":return <MarketPage deals={deals} joined={joined} onJoin={onJoin} onOpen={onOpen} user={user} onCreateDeal={()=>setPage("createDeal")}/>;
-      case"my":return <MyDealsPage deals={deals} joined={joined} onOpen={onOpen}/>;
       case"qr":return <QRHub/>;
-      case"seller":return <SellerDashboard/>;
+      case"chat":return <ChatPage/>;
+      case"seller":return <SellerDashboard deals={deals} joined={joined} onOpen={onOpen}/>;
       case"wallet":return <WalletPage user={user} setUser={setUser} theme={theme} onTheme={changeTheme}/>;
       default:return null;
     }
