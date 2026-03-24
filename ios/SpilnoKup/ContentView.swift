@@ -1,55 +1,64 @@
 import SwiftUI
 
 struct ContentView: View {
-    @State private var selectedTab: AppTab = .home
+    @StateObject private var state = AppState()
+    @State private var selectedTab = 0
 
     var body: some View {
+        Group {
+            if state.isLoggedIn {
+                mainTabView
+            } else {
+                WelcomeView()
+            }
+        }
+        .environmentObject(state)
+        .preferredColorScheme(.dark)
+        .onAppear {
+            state.loadUser()
+            state.loadTheme()
+        }
+    }
+
+    var mainTabView: some View {
         TabView(selection: $selectedTab) {
-            HomeView()
+            MarketView()
                 .tabItem {
                     Image(systemName: "house.fill")
-                    Text("Головна")
+                    Text("Маркет")
                 }
-                .tag(AppTab.home)
+                .tag(0)
 
-            CatalogView()
+            QRHubView()
                 .tabItem {
-                    Image(systemName: "square.grid.2x2.fill")
-                    Text("Каталог")
+                    Image(systemName: "qrcode")
+                    Text("QR")
                 }
-                .tag(AppTab.catalog)
+                .tag(1)
 
-            CreateGroupView()
+            ChatListView()
                 .tabItem {
-                    Image(systemName: "plus.circle.fill")
-                    Text("Створити")
+                    Image(systemName: "message.fill")
+                    Text("Чат")
                 }
-                .tag(AppTab.create)
+                .tag(2)
 
-            NotificationsView()
+            SellerDashboardView()
                 .tabItem {
-                    Image(systemName: "bell.fill")
-                    Text("Сповіщення")
+                    Image(systemName: "briefcase.fill")
+                    Text("Бізнес")
                 }
-                .tag(AppTab.notifications)
+                .tag(3)
 
-            ProfileView()
+            WalletView()
                 .tabItem {
-                    Image(systemName: "person.fill")
-                    Text("Профіль")
+                    Image(systemName: "wallet.pass.fill")
+                    Text("Гаманець")
                 }
-                .tag(AppTab.profile)
+                .tag(4)
         }
-        .tint(.orange)
+        .tint(state.theme.accent)
     }
-}
-
-enum AppTab: String, CaseIterable {
-    case home
-    case catalog
-    case create
-    case notifications
-    case profile
 }
 
 struct ContentView_Previews: PreviewProvider {

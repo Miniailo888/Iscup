@@ -7,30 +7,48 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
-		AA00000100000000000001 /* SpilnoKupApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA00000200000000000001 /* SpilnoKupApp.swift */; };
-		AA00000100000000000002 /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA00000200000000000002 /* ContentView.swift */; };
-		AA00000100000000000003 /* HomeView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA00000200000000000003 /* HomeView.swift */; };
-		AA00000100000000000004 /* CatalogView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA00000200000000000004 /* CatalogView.swift */; };
-		AA00000100000000000005 /* CreateGroupView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA00000200000000000005 /* CreateGroupView.swift */; };
-		AA00000100000000000006 /* NotificationsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA00000200000000000006 /* NotificationsView.swift */; };
-		AA00000100000000000007 /* ProfileView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA00000200000000000007 /* ProfileView.swift */; };
-		AA00000100000000000008 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = AA00000200000000000008 /* Assets.xcassets */; };
+		B100000000000000000001 /* SpilnoKupApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = F100000000000000000001 /* SpilnoKupApp.swift */; };
+		B100000000000000000002 /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F100000000000000000002 /* ContentView.swift */; };
+		B100000000000000000003 /* Models.swift in Sources */ = {isa = PBXBuildFile; fileRef = F100000000000000000003 /* Models.swift */; };
+		B100000000000000000004 /* AppTheme.swift in Sources */ = {isa = PBXBuildFile; fileRef = F100000000000000000004 /* AppTheme.swift */; };
+		B100000000000000000005 /* AppState.swift in Sources */ = {isa = PBXBuildFile; fileRef = F100000000000000000005 /* AppState.swift */; };
+		B100000000000000000006 /* SampleData.swift in Sources */ = {isa = PBXBuildFile; fileRef = F100000000000000000006 /* SampleData.swift */; };
+		B100000000000000000007 /* Components.swift in Sources */ = {isa = PBXBuildFile; fileRef = F100000000000000000007 /* Components.swift */; };
+		B100000000000000000008 /* WelcomeView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F100000000000000000008 /* WelcomeView.swift */; };
+		B100000000000000000009 /* MarketView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F100000000000000000009 /* MarketView.swift */; };
+		B10000000000000000000A /* DealCardView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F10000000000000000000A /* DealCardView.swift */; };
+		B10000000000000000000B /* DealDetailView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F10000000000000000000B /* DealDetailView.swift */; };
+		B10000000000000000000C /* CreateDealView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F10000000000000000000C /* CreateDealView.swift */; };
+		B10000000000000000000D /* ChatView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F10000000000000000000D /* ChatView.swift */; };
+		B10000000000000000000E /* QRHubView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F10000000000000000000E /* QRHubView.swift */; };
+		B10000000000000000000F /* SellerDashboardView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F10000000000000000000F /* SellerDashboardView.swift */; };
+		B100000000000000000010 /* WalletView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F100000000000000000010 /* WalletView.swift */; };
+		B100000000000000000011 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = F100000000000000000011 /* Assets.xcassets */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
-		AA00000200000000000001 /* SpilnoKupApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SpilnoKupApp.swift; sourceTree = "<group>"; };
-		AA00000200000000000002 /* ContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentView.swift; sourceTree = "<group>"; };
-		AA00000200000000000003 /* HomeView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HomeView.swift; sourceTree = "<group>"; };
-		AA00000200000000000004 /* CatalogView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CatalogView.swift; sourceTree = "<group>"; };
-		AA00000200000000000005 /* CreateGroupView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CreateGroupView.swift; sourceTree = "<group>"; };
-		AA00000200000000000006 /* NotificationsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NotificationsView.swift; sourceTree = "<group>"; };
-		AA00000200000000000007 /* ProfileView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProfileView.swift; sourceTree = "<group>"; };
-		AA00000200000000000008 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
-		AA00000200000000000009 /* SpilnoKup.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = SpilnoKup.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		F100000000000000000001 /* SpilnoKupApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SpilnoKupApp.swift; sourceTree = "<group>"; };
+		F100000000000000000002 /* ContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentView.swift; sourceTree = "<group>"; };
+		F100000000000000000003 /* Models.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Models.swift; sourceTree = "<group>"; };
+		F100000000000000000004 /* AppTheme.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppTheme.swift; sourceTree = "<group>"; };
+		F100000000000000000005 /* AppState.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppState.swift; sourceTree = "<group>"; };
+		F100000000000000000006 /* SampleData.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SampleData.swift; sourceTree = "<group>"; };
+		F100000000000000000007 /* Components.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Components.swift; sourceTree = "<group>"; };
+		F100000000000000000008 /* WelcomeView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WelcomeView.swift; sourceTree = "<group>"; };
+		F100000000000000000009 /* MarketView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MarketView.swift; sourceTree = "<group>"; };
+		F10000000000000000000A /* DealCardView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DealCardView.swift; sourceTree = "<group>"; };
+		F10000000000000000000B /* DealDetailView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DealDetailView.swift; sourceTree = "<group>"; };
+		F10000000000000000000C /* CreateDealView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CreateDealView.swift; sourceTree = "<group>"; };
+		F10000000000000000000D /* ChatView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ChatView.swift; sourceTree = "<group>"; };
+		F10000000000000000000E /* QRHubView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = QRHubView.swift; sourceTree = "<group>"; };
+		F10000000000000000000F /* SellerDashboardView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SellerDashboardView.swift; sourceTree = "<group>"; };
+		F100000000000000000010 /* WalletView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WalletView.swift; sourceTree = "<group>"; };
+		F100000000000000000011 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
+		F100000000000000000012 /* SpilnoKup.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = SpilnoKup.app; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
-		AA00000300000000000001 /* Frameworks */ = {
+		D100000000000000000001 /* Frameworks */ = {
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
@@ -40,41 +58,58 @@
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
-		AA00000400000000000001 = {
+		G100000000000000000001 = {
 			isa = PBXGroup;
 			children = (
-				AA00000400000000000002 /* SpilnoKup */,
-				AA00000400000000000004 /* Products */,
+				G100000000000000000002 /* SpilnoKup */,
+				G100000000000000000005 /* Products */,
 			);
 			sourceTree = "<group>";
 		};
-		AA00000400000000000002 /* SpilnoKup */ = {
+		G100000000000000000002 /* SpilnoKup */ = {
 			isa = PBXGroup;
 			children = (
-				AA00000200000000000001 /* SpilnoKupApp.swift */,
-				AA00000200000000000002 /* ContentView.swift */,
-				AA00000400000000000003 /* Views */,
-				AA00000200000000000008 /* Assets.xcassets */,
+				F100000000000000000001 /* SpilnoKupApp.swift */,
+				F100000000000000000002 /* ContentView.swift */,
+				F100000000000000000003 /* Models.swift */,
+				F100000000000000000004 /* AppTheme.swift */,
+				F100000000000000000005 /* AppState.swift */,
+				F100000000000000000006 /* SampleData.swift */,
+				G100000000000000000003 /* Views */,
+				G100000000000000000004 /* Components */,
+				F100000000000000000011 /* Assets.xcassets */,
 			);
 			path = SpilnoKup;
 			sourceTree = "<group>";
 		};
-		AA00000400000000000003 /* Views */ = {
+		G100000000000000000003 /* Views */ = {
 			isa = PBXGroup;
 			children = (
-				AA00000200000000000003 /* HomeView.swift */,
-				AA00000200000000000004 /* CatalogView.swift */,
-				AA00000200000000000005 /* CreateGroupView.swift */,
-				AA00000200000000000006 /* NotificationsView.swift */,
-				AA00000200000000000007 /* ProfileView.swift */,
+				F100000000000000000008 /* WelcomeView.swift */,
+				F100000000000000000009 /* MarketView.swift */,
+				F10000000000000000000A /* DealCardView.swift */,
+				F10000000000000000000B /* DealDetailView.swift */,
+				F10000000000000000000C /* CreateDealView.swift */,
+				F10000000000000000000D /* ChatView.swift */,
+				F10000000000000000000E /* QRHubView.swift */,
+				F10000000000000000000F /* SellerDashboardView.swift */,
+				F100000000000000000010 /* WalletView.swift */,
 			);
 			path = Views;
 			sourceTree = "<group>";
 		};
-		AA00000400000000000004 /* Products */ = {
+		G100000000000000000004 /* Components */ = {
 			isa = PBXGroup;
 			children = (
-				AA00000200000000000009 /* SpilnoKup.app */,
+				F100000000000000000007 /* Components.swift */,
+			);
+			path = Components;
+			sourceTree = "<group>";
+		};
+		G100000000000000000005 /* Products */ = {
+			isa = PBXGroup;
+			children = (
+				F100000000000000000012 /* SpilnoKup.app */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -82,13 +117,13 @@
 /* End PBXGroup section */
 
 /* Begin PBXNativeTarget section */
-		AA00000500000000000001 /* SpilnoKup */ = {
+		T100000000000000000001 /* SpilnoKup */ = {
 			isa = PBXNativeTarget;
-			buildConfigurationList = AA00000700000000000002 /* Build configuration list for PBXNativeTarget "SpilnoKup" */;
+			buildConfigurationList = C100000000000000000002 /* Build configuration list for PBXNativeTarget "SpilnoKup" */;
 			buildPhases = (
-				AA00000600000000000001 /* Sources */,
-				AA00000300000000000001 /* Frameworks */,
-				AA00000600000000000002 /* Resources */,
+				S100000000000000000001 /* Sources */,
+				D100000000000000000001 /* Frameworks */,
+				R100000000000000000001 /* Resources */,
 			);
 			buildRules = (
 			);
@@ -96,25 +131,25 @@
 			);
 			name = SpilnoKup;
 			productName = SpilnoKup;
-			productReference = AA00000200000000000009 /* SpilnoKup.app */;
+			productReference = F100000000000000000012 /* SpilnoKup.app */;
 			productType = "com.apple.product-type.application";
 		};
 /* End PBXNativeTarget section */
 
 /* Begin PBXProject section */
-		AA00000800000000000001 /* Project object */ = {
+		P100000000000000000001 /* Project object */ = {
 			isa = PBXProject;
 			attributes = {
 				BuildIndependentTargetsInParallel = 1;
 				LastSwiftUpdateCheck = 1420;
 				LastUpgradeCheck = 1420;
 				TargetAttributes = {
-					AA00000500000000000001 = {
+					T100000000000000000001 = {
 						CreatedOnToolsVersion = 14.2;
 					};
 				};
 			};
-			buildConfigurationList = AA00000700000000000001 /* Build configuration list for PBXProject "SpilnoKup" */;
+			buildConfigurationList = C100000000000000000001 /* Build configuration list for PBXProject "SpilnoKup" */;
 			compatibilityVersion = "Xcode 14.0";
 			developmentRegion = uk;
 			hasScannedForEncodings = 0;
@@ -122,46 +157,55 @@
 				uk,
 				Base,
 			);
-			mainGroup = AA00000400000000000001;
-			productRefGroup = AA00000400000000000004 /* Products */;
+			mainGroup = G100000000000000000001;
+			productRefGroup = G100000000000000000005 /* Products */;
 			projectDirPath = "";
 			projectRoot = "";
 			targets = (
-				AA00000500000000000001 /* SpilnoKup */,
+				T100000000000000000001 /* SpilnoKup */,
 			);
 		};
 /* End PBXProject section */
 
 /* Begin PBXResourcesBuildPhase section */
-		AA00000600000000000002 /* Resources */ = {
+		R100000000000000000001 /* Resources */ = {
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				AA00000100000000000008 /* Assets.xcassets in Resources */,
+				B100000000000000000011 /* Assets.xcassets in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 /* End PBXResourcesBuildPhase section */
 
 /* Begin PBXSourcesBuildPhase section */
-		AA00000600000000000001 /* Sources */ = {
+		S100000000000000000001 /* Sources */ = {
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				AA00000100000000000001 /* SpilnoKupApp.swift in Sources */,
-				AA00000100000000000002 /* ContentView.swift in Sources */,
-				AA00000100000000000003 /* HomeView.swift in Sources */,
-				AA00000100000000000004 /* CatalogView.swift in Sources */,
-				AA00000100000000000005 /* CreateGroupView.swift in Sources */,
-				AA00000100000000000006 /* NotificationsView.swift in Sources */,
-				AA00000100000000000007 /* ProfileView.swift in Sources */,
+				B100000000000000000001 /* SpilnoKupApp.swift in Sources */,
+				B100000000000000000002 /* ContentView.swift in Sources */,
+				B100000000000000000003 /* Models.swift in Sources */,
+				B100000000000000000004 /* AppTheme.swift in Sources */,
+				B100000000000000000005 /* AppState.swift in Sources */,
+				B100000000000000000006 /* SampleData.swift in Sources */,
+				B100000000000000000007 /* Components.swift in Sources */,
+				B100000000000000000008 /* WelcomeView.swift in Sources */,
+				B100000000000000000009 /* MarketView.swift in Sources */,
+				B10000000000000000000A /* DealCardView.swift in Sources */,
+				B10000000000000000000B /* DealDetailView.swift in Sources */,
+				B10000000000000000000C /* CreateDealView.swift in Sources */,
+				B10000000000000000000D /* ChatView.swift in Sources */,
+				B10000000000000000000E /* QRHubView.swift in Sources */,
+				B10000000000000000000F /* SellerDashboardView.swift in Sources */,
+				B100000000000000000010 /* WalletView.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 /* End PBXSourcesBuildPhase section */
 
 /* Begin XCBuildConfiguration section */
-		AA00000900000000000001 /* Debug */ = {
+		X100000000000000000001 /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ALWAYS_SEARCH_USER_PATHS = NO;
@@ -221,7 +265,7 @@
 			};
 			name = Debug;
 		};
-		AA00000900000000000002 /* Release */ = {
+		X100000000000000000002 /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ALWAYS_SEARCH_USER_PATHS = NO;
@@ -274,7 +318,7 @@
 			};
 			name = Release;
 		};
-		AA00000900000000000003 /* Debug */ = {
+		X100000000000000000003 /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
@@ -305,7 +349,7 @@
 			};
 			name = Debug;
 		};
-		AA00000900000000000004 /* Release */ = {
+		X100000000000000000004 /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
@@ -339,25 +383,25 @@
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
-		AA00000700000000000001 /* Build configuration list for PBXProject "SpilnoKup" */ = {
+		C100000000000000000001 /* Build configuration list for PBXProject "SpilnoKup" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
-				AA00000900000000000001 /* Debug */,
-				AA00000900000000000002 /* Release */,
+				X100000000000000000001 /* Debug */,
+				X100000000000000000002 /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
 		};
-		AA00000700000000000002 /* Build configuration list for PBXNativeTarget "SpilnoKup" */ = {
+		C100000000000000000002 /* Build configuration list for PBXNativeTarget "SpilnoKup" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
-				AA00000900000000000003 /* Debug */,
-				AA00000900000000000004 /* Release */,
+				X100000000000000000003 /* Debug */,
+				X100000000000000000004 /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
 		};
 /* End XCConfigurationList section */
 	};
-	rootObject = AA00000800000000000001 /* Project object */;
+	rootObject = P100000000000000000001 /* Project object */;
 }
