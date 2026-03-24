@@ -31,6 +31,11 @@ const ICONS = {
   phone: <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="5" y="2" width="14" height="20" rx="2"/><line x1="12" y1="18" x2="12.01" y2="18"/></svg>,
   check: <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg>,
   download: <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>,
+  share: <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg>,
+  filter: <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"/></svg>,
+  clock: <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>,
+  mapPin: <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z"/><circle cx="12" cy="10" r="3"/></svg>,
+  copy: <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/></svg>,
 };
 
 // ── Дані ────────────────────────────────────────────────────────────────────
@@ -78,6 +83,34 @@ const DEALS = [
     title:"Яйця домашні (лоток 30 шт)", unit:"лоток", retail:145, group:95, min:1, max:5,
     joined:12, needed:20, days:3, desc:"Несучки вільного вигулу. Жовток яскраво-помаранчевий.",
     tags:["🐔 Вільний вигул","🟠 Яскравий жовток","🚗 Доставка з курчатами"], hot:false },
+  { id:9, cat:"veggies", seller:"Еко-ферма Зелений Гай", avatar:"🥕", city:"Фастів", rating:4.8, deals:56,
+    title:"Набір сезонних овочів (10 кг)", unit:"набір", retail:450, group:290, min:1, max:5,
+    joined:15, needed:25, days:4, desc:"Помідори, огірки, перець, морква, цибуля. Все свіже з грядки.",
+    tags:["🥗 Сезонне","🌱 Органік","📦 10 кг"], hot:true },
+  { id:10, cat:"dairy", seller:"Сироварня Карпат", avatar:"🧀", city:"Львів", rating:4.9, deals:78,
+    title:"Набір крафтових сирів (5 видів)", unit:"набір", retail:680, group:450, min:1, max:3,
+    joined:8, needed:15, days:5, desc:"Бринза, сулугуні, качотта, камамбер, рікотта. Ручне виробництво.",
+    tags:["🏔 Карпатське","🧀 5 видів","❄ Термопакування"], hot:false },
+  { id:11, cat:"food", seller:"Кондитерська Солодка", avatar:"🎂", city:"Одеса", rating:4.7, deals:134,
+    title:"Набір тістечок преміум (8 шт)", unit:"набір", retail:520, group:340, min:1, max:4,
+    joined:19, needed:20, days:1, desc:"Наполеон, еклери, тірамісу, чізкейк. Без консервантів.",
+    tags:["🎂 Преміум","🚚 Нова Пошта","⏰ Свіже щодня"], hot:true },
+  { id:12, cat:"farm", seller:"Рибне господарство Дніпро", avatar:"🐟", city:"Дніпро", rating:4.6, deals:42,
+    title:"Форель свіжа (охолоджена)", unit:"кг", retail:420, group:280, min:2, max:8,
+    joined:11, needed:20, days:3, desc:"Райдужна форель. Вирощена в чистій воді Дніпра. Без ГМО.",
+    tags:["🐟 Свіжа","💧 Чиста вода","📦 від 2 кг"], hot:false },
+  { id:13, cat:"honey", seller:"Пасіка Лісова", avatar:"🌻", city:"Полтава", rating:5.0, deals:91,
+    title:"Мед соняшниковий + пилок", unit:"набір", retail:320, group:210, min:1, max:6,
+    joined:28, needed:30, days:2, desc:"Мед 1л + квітковий пилок 200г. Збір серпень 2024.",
+    tags:["🌻 Соняшник","🐝 + Пилок","📜 Сертифікат"], hot:true },
+  { id:14, cat:"cafe", seller:"Чайна Майстерня", avatar:"🍵", city:"Київ, Подол", rating:4.8, deals:167,
+    title:"Набір китайського чаю (6 сортів)", unit:"набір", retail:890, group:590, min:1, max:3,
+    joined:5, needed:12, days:6, desc:"Пуер, улун, жасмин, лунцзін, тегуаньінь, байховий. По 50г кожен.",
+    tags:["🍵 6 сортів","🇨🇳 Китай","🎁 Подарункова коробка"], hot:false },
+  { id:15, cat:"handmade", seller:"Свічкова Мануфактура", avatar:"🕯", city:"Харків", rating:4.7, deals:63,
+    title:"Набір ароматичних свічок (4 шт)", unit:"набір", retail:560, group:380, min:1, max:5,
+    joined:13, needed:18, days:4, desc:"Соєвий віск. Аромати: лаванда, ваніль, кедр, цитрус. Горять 40+ годин.",
+    tags:["🕯 Соєвий віск","🌿 Натуральні","🎁 В коробці"], hot:false },
 ];
 
 const SELLER = {
@@ -307,10 +340,19 @@ function MarketPage({ joined, onJoin, onOpen, user }) {
   const [cat, setCat] = useState("all");
   const [search, setSearch] = useState("");
   const [sort, setSort] = useState("hot");
+  const [showFilters, setShowFilters] = useState(false);
+  const [cityFilter, setCityFilter] = useState("all");
+  const [priceFilter, setPriceFilter] = useState("all");
+
+  const cities = ["all", ...new Set(DEALS.map(d => d.city.split(",")[0].trim()))];
 
   let list = cat === "all" ? DEALS : DEALS.filter(d => d.cat === cat);
   if (search) list = list.filter(d => (d.title + d.seller).toLowerCase().includes(search.toLowerCase()));
-  list = [...list].sort(sort === "new" ? (a, b) => b.id - a.id : sort === "disc" ? (a, b) => disc(b) - disc(a) : (a, b) => pct(b) - pct(a));
+  if (cityFilter !== "all") list = list.filter(d => d.city.includes(cityFilter));
+  if (priceFilter === "low") list = list.filter(d => d.group < 200);
+  else if (priceFilter === "mid") list = list.filter(d => d.group >= 200 && d.group < 500);
+  else if (priceFilter === "high") list = list.filter(d => d.group >= 500);
+  list = [...list].sort(sort === "new" ? (a, b) => b.id - a.id : sort === "disc" ? (a, b) => disc(b) - disc(a) : sort === "price" ? (a, b) => a.group - b.group : (a, b) => pct(b) - pct(a));
 
   return (
     <div>
@@ -347,12 +389,34 @@ function MarketPage({ joined, onJoin, onOpen, user }) {
         ))}
       </div>
 
-      <div style={{ display: "flex", gap: 6, padding: "0 16px 16px" }}>
-        {[["hot", "🔥 Гарячі"], ["new", "✨ Нові"], ["disc", "💰 Знижка"]].map(([s, l]) => (
+      <div style={{ ...S.flex, gap: 6, padding: "0 16px 12px", flexWrap: "wrap" }}>
+        {[["hot", "🔥 Гарячі"], ["new", "✨ Нові"], ["disc", "💰 Знижка"], ["price", "📊 За ціною"]].map(([s, l]) => (
           <button key={s} onClick={() => setSort(s)} style={{ ...S.btn, padding: "6px 12px", borderRadius: 10, fontSize: 11,
             background: sort === s ? T.greenLight : "transparent", color: sort === s ? T.green : T.textSec }}>{l}</button>
         ))}
+        <button onClick={() => setShowFilters(!showFilters)} style={{ ...S.btn, ...S.flex, gap: 4, marginLeft: "auto", padding: "6px 12px", borderRadius: 10, fontSize: 11, background: showFilters ? T.greenLight : "transparent", color: showFilters ? T.green : T.textSec }}>
+          {ICONS.filter} Фільтри
+        </button>
       </div>
+
+      {showFilters && (
+        <div style={{ ...S.card, margin: "0 16px 16px", padding: 14 }}>
+          <div style={{ fontSize: 12, fontWeight: 700, color: T.text, marginBottom: 8 }}>Місто</div>
+          <div style={{ display: "flex", gap: 6, flexWrap: "wrap", marginBottom: 12 }}>
+            {cities.map(c => (
+              <button key={c} onClick={() => setCityFilter(c)} style={{ ...S.btn, padding: "5px 10px", borderRadius: 8, fontSize: 11,
+                background: cityFilter === c ? T.accent : T.cardAlt, color: cityFilter === c ? "#fff" : T.textSec }}>{c === "all" ? "Всі міста" : c}</button>
+            ))}
+          </div>
+          <div style={{ fontSize: 12, fontWeight: 700, color: T.text, marginBottom: 8 }}>Ціна</div>
+          <div style={{ display: "flex", gap: 6 }}>
+            {[["all", "Будь-яка"], ["low", "до ₴200"], ["mid", "₴200-500"], ["high", "від ₴500"]].map(([v, l]) => (
+              <button key={v} onClick={() => setPriceFilter(v)} style={{ ...S.btn, padding: "5px 10px", borderRadius: 8, fontSize: 11,
+                background: priceFilter === v ? T.accent : T.cardAlt, color: priceFilter === v ? "#fff" : T.textSec }}>{l}</button>
+            ))}
+          </div>
+        </div>
+      )}
 
       <div style={{ padding: "0 16px 90px", display: "flex", flexDirection: "column", gap: 12 }}>
         {list.map(d => <DealCard key={d.id} deal={d} onOpen={onOpen} joined={joined} onJoin={onJoin} />)}
@@ -418,6 +482,14 @@ function DealDetail({ deal, onBack, joined, onJoin, onBuy }) {
           <div style={{ fontSize: 13, fontWeight: 700, color: T.text, marginBottom: 8 }}>📋 Опис</div>
           <div style={{ fontSize: 13, color: T.textSec, lineHeight: 1.6 }}>{deal.desc}</div>
         </div>
+
+        <button onClick={() => {
+          const text = `${deal.title} — всього ₴${deal.group} замість ₴${deal.retail}! Економія ${disc(deal)}%! Приєднуйся: ${window.location.href}`;
+          if (navigator.share) navigator.share({ title: "СпільноКуп: " + deal.title, text, url: window.location.href });
+          else { navigator.clipboard.writeText(text); alert("Посилання скопійовано!"); }
+        }} style={{ ...S.btn, ...S.flex, justifyContent: "center", gap: 8, width: "100%", padding: 14, background: T.cardAlt, borderRadius: 14, color: T.text, fontSize: 13 }}>
+          {ICONS.share} Поділитись оголошенням
+        </button>
 
         {!isIn && (
           <div style={S.card}>
@@ -492,39 +564,194 @@ function MyDealsPage({ joined, onOpen }) {
   );
 }
 
+// ── QR-код генератор ────────────────────────────────────────────────────────
+function QRCode({ value, size = 200 }) {
+  const cells = 25;
+  const cs = size / cells;
+  const hash = value.split("").reduce((a, c) => ((a << 5) - a + c.charCodeAt(0)) | 0, 0);
+  const grid = Array.from({ length: cells }, (_, r) => Array.from({ length: cells }, (_, c) => {
+    // Finder patterns (top-left, top-right, bottom-left)
+    const inFinder = (cr, cc) => cr >= 0 && cr < 7 && cc >= 0 && cc < 7;
+    if (inFinder(r, c) || inFinder(r, c - (cells - 7)) || inFinder(r - (cells - 7), c)) {
+      const fr = r < 7 ? r : r - (cells - 7);
+      const fc = c < 7 ? c : c - (cells - 7);
+      if (fr === 0 || fr === 6 || fc === 0 || fc === 6) return true;
+      if (fr >= 2 && fr <= 4 && fc >= 2 && fc <= 4) return true;
+      return false;
+    }
+    // Timing patterns
+    if (r === 6) return c % 2 === 0;
+    if (c === 6) return r % 2 === 0;
+    // Alignment pattern
+    if (r >= cells - 9 && r <= cells - 5 && c >= cells - 9 && c <= cells - 5) {
+      const ar = r - (cells - 9), ac = c - (cells - 9);
+      if (ar === 0 || ar === 4 || ac === 0 || ac === 4 || (ar === 2 && ac === 2)) return true;
+      return false;
+    }
+    // Separators
+    if ((r === 7 || c === 7) && (r < 9 || c < 9)) return false;
+    if ((r === 7 && c > cells - 9) || (c === cells - 8 && r < 9)) return false;
+    if ((r === cells - 8 && c < 9) || (c === 7 && r > cells - 9)) return false;
+    // Data (deterministic pseudo-random based on value)
+    return (((hash ^ (r * 37 + c * 53 + r * c * 7)) >>> 0) % 100) > 42;
+  }));
+
+  return (
+    <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`}>
+      <rect width={size} height={size} fill="#fff" rx={4} />
+      {grid.map((row, r) => row.map((on, c) =>
+        on ? <rect key={`${r}-${c}`} x={c * cs} y={r * cs} width={cs + 0.5} height={cs + 0.5} fill={T.text} /> : null
+      ))}
+    </svg>
+  );
+}
+
 // ── QR сторінка покупця ─────────────────────────────────────────────────────
 function BuyerQRPage({ deal, qty, onBack }) {
+  const [status, setStatus] = useState("active");
+  const code = `SC-${(deal.id * 1000 + qty).toString(36).toUpperCase().padStart(6, "0")}`;
   const total = deal.group * qty;
+  const [copied, setCopied] = useState(false);
+
   return (
     <div style={S.page}>
       <BackBtn onClick={onBack} />
       <div style={{ ...S.card, textAlign: "center", padding: 24 }}>
-        <div style={{ fontSize: 13, fontWeight: 700, color: T.green, marginBottom: 16 }}>Ваш QR-код для отримання</div>
-        <div style={{ background: T.cardAlt, borderRadius: T.radius, padding: 20, display: "inline-block", marginBottom: 16 }}>
-          <div style={{ width: 180, height: 180, background: `repeating-conic-gradient(${T.text} 0% 25%, #fff 0% 50%) 0 0 / 20px 20px`, borderRadius: 8 }} />
+        <div style={{ ...S.flex, justifyContent: "center", gap: 6, marginBottom: 16 }}>
+          <div style={{ width: 8, height: 8, borderRadius: "50%", background: status === "active" ? T.accent : status === "scanned" ? T.yellow : T.green, animation: status === "active" ? "pulse 2s infinite" : "none" }} />
+          <span style={{ fontSize: 12, fontWeight: 700, color: status === "active" ? T.green : status === "scanned" ? "#a16207" : T.green }}>
+            {status === "active" ? "Активний" : status === "scanned" ? "Зіскановано" : "Отримано"}
+          </span>
         </div>
-        <div style={{ fontSize: 13, color: T.textSec, marginBottom: 16 }}>{deal.title} × {qty} {deal.unit}</div>
-        <div style={{ ...S.card, background: T.greenLight, borderColor: T.greenBorder }}>
-          <div style={{ fontSize: 12, color: T.green }}>До сплати</div>
-          <div style={{ fontSize: 28, fontWeight: 900, color: T.green }}>₴{total}</div>
+
+        <div style={{ background: T.cardAlt, borderRadius: T.radius, padding: 16, display: "inline-block", marginBottom: 16 }}>
+          <QRCode value={code + "|" + deal.title + "|" + qty} size={200} />
+        </div>
+
+        <div style={{ ...S.flex, justifyContent: "center", gap: 8, marginBottom: 4 }}>
+          <span style={{ fontSize: 20, fontWeight: 900, color: T.text, letterSpacing: 2 }}>{code}</span>
+          <button onClick={() => { navigator.clipboard.writeText(code); setCopied(true); setTimeout(() => setCopied(false), 2000); }}
+            style={{ ...S.btn, background: "transparent", color: copied ? T.green : T.textMuted, padding: 4 }}>
+            {copied ? ICONS.check : ICONS.copy}
+          </button>
+        </div>
+        <div style={{ fontSize: 13, color: T.textSec, marginBottom: 20 }}>{deal.title} × {qty} {deal.unit}</div>
+
+        <div style={{ ...S.card, background: T.greenLight, borderColor: T.greenBorder, marginBottom: 16 }}>
+          <div style={{ fontSize: 12, color: T.green }}>Сума замовлення</div>
+          <div style={{ fontSize: 32, fontWeight: 900, color: T.green }}>₴{total}</div>
+        </div>
+
+        <div style={{ ...S.card, padding: 12, marginBottom: 12 }}>
+          <div style={{ ...S.flex, justifyContent: "space-between", marginBottom: 8 }}>
+            <span style={{ fontSize: 12, color: T.textSec }}>Продавець</span>
+            <span style={{ fontSize: 12, fontWeight: 700, color: T.text }}>{deal.seller}</span>
+          </div>
+          <div style={{ ...S.flex, justifyContent: "space-between", marginBottom: 8 }}>
+            <span style={{ fontSize: 12, color: T.textSec }}>Місто</span>
+            <span style={{ fontSize: 12, fontWeight: 700, color: T.text }}>{deal.city}</span>
+          </div>
+          <div style={{ ...S.flex, justifyContent: "space-between" }}>
+            <span style={{ fontSize: 12, color: T.textSec }}>Дійсний до</span>
+            <span style={{ fontSize: 12, fontWeight: 700, color: T.text }}>{deal.days} дн.</span>
+          </div>
+        </div>
+
+        <div style={{ display: "flex", gap: 8 }}>
+          <button onClick={() => setStatus(status === "active" ? "scanned" : "done")}
+            style={{ ...S.btn, flex: 1, padding: 12, borderRadius: 12, fontSize: 12, background: T.accent, color: "#fff" }}>
+            {status === "active" ? "Симуляція: сканувати" : status === "scanned" ? "Симуляція: підтвердити" : "✓ Завершено"}
+          </button>
+          <button onClick={() => {
+            const text = `Моє замовлення ${code}: ${deal.title} × ${qty} ${deal.unit} — ₴${total}`;
+            if (navigator.share) navigator.share({ title: code, text });
+            else { navigator.clipboard.writeText(text); alert("Скопійовано!"); }
+          }} style={{ ...S.btn, padding: 12, borderRadius: 12, background: T.cardAlt, color: T.textSec }}>
+            {ICONS.share}
+          </button>
         </div>
       </div>
+
+      <style>{`@keyframes pulse { 0%,100% { opacity:1 } 50% { opacity:0.4 } }`}</style>
     </div>
   );
 }
 
 // ── QR Хаб ──────────────────────────────────────────────────────────────────
-function QRHub() {
+function QRHub({ orders, onScan }) {
+  const [scanning, setScanning] = useState(false);
+  const [scanned, setScanned] = useState(null);
+
+  if (scanned) return (
+    <div style={S.page}>
+      <BackBtn onClick={() => setScanned(null)} />
+      <div style={{ ...S.card, textAlign: "center", padding: 24 }}>
+        <div style={{ fontSize: 48, marginBottom: 12 }}>✅</div>
+        <h3 style={{ color: T.text, fontSize: 18, fontWeight: 900, marginBottom: 8 }}>Замовлення знайдено!</h3>
+        <div style={{ ...S.card, background: T.greenLight, borderColor: T.greenBorder, textAlign: "left", marginBottom: 16 }}>
+          <div style={{ ...S.flex, justifyContent: "space-between", marginBottom: 8 }}>
+            <span style={{ fontSize: 12, color: T.textSec }}>Покупець</span>
+            <span style={{ fontSize: 12, fontWeight: 700, color: T.text }}>{scanned.buyer}</span>
+          </div>
+          <div style={{ ...S.flex, justifyContent: "space-between", marginBottom: 8 }}>
+            <span style={{ fontSize: 12, color: T.textSec }}>Товар</span>
+            <span style={{ fontSize: 12, fontWeight: 700, color: T.text }}>{scanned.item} × {scanned.qty} {scanned.unit}</span>
+          </div>
+          <div style={{ ...S.flex, justifyContent: "space-between" }}>
+            <span style={{ fontSize: 12, color: T.textSec }}>Сума</span>
+            <span style={{ fontSize: 14, fontWeight: 900, color: T.green }}>₴{scanned.amount}</span>
+          </div>
+        </div>
+        <button onClick={() => { setScanned(null); }} style={{ ...S.btn, width: "100%", padding: 14, background: T.accent, borderRadius: 14, color: "#fff", fontSize: 14 }}>
+          Підтвердити видачу
+        </button>
+      </div>
+    </div>
+  );
+
+  if (scanning) return (
+    <div style={S.page}>
+      <BackBtn onClick={() => setScanning(false)} />
+      <div style={{ ...S.card, textAlign: "center", padding: 24 }}>
+        <div style={{ width: "100%", height: 250, background: T.text, borderRadius: T.radius, marginBottom: 16, ...S.flex, justifyContent: "center", position: "relative", overflow: "hidden" }}>
+          <div style={{ width: 180, height: 180, border: "3px solid " + T.accent, borderRadius: 16 }} />
+          <div style={{ position: "absolute", width: 180, height: 2, background: T.accent, animation: "scanLine 2s linear infinite" }} />
+        </div>
+        <div style={{ fontSize: 13, color: T.textSec, marginBottom: 16 }}>Наведіть камеру на QR-код покупця</div>
+        <button onClick={() => { setScanning(false); setScanned(ORDERS[0]); }}
+          style={{ ...S.btn, width: "100%", padding: 14, background: T.cardAlt, borderRadius: 14, color: T.text, fontSize: 13 }}>
+          Симуляція: зісканувати {ORDERS[0].id}
+        </button>
+      </div>
+      <style>{`@keyframes scanLine { 0% { top:20% } 50% { top:70% } 100% { top:20% } }`}</style>
+    </div>
+  );
+
   return (
     <div style={S.page}>
-      <h2 style={{ color: T.text, fontSize: 20, fontWeight: 900, marginBottom: 20 }}>QR-код</h2>
+      <h2 style={{ color: T.text, fontSize: 20, fontWeight: 900, marginBottom: 20 }}>QR-центр</h2>
       <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
-        {[["📱", "Покупець", "Покажи QR продавцю для отримання товару"], ["📷", "Продавець", "Скануй QR покупця для підтвердження видачі"]].map(([ico, title, desc]) => (
-          <div key={title} style={{ ...S.card, ...S.flex, gap: 16, padding: 20, cursor: "pointer" }}>
-            <Icon emoji={ico} size={56} />
-            <div>
-              <div style={{ fontSize: 15, fontWeight: 800, color: T.text }}>{title}</div>
-              <div style={{ fontSize: 12, color: T.textSec }}>{desc}</div>
+        <div onClick={() => setScanning(true)} style={{ ...S.card, ...S.flex, gap: 16, padding: 20, cursor: "pointer" }}>
+          <Icon emoji="📷" size={56} />
+          <div style={{ flex: 1 }}>
+            <div style={{ fontSize: 15, fontWeight: 800, color: T.text }}>Сканувати QR</div>
+            <div style={{ fontSize: 12, color: T.textSec }}>Скануй QR покупця для підтвердження</div>
+          </div>
+        </div>
+
+        <div style={{ fontSize: 14, fontWeight: 800, color: T.text, marginTop: 8 }}>Приклади QR-кодів</div>
+        {ORDERS.slice(0, 2).map(o => (
+          <div key={o.id} style={{ ...S.card, ...S.flex, gap: 12 }}>
+            <div style={{ flexShrink: 0 }}><QRCode value={o.id + "|" + o.item} size={64} /></div>
+            <div style={{ flex: 1 }}>
+              <div style={{ fontSize: 13, fontWeight: 700, color: T.text }}>{o.id}</div>
+              <div style={{ fontSize: 11, color: T.textSec }}>{o.buyer} · {o.item}</div>
+            </div>
+            <div style={{ textAlign: "right" }}>
+              <div style={{ fontSize: 14, fontWeight: 800, color: T.green }}>₴{o.amount}</div>
+              <Badge bg={o.status === "paid" ? "#fef9c3" : T.greenLight} color={o.status === "paid" ? "#a16207" : T.green}>
+                {o.status === "paid" ? "Оплачено" : "Видано"}
+              </Badge>
             </div>
           </div>
         ))}
