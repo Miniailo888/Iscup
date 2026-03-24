@@ -3,5 +3,5 @@ builder = "nixpacks"
 buildCommand = "echo 'skip'"
 
 [deploy]
-startCommand = "npx serve@14 -s dist -l $PORT"
+startCommand = "sh start.sh"
 restartPolicyType = "on_failure"
