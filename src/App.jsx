@@ -262,26 +262,27 @@ function RegisterScreen({ onDone }) {
 // ── Картка угоди ────────────────────────────────────────────────────────────
 function DealPhoto({ deal, h=90 }) {
   const ph=dealPhoto(deal);
-  const cats={farm:"#182010",honey:"#201808",veggies:"#0e1810",dairy:"#14141c",food:"#1a1208",handmade:"#140c18",cafe:"#161008"};
-  const bg=cats[deal.cat]||"#141418";
   if(ph && PHOTOS[ph]) return <div style={{width:"100%",height:h,borderRadius:8,overflow:"hidden"}}>{PHOTOS[ph](999,h)}</div>;
   if(ph && typeof ph==="string" && ph.startsWith("data:")) return <div style={{width:"100%",height:h,borderRadius:8,overflow:"hidden"}}><img src={ph} alt="" style={{width:"100%",height:"100%",objectFit:"cover"}}/></div>;
-  return <div style={{width:"100%",height:h,borderRadius:8,background:bg,...getS().flex,justifyContent:"center",flexDirection:"column",gap:4}}>
+  const cats={farm:["#1a2010","#2a3518"],honey:["#2a200a","#3a3015"],veggies:["#102010","#1a3018"],dairy:["#1a1a20","#2a2a30"],food:["#201510","#302518"],handmade:["#1a1020","#2a1a30"],cafe:["#1a1510","#2a2018"]};
+  const c=cats[deal.cat]||["#1a1a20","#2a2a30"];
+  return <div style={{width:"100%",height:h,borderRadius:8,background:`linear-gradient(135deg,${c[0]},${c[1]})`,...getS().flex,justifyContent:"center",flexDirection:"column",gap:4}}>
     <span style={{fontSize:28}}>{deal.avatar}</span>
-    <span style={{fontSize:8,color:T.textMuted+"cc"}}>{deal.title.length>25?deal.title.slice(0,25)+"…":deal.title}</span>
+    <span style={{fontSize:8,color:T.textMuted,fontWeight:600}}>{deal.title.length>20?deal.title.slice(0,20)+"...":deal.title}</span>
   </div>;
 }
 
 function DealCard({ deal, onOpen, joined, onJoin }) {
   const p=pct(deal),d=disc(deal),isIn=joined[deal.id],col=pCol(p);
   const bc=discBorder(deal);
-  return <div onClick={()=>onOpen(deal)} style={{ ...S.card,borderRadius:12,overflow:"hidden",cursor:"pointer",padding:0,border:`1px solid ${bc}44` }}>
+  return <div onClick={()=>onOpen(deal)} style={{ ...S.card,borderRadius:12,overflow:"hidden",cursor:"pointer",padding:0,border:`1.5px solid ${bc}` }}>
     <div style={{padding:"8px 8px 0",position:"relative"}}>
       <DealPhoto deal={deal} h={90}/>
       <div style={{position:"absolute",top:12,right:12,...S.flex,gap:4}}>
-        {isIn&&<span style={{fontSize:8,fontWeight:700,color:"#fff",background:T.green+"cc",padding:"2px 6px",borderRadius:4}}>В групі</span>}
+        {deal.hot&&<span style={{fontSize:9,fontWeight:800,color:"#fff",background:"rgba(0,0,0,0.5)",padding:"2px 7px",borderRadius:4,backdropFilter:"blur(4px)"}}>-{d}%</span>}
+        {isIn&&<span style={{fontSize:9,fontWeight:800,color:"#fff",background:T.green+"cc",padding:"2px 7px",borderRadius:4}}>В групі</span>}
       </div>
-      <div style={{position:"absolute",bottom:4,left:12,background:"rgba(0,0,0,0.5)",backdropFilter:"blur(4px)",borderRadius:4,padding:"2px 6px"}}>
+      <div style={{position:"absolute",bottom:4,left:12,background:"rgba(0,0,0,0.45)",backdropFilter:"blur(4px)",borderRadius:4,padding:"2px 6px"}}>
         <span style={{fontSize:14,fontWeight:800,color:"#fff"}}>₴{deal.group}</span>
         <span style={{fontSize:9,color:"#ffffff88",textDecoration:"line-through",marginLeft:4}}>₴{deal.retail}</span>
       </div>
@@ -289,17 +290,11 @@ function DealCard({ deal, onOpen, joined, onJoin }) {
     <div style={{padding:"8px 10px 10px"}}>
       <div style={{fontSize:12,fontWeight:700,color:T.text,marginBottom:2,lineHeight:1.3}}>{deal.title}</div>
       <div style={{fontSize:9,color:T.textMuted,marginBottom:6}}>{deal.seller} · {deal.city} · {I.star} {deal.rating}</div>
-      <div style={{...S.flex,gap:6,marginBottom:6}}>
-        <div style={{flex:1}}><ProgressBar value={p} color={col} h={3}/></div>
-        <span style={{fontSize:8,color:col,fontWeight:700}}>{deal.joined}/{deal.needed}</span>
-        <span style={{fontSize:8,color:T.textMuted}}>{deal.days}д</span>
-      </div>
-      <div style={{...S.flex,justifyContent:"space-between"}}>
-        <div style={{...S.flex,gap:4}}>
-          {deal.hot&&<span style={{fontSize:7,fontWeight:800,color:T.orange,background:T.orange+"15",padding:"1px 5px",borderRadius:3}}>HOT</span>}
-          <span style={{fontSize:7,fontWeight:800,color:bc,background:bc+"15",padding:"1px 5px",borderRadius:3}}>-{d}%</span>
-        </div>
-        <button onClick={e=>{e.stopPropagation();onJoin(deal.id);}} style={{...S.btn,background:isIn?T.green:T.accent,color:"#fff",borderRadius:6,padding:"3px 10px",fontSize:9}}>{isIn?"✓ В групі":"+ Долучитись"}</button>
+      <div style={{ ...S.flex,gap:6 }}>
+        <div style={{ flex:1 }}><ProgressBar value={p} color={col} h={3}/></div>
+        <span style={{ fontSize:8,color:col,fontWeight:700 }}>{deal.joined}/{deal.needed}</span>
+        <span style={{ fontSize:8,color:T.textMuted }}>{deal.days}д</span>
+        <button onClick={e=>{e.stopPropagation();onJoin(deal.id);}} style={{ ...S.btn,background:isIn?T.green:T.accent,color:"#fff",borderRadius:6,padding:"2px 8px",fontSize:9 }}>{isIn?"✓":"+"}</button>
       </div>
     </div>
   </div>;
