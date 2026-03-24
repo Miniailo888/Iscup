@@ -1,21 +1,48 @@
 import { useState } from "react";
 
-// ── Тема ────────────────────────────────────────────────────────────────────
-const T = {
-  bg: "#f5f6fa", card: "#fff", cardAlt: "#f0f2f5", border: "#eee",
-  text: "#1a1a2e", textSec: "#6b7280", textMuted: "#9ca3af",
-  green: "#16a34a", greenLight: "#dcfce7", greenBorder: "#bbf7d0",
-  orange: "#f97316", yellow: "#eab308", accent: "#22c55e",
-  purple: "#8b5cf6", blue: "#3b82f6",
-  radius: 16, radiusSm: 12,
+// ── Теми ────────────────────────────────────────────────────────────────────
+const THEMES = {
+  warm: {
+    name: "Тепла", emoji: "☀",
+    bg:"#faf8f5",card:"#fffefa",cardAlt:"#f5f2ed",border:"#e8e4de",
+    text:"#2c2520",textSec:"#7a7068",textMuted:"#a89e94",
+    accent:"#22c55e",green:"#16a34a",greenLight:"#dcfce7",greenBorder:"#bbf7d0",
+    orange:"#f97316",yellow:"#eab308",purple:"#8b5cf6",blue:"#3b82f6",
+    navBg:"rgba(250,248,245,0.30)",navText:"#2c2520",
+    gradA:"#22c55e",gradB:"#eab308",gradC:"#f97316",
+  },
+  ocean: {
+    name: "Океан", emoji: "🌊",
+    bg:"#f0f6ff",card:"#fafcff",cardAlt:"#e8f0fa",border:"#d4e2f0",
+    text:"#1a2744",textSec:"#5a6d88",textMuted:"#8da0b8",
+    accent:"#3b82f6",green:"#0ea5e9",greenLight:"#dbeafe",greenBorder:"#93c5fd",
+    orange:"#f97316",yellow:"#eab308",purple:"#6366f1",blue:"#3b82f6",
+    navBg:"rgba(240,246,255,0.30)",navText:"#1a2744",
+    gradA:"#3b82f6",gradB:"#6366f1",gradC:"#06b6d4",
+  },
+  berry: {
+    name: "Ягода", emoji: "🍇",
+    bg:"#faf5fa",card:"#fffafd",cardAlt:"#f4ecf4",border:"#e8d8e8",
+    text:"#2e1a2e",textSec:"#7a5a7a",textMuted:"#a888a8",
+    accent:"#d946ef",green:"#c026d3",greenLight:"#fae8ff",greenBorder:"#e879f9",
+    orange:"#f97316",yellow:"#eab308",purple:"#a855f7",blue:"#8b5cf6",
+    navBg:"rgba(250,245,250,0.30)",navText:"#2e1a2e",
+    gradA:"#d946ef",gradB:"#a855f7",gradC:"#ec4899",
+  },
 };
 
-const S = {
-  card: { background: T.card, borderRadius: T.radius, padding: 14, border: `1px solid ${T.border}22` },
-  btn: { border: "none", cursor: "pointer", fontWeight: 700, fontFamily: "inherit" },
-  flex: { display: "flex", alignItems: "center" },
-  page: { padding: "16px 16px 90px" },
-};
+let T = { ...THEMES.warm, radius:16, radiusSm:12 };
+function applyTheme(id) { Object.assign(T, THEMES[id], { radius:16, radiusSm:12 }); }
+
+function getS() {
+  return {
+    card: { background:T.card,borderRadius:T.radius,padding:14,border:`1px solid ${T.border}22` },
+    btn: { border:"none",cursor:"pointer",fontWeight:700,fontFamily:"inherit" },
+    flex: { display:"flex",alignItems:"center" },
+    page: { padding:"16px 16px 90px" },
+  };
+}
+let S = getS();
 
 // ── SVG Іконки ──────────────────────────────────────────────────────────────
 const I = {
@@ -88,14 +115,24 @@ const pCol = p => p >= 90 ? T.orange : p >= 60 ? T.yellow : T.accent;
 // ── Декоративний фон ────────────────────────────────────────────────────────
 function BgDecor() {
   return <div style={{ position:"absolute",top:0,left:0,right:0,bottom:0,overflow:"hidden",pointerEvents:"none",zIndex:0 }}>
-    <div style={{ position:"absolute",top:-60,right:-40,width:200,height:200,borderRadius:"50%",background:"radial-gradient(circle,rgba(34,197,94,0.08),transparent 70%)" }}/>
-    <div style={{ position:"absolute",top:"40%",left:-60,width:180,height:180,borderRadius:"50%",background:"radial-gradient(circle,rgba(139,92,246,0.06),transparent 70%)" }}/>
-    <div style={{ position:"absolute",bottom:100,right:-30,width:160,height:160,borderRadius:"50%",background:"radial-gradient(circle,rgba(59,130,246,0.06),transparent 70%)" }}/>
-    <svg style={{ position:"absolute",top:0,left:0,width:"100%",height:"100%",opacity:0.04 }}><defs><linearGradient id="g1" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stopColor={T.accent}/><stop offset="50%" stopColor={T.purple}/><stop offset="100%" stopColor={T.blue}/></linearGradient></defs>
-      <path d="M0 200Q100 150 200 220T400 180" fill="none" stroke="url(#g1)" strokeWidth="2"/>
-      <path d="M0 400Q150 350 250 420T400 380" fill="none" stroke="url(#g1)" strokeWidth="1.5"/>
-      <path d="M0 600Q120 550 220 620T400 580" fill="none" stroke="url(#g1)" strokeWidth="1"/>
+    <div style={{ position:"absolute",top:-60,right:-40,width:220,height:220,borderRadius:"50%",background:`radial-gradient(circle,${T.gradA}10,transparent 70%)` }}/>
+    <div style={{ position:"absolute",top:"40%",left:-60,width:200,height:200,borderRadius:"50%",background:`radial-gradient(circle,${T.gradB}0c,transparent 70%)` }}/>
+    <div style={{ position:"absolute",bottom:100,right:-30,width:180,height:180,borderRadius:"50%",background:`radial-gradient(circle,${T.gradC}0a,transparent 70%)` }}/>
+    <svg style={{ position:"absolute",top:0,left:0,width:"100%",height:"100%",opacity:0.05 }}><defs><linearGradient id="g1" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stopColor={T.gradA}/><stop offset="50%" stopColor={T.gradB}/><stop offset="100%" stopColor={T.gradC}/></linearGradient></defs>
+      <path d="M0 180Q100 130 200 200T400 160" fill="none" stroke="url(#g1)" strokeWidth="2.5"/>
+      <path d="M0 380Q150 320 250 400T400 360" fill="none" stroke="url(#g1)" strokeWidth="2"/>
+      <path d="M0 580Q120 520 220 600T400 560" fill="none" stroke="url(#g1)" strokeWidth="1.5"/>
     </svg>
+  </div>;
+}
+
+function ThemeSwitcher({ current, onChange }) {
+  return <div style={{ ...S.flex,gap:6 }}>
+    {Object.entries(THEMES).map(([id,t])=>(
+      <button key={id} onClick={()=>onChange(id)} style={{ ...S.btn,padding:"5px 10px",borderRadius:10,fontSize:10,background:current===id?T.accent:T.cardAlt,color:current===id?"#fff":T.textSec,...S.flex,gap:4 }}>
+        {t.emoji} {t.name}
+      </button>
+    ))}
   </div>;
 }
 
@@ -125,12 +162,12 @@ function Input({ value, onChange, placeholder, icon, type="text", area }) {
 const NAV = [["market",I.home,"Маркет"],["my",I.bag,"Мої"],["qr",I.qr,"QR"],["seller",I.chart,"Бізнес"],["wallet",I.wallet,"Гаманець"]];
 
 function Nav({ tab, setTab }) {
-  return <div style={{ position:"absolute",bottom:0,left:0,right:0,height:72,background:"rgba(255,255,255,0.55)",backdropFilter:"blur(24px)",WebkitBackdropFilter:"blur(24px)",borderTop:`1px solid rgba(0,0,0,0.04)`,...S.flex,zIndex:100,padding:"0 4px" }}>
+  return <div style={{ position:"absolute",bottom:0,left:0,right:0,height:72,background:T.navBg,backdropFilter:"blur(28px)",WebkitBackdropFilter:"blur(28px)",borderTop:`1px solid rgba(0,0,0,0.03)`,...S.flex,zIndex:100,padding:"0 4px" }}>
     {NAV.map(([t,icon,label])=>(
-      <button key={t} onClick={()=>setTab(t)} style={{ ...S.btn,flex:1,display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",gap:3,background:"transparent",color:tab===t?T.green:T.textMuted,transition:"all .25s",transform:tab===t?"scale(1.15)":"scale(1)" }}>
+      <button key={t} onClick={()=>setTab(t)} style={{ ...S.btn,flex:1,display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",gap:3,background:"transparent",color:tab===t?T.accent:T.navText,transition:"all .25s",transform:tab===t?"scale(1.15)":"scale(1)",opacity:tab===t?1:0.55 }}>
         {icon}
-        <span style={{ fontSize:9,fontWeight:tab===t?800:600,letterSpacing:tab===t?0.5:0 }}>{label}</span>
-        {tab===t&&<div style={{ width:20,height:3,background:`linear-gradient(90deg,${T.accent},${T.purple})`,borderRadius:2,marginTop:-1 }}/>}
+        <span style={{ fontSize:9,fontWeight:tab===t?800:600 }}>{label}</span>
+        {tab===t&&<div style={{ width:20,height:3,background:`linear-gradient(90deg,${T.gradA},${T.gradB})`,borderRadius:2,marginTop:-1 }}/>}
       </button>
     ))}
   </div>;
@@ -232,7 +269,7 @@ function DealCard({ deal, onOpen, joined, onJoin }) {
 }
 
 // ── Маркет ──────────────────────────────────────────────────────────────────
-function MarketPage({ deals, joined, onJoin, onOpen, user, onCreateDeal }) {
+function MarketPage({ deals, joined, onJoin, onOpen, user, onCreateDeal, theme, onTheme }) {
   const [cat,setCat]=useState("all"),[search,setSearch]=useState(""),[sort,setSort]=useState("hot"),[showF,setShowF]=useState(false),[cityF,setCityF]=useState("all"),[priceF,setPriceF]=useState("all");
   const cities=["all",...new Set(deals.map(d=>d.city.split(",")[0].trim()))];
   let list=cat==="all"?deals:deals.filter(d=>d.cat===cat);
@@ -262,6 +299,7 @@ function MarketPage({ deals, joined, onJoin, onOpen, user, onCreateDeal }) {
       </div>
     </div>
 
+    <div style={{ padding:"0 16px 10px" }}><ThemeSwitcher current={theme} onChange={onTheme}/></div>
     <div style={{ padding:"0 16px 10px" }}><input value={search} onChange={e=>setSearch(e.target.value)} placeholder="Пошук..." style={{ width:"100%",background:T.card,border:`1px solid ${T.border}`,borderRadius:12,padding:"10px 14px",color:T.text,fontSize:13,boxSizing:"border-box",outline:"none",fontFamily:"inherit" }}/></div>
 
     <div style={{ display:"flex",gap:6,padding:"0 16px 10px",overflowX:"auto",scrollbarWidth:"none" }}>
@@ -571,6 +609,9 @@ export default function App() {
   const [authStep,setAuthStep]=useState(user?null:"welcome");
   const [tab,setTab]=useState("market"),[page,setPage]=useState(null),[joined,setJoined]=useState({}),[buyData,setBuyData]=useState(null);
   const [deals,setDeals]=useState(INIT_DEALS);
+  const [theme,setTheme]=useState(()=>localStorage.getItem("spilnokup_theme")||"warm");
+  applyTheme(theme); S=getS();
+  const changeTheme=(id)=>{setTheme(id);localStorage.setItem("spilnokup_theme",id);};
 
   const onJoin=id=>setJoined(j=>({...j,[id]:!j[id]}));
   const onOpen=deal=>{setPage("detail");setBuyData({deal,qty:deal.min});};
@@ -588,7 +629,7 @@ export default function App() {
     if(page==="qr"&&buyData) return <BuyerQRPage deal={buyData.deal} qty={buyData.qty} onBack={()=>setPage(null)}/>;
     if(page==="createDeal") return <CreateDealPage onBack={()=>setPage(null)} onSave={d=>{setDeals(prev=>[d,...prev]);setPage(null);}}/>;
     switch(tab){
-      case"market":return <MarketPage deals={deals} joined={joined} onJoin={onJoin} onOpen={onOpen} user={user} onCreateDeal={()=>setPage("createDeal")}/>;
+      case"market":return <MarketPage deals={deals} joined={joined} onJoin={onJoin} onOpen={onOpen} user={user} onCreateDeal={()=>setPage("createDeal")} theme={theme} onTheme={changeTheme}/>;
       case"my":return <MyDealsPage deals={deals} joined={joined} onOpen={onOpen}/>;
       case"qr":return <QRHub/>;
       case"seller":return <SellerDashboard/>;
@@ -597,8 +638,8 @@ export default function App() {
     }
   }
 
-  return <div style={{ minHeight:"100vh",background:T.bg,display:"flex",justifyContent:"center",alignItems:isMobile?"stretch":"flex-start",padding:isMobile?0:"20px 0",fontFamily:"'Inter',system-ui,sans-serif" }}>
-    <div style={{ width:isMobile?"100%":390,height:isMobile?"100vh":820,background:T.card,borderRadius:isMobile?0:44,overflow:"hidden",boxShadow:isMobile?"none":"0 20px 60px rgba(0,0,0,0.08)",position:"relative" }}>
+  return <div style={{ minHeight:"100vh",background:T.bg,display:"flex",justifyContent:"center",alignItems:isMobile?"stretch":"flex-start",padding:isMobile?0:"20px 0",fontFamily:"'Inter',system-ui,sans-serif",transition:"background .3s" }}>
+    <div style={{ width:isMobile?"100%":390,height:isMobile?"100vh":820,background:T.card,borderRadius:isMobile?0:44,overflow:"hidden",boxShadow:isMobile?"none":"0 20px 60px rgba(0,0,0,0.08)",position:"relative",transition:"background .3s" }}>
       <BgDecor/>
       <div style={{ position:"relative",zIndex:1,height:showNav?"calc(100% - 72px)":"100%",overflowY:"auto" }}>{render()}</div>
       {showNav&&<Nav tab={tab} setTab={setTab}/>}
