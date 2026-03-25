@@ -18,12 +18,16 @@ async function request(path, options = {}) {
       await refreshToken();
       headers['Authorization'] = `Bearer ${getToken()}`;
       res = await fetch(`${API}${path}`, { ...options, headers });
-    } catch { /* refresh failed */ }
+    } catch {
+      // Refresh failed — clear auth, user needs to re-login
+      logout();
+      throw new Error('Сесія закінчилась. Увійдіть знову');
+    }
   }
 
   if (!res.ok) {
-    const err = await res.json().catch(() => ({ error: 'Помилка сервера' }));
-    throw new Error(err.error || `HTTP ${res.status}`);
+    const err = await res.json().catch(() => ({}));
+    throw new Error(err.error || `Помилка ${res.status}`);
   }
   return res.json();
 }

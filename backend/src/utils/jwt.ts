@@ -11,7 +11,7 @@ export interface JwtPayload {
 }
 
 export function generateAccessToken(userId: string, role: string): string {
-  return jwt.sign({ userId, role }, JWT_SECRET, { expiresIn: '15m' });
+  return jwt.sign({ userId, role }, JWT_SECRET, { expiresIn: '7d' });
 }
 
 export function generateRefreshToken(userId: string): string {
