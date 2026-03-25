@@ -108,10 +108,21 @@ const dealPhoto=(d)=>{
 
 // ── Дані ────────────────────────────────────────────────────────────────────
 const CATEGORIES = [
-  { id:"all", label:"Всі", icon:"🏪" }, { id:"farm", label:"Ферма", icon:"🐔" },
-  { id:"honey", label:"Мед", icon:"🍯" }, { id:"veggies", label:"Городина", icon:"🥬" },
-  { id:"dairy", label:"Молочне", icon:"🥛" }, { id:"food", label:"Випічка", icon:"🍞" },
-  { id:"handmade", label:"Handmade", icon:"🧵" }, { id:"cafe", label:"Кафе", icon:"☕" },
+  { id:"all", label:"Всі", icon:"🏪" },
+  { id:"food", label:"Їжа", icon:"🍽" },
+  { id:"farm", label:"Ферма", icon:"🐔" },
+  { id:"veggies", label:"Городина", icon:"🥬" },
+  { id:"dairy", label:"Молочне", icon:"🥛" },
+  { id:"bakery", label:"Випічка", icon:"🍞" },
+  { id:"drinks", label:"Напої", icon:"☕" },
+  { id:"sport", label:"Спорт", icon:"⚽" },
+  { id:"electronics", label:"Електроніка", icon:"📱" },
+  { id:"services", label:"Послуги", icon:"🛠" },
+  { id:"clothing", label:"Одяг", icon:"👕" },
+  { id:"handmade", label:"Handmade", icon:"🧵" },
+  { id:"beauty", label:"Краса", icon:"💄" },
+  { id:"home", label:"Дім", icon:"🏠" },
+  { id:"other", label:"Інше", icon:"📦" },
 ];
 
 const INIT_DEALS = [
@@ -590,52 +601,135 @@ function RouteMap({ status }) {
 }
 
 function CreateDealPage({ onBack, onSave }) {
-  const [title,setTitle]=useState(""),[cat,setCat]=useState("farm"),[price,setPrice]=useState(""),[retail,setRetail]=useState(""),[unit,setUnit]=useState("кг"),[min,setMin]=useState("1"),[max,setMax]=useState("10"),[needed,setNeeded]=useState("20"),[days,setDays]=useState("7"),[desc,setDesc]=useState(""),[city,setCity]=useState(""),[tags,setTags]=useState(""),[pin,setPin]=useState({x:50,y:45}),[photo,setPhoto]=useState(null);
+  const [title,setTitle]=useState(""),[cat,setCat]=useState("food"),[price,setPrice]=useState(""),[retail,setRetail]=useState(""),[unit,setUnit]=useState("шт"),[min,setMin]=useState("1"),[max,setMax]=useState("10"),[needed,setNeeded]=useState("20"),[days,setDays]=useState("7"),[desc,setDesc]=useState(""),[city,setCity]=useState(""),[address,setAddress]=useState(""),[coords,setCoords]=useState(""),[pin,setPin]=useState({x:50,y:45}),[photo,setPhoto]=useState(null);
   const [saving,setSaving]=useState(false),[error,setError]=useState("");
-  const canSave = title && price && retail && city && desc;
-  const catMap={farm:"meat",honey:"grocery",veggies:"vegetables",dairy:"dairy",food:"bakery",handmade:"clothing",cafe:"services"};
+  const [deliveryTags,setDeliveryTags]=useState(["Самовивіз"]);
+  const [customTags,setCustomTags]=useState("");
+
+  const units=["шт","кг","л","набір","пачка","лоток","банка","упаковка"];
+  const deliveryOptions=["Самовивіз","Доставка","Нова Пошта","Укрпошта","Meest"];
+  const toggleDelivery=(tag)=>setDeliveryTags(prev=>prev.includes(tag)?prev.filter(t=>t!==tag):[...prev,tag]);
+
+  const canSave = title && price && retail && Number(price)<Number(retail) && city && desc && unit && needed && days;
+  const allTags=[...deliveryTags,...(customTags?customTags.split(",").map(t=>t.trim()).filter(Boolean):[])];
+
+  const Label=({text,hint})=><div style={{marginBottom:6}}>
+    <span style={{fontSize:12,fontWeight:700,color:T.text}}>{text}</span>
+    {hint&&<span style={{fontSize:10,color:T.textMuted,marginLeft:6}}>{hint}</span>}
+  </div>;
+
   return <div style={S.page}>
     <BackBtn onClick={onBack}/>
     <h2 style={{ fontSize:22,fontWeight:900,color:T.text,marginBottom:4 }}>Нове оголошення</h2>
-    <p style={{ fontSize:12,color:T.textSec,marginBottom:16 }}>Створіть групову покупку</p>
-    <div style={{ display:"flex",flexDirection:"column",gap:12 }}>
+    <p style={{ fontSize:12,color:T.textSec,marginBottom:16 }}>Заповніть інформацію про товар або послугу</p>
+    <div style={{ display:"flex",flexDirection:"column",gap:14 }}>
+
       <div>
-        <div style={{ fontSize:11,fontWeight:700,color:T.text,marginBottom:6 }}>Фото товару</div>
+        <Label text="Фото товару" hint="(необов'язково)"/>
         <label style={{ ...S.card,display:"flex",flexDirection:"column",alignItems:"center",gap:6,padding:16,cursor:"pointer",borderStyle:"dashed" }}>
-          {photo?<img src={photo} alt="" style={{width:"100%",height:100,objectFit:"cover",borderRadius:8}}/>:
+          {photo?<img src={photo} alt="" style={{width:"100%",height:120,objectFit:"cover",borderRadius:8}}/>:
           <>{I.cam}<div style={{fontSize:11,color:T.textMuted}}>Натисніть щоб додати фото</div></>}
           <input type="file" accept="image/*" style={{display:"none"}} onChange={e=>{const f=e.target.files[0];if(f){const r=new FileReader();r.onload=ev=>setPhoto(ev.target.result);r.readAsDataURL(f);}}}/>
         </label>
       </div>
-      <Input value={title} onChange={e=>setTitle(e.target.value)} placeholder="Назва товару"/>
-      <div style={{ display:"flex",gap:8 }}>
-        <div style={{ flex:1 }}><Input value={price} onChange={e=>setPrice(e.target.value)} placeholder="Групова ціна" type="number"/></div>
-        <div style={{ flex:1 }}><Input value={retail} onChange={e=>setRetail(e.target.value)} placeholder="Роздрібна ціна" type="number"/></div>
+
+      <div>
+        <Label text="Назва" hint="Що продаєте?"/>
+        <Input value={title} onChange={e=>setTitle(e.target.value)} placeholder="Наприклад: Мед акацієвий 1л"/>
       </div>
-      <div style={{ fontSize:11,fontWeight:700,color:T.text }}>Категорія</div>
-      <div style={{ display:"flex",gap:6,flexWrap:"wrap" }}>
-        {CATEGORIES.filter(c=>c.id!=="all").map(c=><button key={c.id} onClick={()=>setCat(c.id)} style={{ ...S.btn,padding:"6px 10px",borderRadius:10,fontSize:11,background:cat===c.id?T.accent:T.cardAlt,color:cat===c.id?"#fff":T.textSec }}>{c.icon} {c.label}</button>)}
+
+      <div>
+        <Label text="Категорія"/>
+        <div style={{ display:"flex",gap:6,flexWrap:"wrap" }}>
+          {CATEGORIES.filter(c=>c.id!=="all").map(c=><button key={c.id} onClick={()=>setCat(c.id)} style={{ ...S.btn,padding:"6px 10px",borderRadius:10,fontSize:10,background:cat===c.id?T.accent:T.cardAlt,color:cat===c.id?"#fff":T.textSec }}>{c.icon} {c.label}</button>)}
+        </div>
       </div>
-      <div style={{ display:"flex",gap:8 }}>
-        <div style={{ flex:1 }}><Input value={unit} onChange={e=>setUnit(e.target.value)} placeholder="Одиниця"/></div>
-        <div style={{ flex:1 }}><Input value={needed} onChange={e=>setNeeded(e.target.value)} placeholder="Потрібно учасників" type="number"/></div>
+
+      <div>
+        <Label text="Ціна (₴)" hint="Групова має бути менше роздрібної"/>
+        <div style={{ display:"flex",gap:8 }}>
+          <div style={{ flex:1 }}><Input value={price} onChange={e=>setPrice(e.target.value)} placeholder="Групова ціна, ₴" type="number"/></div>
+          <div style={{ flex:1 }}><Input value={retail} onChange={e=>setRetail(e.target.value)} placeholder="Роздрібна ціна, ₴" type="number"/></div>
+        </div>
+        {price&&retail&&Number(price)>=Number(retail)&&<div style={{fontSize:10,color:"#ef4444",marginTop:4}}>Групова ціна має бути менше роздрібної</div>}
+        {price&&retail&&Number(price)<Number(retail)&&<div style={{fontSize:10,color:T.green,marginTop:4}}>Знижка: {Math.round((1-Number(price)/Number(retail))*100)}%</div>}
       </div>
-      <div style={{ display:"flex",gap:8 }}>
-        <div style={{ flex:1 }}><Input value={min} onChange={e=>setMin(e.target.value)} placeholder="Мін." type="number"/></div>
-        <div style={{ flex:1 }}><Input value={max} onChange={e=>setMax(e.target.value)} placeholder="Макс." type="number"/></div>
-        <div style={{ flex:1 }}><Input value={days} onChange={e=>setDays(e.target.value)} placeholder="Днів" type="number"/></div>
+
+      <div>
+        <Label text="Одиниця виміру"/>
+        <div style={{ display:"flex",gap:6,flexWrap:"wrap" }}>
+          {units.map(u=><button key={u} onClick={()=>setUnit(u)} style={{ ...S.btn,padding:"6px 12px",borderRadius:10,fontSize:11,background:unit===u?T.accent:T.cardAlt,color:unit===u?"#fff":T.textSec }}>{u}</button>)}
+        </div>
       </div>
-      <Input value={city} onChange={e=>setCity(e.target.value)} placeholder="Місто" icon={I.pin}/>
-      <div style={{ fontSize:11,fontWeight:700,color:T.text }}>Точка самовивозу (натисніть на карту)</div>
-      <MapView pin={pin} onPin={setPin} label={city||"Оберіть місце"}/>
-      <Input value={desc} onChange={e=>setDesc(e.target.value)} placeholder="Опис товару..." area/>
-      <Input value={tags} onChange={e=>setTags(e.target.value)} placeholder="Теги через кому"/>
-      {error&&<div style={{ color:"#ef4444",fontSize:12,marginBottom:8 }}>{error}</div>}
+
+      <div>
+        <Label text="Кількість" hint="Мін / Макс на одного покупця"/>
+        <div style={{ display:"flex",gap:8 }}>
+          <div style={{ flex:1 }}><Input value={min} onChange={e=>setMin(e.target.value)} placeholder="Мін: 1" type="number"/></div>
+          <div style={{ flex:1 }}><Input value={max} onChange={e=>setMax(e.target.value)} placeholder="Макс: 10" type="number"/></div>
+        </div>
+      </div>
+
+      <div>
+        <div style={{ display:"flex",gap:8 }}>
+          <div style={{ flex:1 }}>
+            <Label text="Учасників потрібно"/>
+            <Input value={needed} onChange={e=>setNeeded(e.target.value)} placeholder="20" type="number"/>
+          </div>
+          <div style={{ flex:1 }}>
+            <Label text="Термін (днів)"/>
+            <Input value={days} onChange={e=>setDays(e.target.value)} placeholder="7" type="number"/>
+          </div>
+        </div>
+      </div>
+
+      <div>
+        <Label text="Опис товару" hint="Коротко про якість, склад, особливості"/>
+        <Input value={desc} onChange={e=>setDesc(e.target.value)} placeholder="Натуральний продукт без ГМО..." area/>
+      </div>
+
+      <div>
+        <Label text="Спосіб отримання" hint="(оберіть один або кілька)"/>
+        <div style={{ display:"flex",gap:6,flexWrap:"wrap" }}>
+          {deliveryOptions.map(d=><button key={d} onClick={()=>toggleDelivery(d)} style={{ ...S.btn,padding:"6px 12px",borderRadius:10,fontSize:11,background:deliveryTags.includes(d)?T.accent:T.cardAlt,color:deliveryTags.includes(d)?"#fff":T.textSec }}>{d}</button>)}
+        </div>
+      </div>
+
+      <div>
+        <Label text="Додаткові теги" hint="(необов'язково, через кому)"/>
+        <Input value={customTags} onChange={e=>setCustomTags(e.target.value)} placeholder="Органік, Без ГМО, Сертифікат"/>
+      </div>
+
+      <div style={{ ...S.card,background:T.greenLight }}>
+        <Label text="Місце отримання"/>
+        <Input value={city} onChange={e=>setCity(e.target.value)} placeholder="Місто" icon={I.pin}/>
+        <div style={{marginTop:8}}>
+          <Input value={address} onChange={e=>setAddress(e.target.value)} placeholder="Адреса: вул. Хрещатик, 1"/>
+        </div>
+        <div style={{marginTop:8}}>
+          <Input value={coords} onChange={e=>setCoords(e.target.value)} placeholder="Координати: 50.4501, 30.5234"/>
+          <div style={{fontSize:9,color:T.textMuted,marginTop:4}}>Відкрийте Google Maps → ПКМ на точці → Копіювати координати</div>
+        </div>
+        <div style={{marginTop:8}}>
+          <div style={{fontSize:10,fontWeight:700,color:T.text,marginBottom:4}}>Або вкажіть на карті</div>
+          <MapView pin={pin} onPin={setPin} label={address||city||"Оберіть місце"}/>
+        </div>
+      </div>
+
+      {allTags.length>0&&<div>
+        <div style={{fontSize:10,color:T.textSec,marginBottom:4}}>Теги:</div>
+        <div style={{display:"flex",gap:4,flexWrap:"wrap"}}>
+          {allTags.map((t,i)=><span key={i} style={{background:T.cardAlt,color:T.textSec,fontSize:10,padding:"3px 8px",borderRadius:6}}>{t}</span>)}
+        </div>
+      </div>}
+
+      {error&&<div style={{ color:"#ef4444",fontSize:12 }}>{error}</div>}
       <button onClick={async()=>{if(!canSave||saving) return;
         setSaving(true);setError("");
         try{
           const deadline=new Date();deadline.setDate(deadline.getDate()+parseInt(days));
-          await createDeal({title,description:desc,category:catMap[cat]||cat,retailPrice:+retail,groupPrice:+price,unit,minQty:+min,maxQty:+max,needed:+needed,deadline:deadline.toISOString(),images:photo?[photo]:[],tags:tags?tags.split(",").map(t=>t.trim()):[],city});
+          const fullCity=address?`${city}, ${address}`:city;
+          await createDeal({title,description:desc,category:cat,retailPrice:+retail,groupPrice:+price,unit,minQty:+min,maxQty:+max,needed:+needed,deadline:deadline.toISOString(),images:photo?[photo]:[],tags:allTags,city:fullCity});
           onSave();
         }catch(e){setError(e.message);}
         finally{setSaving(false);}
@@ -1265,7 +1359,7 @@ export default function App() {
   const loadDeals=useCallback(async()=>{
     try{
       const data=await apiFetchDeals({limit:50});
-      const catMap={meat:"farm",dairy:"dairy",grocery:"honey",bakery:"food",vegetables:"veggies",services:"cafe",clothing:"handmade"};
+      const catMap={meat:"farm",dairy:"dairy",grocery:"food",bakery:"bakery",vegetables:"veggies",services:"services",clothing:"clothing",food:"food",sport:"sport",electronics:"electronics",handmade:"handmade",beauty:"beauty",home:"home",drinks:"drinks",other:"other"};
       const mapped=data.deals.map((d,i)=>({
         id:d.id,cat:catMap[d.category]||d.category,seller:d.seller?.name||"",avatar:d.seller?.avatarUrl||"🏪",
         city:d.city||d.seller?.city||"",rating:4.8,deals:0,title:d.title,unit:d.unit,
