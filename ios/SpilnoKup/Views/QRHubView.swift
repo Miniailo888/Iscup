@@ -40,7 +40,7 @@ struct QRHubView: View {
                                     .padding(.horizontal)
                             }
                         }
-                    }
+
                         // Map
                         VStack(alignment: .leading, spacing: 8) {
                             Text("Карта точок видачі")
