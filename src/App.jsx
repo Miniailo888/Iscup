@@ -1349,8 +1349,9 @@ function WalletPage({ user, setUser, theme, onTheme }) {
   const [showAuth,setShowAuth]=useState(false);
   const [authMode,setAuthMode]=useState("register"); // "register" | "login"
   const [authPhone,setAuthPhone]=useState(""),[authCode,setAuthCode]=useState(""),[authName,setAuthName]=useState(""),[authCity,setAuthCity]=useState("");
-  const [authStep,setAuthStep]=useState(0); // register: 0=name+phone, 1=city, 2=otp  |  login: 0=phone, 1=otp
+  const [authStep,setAuthStep]=useState(0); // register: 0=name+phone, 1=city, 2=telegram, 3=otp  |  login: 0=phone, 1=telegram, 2=otp
   const [authLoading,setAuthLoading]=useState(false),[authError,setAuthError]=useState("");
+  const [authTgToken,setAuthTgToken]=useState("");
   const txIcons={income:"↓",withdrawal:"↑",hold:"◷"}, txColors={income:T.green,withdrawal:T.orange,hold:T.yellow};
   const isGuest=!user||user.name==="Гість"||!localStorage.getItem("spilnokup_token");
 
@@ -1369,14 +1370,18 @@ function WalletPage({ user, setUser, theme, onTheme }) {
   },[user]);
   const initials=(user?.name||"Г").split(" ").map(w=>w[0]).join("").toUpperCase().slice(0,2);
 
-  const doAuthSendOtp=async()=>{
+  const doAuthSendOtp=async(nextStep)=>{
     setAuthLoading(true);setAuthError("");
     try{
       const res=await sendOtp(authPhone);
-      if(res.otp) setAuthCode(res.otp);
-      setAuthStep(2);
-    }catch(e){setAuthError(e.message);setAuthStep(1);}
+      if(res.telegramToken) setAuthTgToken(res.telegramToken);
+      setAuthStep(nextStep||2);
+    }catch(e){setAuthError(e.message);}
     finally{setAuthLoading(false);}
+  };
+  const openAuthTelegram=()=>{
+    if(authTgToken) window.open(`https://t.me/spilnokupbot?start=${authTgToken}`,"_blank");
+    else window.open("https://t.me/spilnokupbot","_blank");
   };
   const doAuthVerify=async()=>{
     setAuthLoading(true);setAuthError("");
@@ -1452,7 +1457,7 @@ function WalletPage({ user, setUser, theme, onTheme }) {
   if(showAuth) {
     const resetAuth=()=>{setShowAuth(false);setAuthStep(0);setAuthError("");setAuthCode("");setAuthPhone("");setAuthName("");setAuthCity("");};
 
-    // Login mode: phone → OTP
+    // Login mode: phone → telegram → OTP
     if(authMode==="login") return <div style={S.page}>
       <BackBtn onClick={resetAuth}/>
       {authStep===0?<>
@@ -1462,14 +1467,20 @@ function WalletPage({ user, setUser, theme, onTheme }) {
           <Input value={authPhone} onChange={e=>setAuthPhone(e.target.value)} placeholder="+380XXXXXXXXX" icon={I.phone} type="tel"/>
         </div>
         {authError&&<div style={{ color:"#ef4444",fontSize:12,marginTop:10 }}>{authError}</div>}
-        <button onClick={()=>{setAuthStep(1);doAuthSendOtp();}} disabled={!authPhone||authLoading} style={{ ...S.btn,width:"100%",padding:14,background:authPhone?T.accent:T.cardAlt,color:authPhone?"#fff":T.textMuted,borderRadius:14,fontSize:14,marginTop:20 }}>{authLoading?"Надсилаємо...":"Отримати код"}</button>
+        <button onClick={()=>doAuthSendOtp(1)} disabled={!authPhone||authLoading} style={{ ...S.btn,width:"100%",padding:14,background:authPhone?T.accent:T.cardAlt,color:authPhone?"#fff":T.textMuted,borderRadius:14,fontSize:14,marginTop:20 }}>{authLoading?"Зачекайте...":"Далі"}</button>
         <div style={{ textAlign:"center",marginTop:16 }}>
           <span style={{ fontSize:11,color:T.textSec }}>Немає акаунту? </span>
           <button onClick={()=>{setAuthMode("register");setAuthStep(0);setAuthError("");}} style={{ ...S.btn,background:"none",color:T.accent,fontSize:11,padding:0 }}>Створити</button>
         </div>
+      </>:authStep===1?<>
+        <h2 style={{ fontSize:20,fontWeight:900,color:T.text,marginBottom:4 }}>Отримайте код</h2>
+        <div style={{ fontSize:50,textAlign:"center",margin:"16px 0" }}>✈️</div>
+        <p style={{ fontSize:13,color:T.textSec,marginBottom:16,textAlign:"center",lineHeight:1.6 }}>Натисніть кнопку — відкриється Telegram.<br/>Натисніть <b>Start</b> — бот надішле код.</p>
+        <button onClick={openAuthTelegram} style={{ ...S.btn,width:"100%",padding:14,background:"#0088cc",color:"#fff",borderRadius:14,fontSize:14,marginBottom:12 }}>✈️ Відкрити Telegram</button>
+        <button onClick={()=>setAuthStep(2)} style={{ ...S.btn,width:"100%",padding:14,background:T.accent,color:"#fff",borderRadius:14,fontSize:14 }}>Я отримав код</button>
       </>:<>
         <h2 style={{ fontSize:20,fontWeight:900,color:T.text,marginBottom:4 }}>Код підтвердження</h2>
-        <div style={{ ...S.card,background:T.greenLight,textAlign:"center",marginBottom:16 }}><div style={{ fontSize:12,color:T.green }}>Код надіслано на {authPhone}</div></div>
+        <div style={{ ...S.card,background:T.greenLight,textAlign:"center",marginBottom:16,...S.flex,justifyContent:"center",gap:6 }}><span style={{fontSize:16}}>✈️</span><span style={{ fontSize:12,color:T.green }}>Код надіслано в Telegram</span></div>
         <div style={{ ...S.flex,justifyContent:"center",gap:8,marginBottom:20 }}>
           {[0,1,2,3,4,5].map(i=><input key={i} maxLength={1} value={authCode[i]||""} onChange={e=>{const v=e.target.value.replace(/\D/g,"");if(v){const nc=authCode.split("");nc[i]=v;setAuthCode(nc.join(""));if(i<5)e.target.nextSibling?.focus();}}}
             style={{ width:40,height:48,textAlign:"center",fontSize:18,fontWeight:900,border:`2px solid ${authCode[i]?T.accent:T.border}`,borderRadius:12,outline:"none",color:T.text,fontFamily:"inherit",background:T.card }}/>)}
@@ -1506,10 +1517,16 @@ function WalletPage({ user, setUser, theme, onTheme }) {
           )}
         </div>
         {authError&&<div style={{ color:"#ef4444",fontSize:12,marginTop:10 }}>{authError}</div>}
-        <button onClick={()=>{setAuthStep(2);doAuthSendOtp();}} disabled={!authCity||authLoading} style={{ ...S.btn,width:"100%",padding:14,background:authCity?T.accent:T.cardAlt,color:authCity?"#fff":T.textMuted,borderRadius:14,fontSize:14,marginTop:20 }}>Далі</button>
+        <button onClick={()=>doAuthSendOtp(2)} disabled={!authCity||authLoading} style={{ ...S.btn,width:"100%",padding:14,background:authCity?T.accent:T.cardAlt,color:authCity?"#fff":T.textMuted,borderRadius:14,fontSize:14,marginTop:20 }}>{authLoading?"Зачекайте...":"Далі"}</button>
+      </>:authStep===2?<>
+        <h2 style={{ fontSize:20,fontWeight:900,color:T.text,marginBottom:4 }}>Отримайте код</h2>
+        <div style={{ fontSize:50,textAlign:"center",margin:"16px 0" }}>✈️</div>
+        <p style={{ fontSize:13,color:T.textSec,marginBottom:16,textAlign:"center",lineHeight:1.6 }}>Натисніть кнопку — відкриється Telegram.<br/>Натисніть <b>Start</b> — бот надішле код.</p>
+        <button onClick={openAuthTelegram} style={{ ...S.btn,width:"100%",padding:14,background:"#0088cc",color:"#fff",borderRadius:14,fontSize:14,marginBottom:12 }}>✈️ Відкрити Telegram</button>
+        <button onClick={()=>setAuthStep(3)} style={{ ...S.btn,width:"100%",padding:14,background:T.accent,color:"#fff",borderRadius:14,fontSize:14 }}>Я отримав код</button>
       </>:<>
         <h2 style={{ fontSize:20,fontWeight:900,color:T.text,marginBottom:4 }}>Код підтвердження</h2>
-        <div style={{ ...S.card,background:T.greenLight,textAlign:"center",marginBottom:16 }}><div style={{ fontSize:12,color:T.green }}>Код надіслано на {authPhone}</div></div>
+        <div style={{ ...S.card,background:T.greenLight,textAlign:"center",marginBottom:16,...S.flex,justifyContent:"center",gap:6 }}><span style={{fontSize:16}}>✈️</span><span style={{ fontSize:12,color:T.green }}>Код надіслано в Telegram</span></div>
         <div style={{ ...S.flex,justifyContent:"center",gap:8,marginBottom:20 }}>
           {[0,1,2,3,4,5].map(i=><input key={i} maxLength={1} value={authCode[i]||""} onChange={e=>{const v=e.target.value.replace(/\D/g,"");if(v){const nc=authCode.split("");nc[i]=v;setAuthCode(nc.join(""));if(i<5)e.target.nextSibling?.focus();}}}
             style={{ width:40,height:48,textAlign:"center",fontSize:18,fontWeight:900,border:`2px solid ${authCode[i]?T.accent:T.border}`,borderRadius:12,outline:"none",color:T.text,fontFamily:"inherit",background:T.card }}/>)}
