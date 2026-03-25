@@ -70,7 +70,7 @@ router.post('/', auth_middleware_1.authenticate, async (req, res) => {
         // Emit real-time update
         try {
             const io = (0, socket_1.getIO)();
-            io.to(`deal:${dealId}`).emit('deal:update', { dealId, joined: deal.joined + quantity });
+            io.to('public').emit('deal:update', { dealId, joined: deal.joined + quantity });
         }
         catch { }
         const fullOrder = await prisma_1.prisma.order.findUnique({

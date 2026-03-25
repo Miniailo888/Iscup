@@ -74,7 +74,7 @@ router.post('/', authenticate, async (req: Request, res: Response): Promise<void
     // Emit real-time update
     try {
       const io = getIO();
-      io.to(`deal:${dealId}`).emit('deal:update', { dealId, joined: deal.joined + quantity });
+      io.to('public').emit('deal:update', { dealId, joined: deal.joined + quantity });
     } catch {}
 
     const fullOrder = await prisma.order.findUnique({

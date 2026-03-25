@@ -154,7 +154,7 @@ router.post('/', auth_middleware_1.authenticate, (0, auth_middleware_2.requireRo
         });
         logger_1.logger.info(`Deal created: ${deal.id} by ${req.user.userId}`);
         try {
-            (0, socket_1.getIO)().emit('deal:new', { dealId: deal.id });
+            (0, socket_1.getIO)().to('public').emit('deal:new', { dealId: deal.id });
         }
         catch { }
         res.status(201).json(deal);
@@ -187,7 +187,7 @@ router.delete('/:id', auth_middleware_1.authenticate, async (req, res) => {
         await prisma_1.prisma.deal.delete({ where: { id: dealId } });
         logger_1.logger.info(`Deal deleted: ${dealId} by ${req.user.userId}`);
         try {
-            (0, socket_1.getIO)().emit('deal:deleted', { dealId });
+            (0, socket_1.getIO)().to('public').emit('deal:deleted', { dealId });
         }
         catch { }
         res.json({ success: true });
