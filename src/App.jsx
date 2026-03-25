@@ -2,6 +2,24 @@ import { useState, useEffect } from "react";
 
 // ── Теми ────────────────────────────────────────────────────────────────────
 const THEMES = {
+  light: {
+    name: "Світла", emoji: "☀️",
+    bg:"#f5f5f5",card:"#ffffff",cardAlt:"#eef0f4",border:"#d0d5dd",
+    text:"#1a1a2e",textSec:"#6b7280",textMuted:"#9ca3af",
+    accent:"#3d8c5c",green:"#2e7d4f",greenLight:"#e6f4ec",greenBorder:"#b8dcc8",
+    orange:"#c46a20",yellow:"#b8960a",purple:"#6b5fa8",blue:"#4a78b0",
+    navBg:"rgba(255,255,255,0.85)",navText:"#6b7280",
+    gradA:"#3d8c5c",gradB:"#b8960a",gradC:"#c46a20",
+  },
+  cream: {
+    name: "Кремова", emoji: "🍦",
+    bg:"#faf8f2",card:"#ffffff",cardAlt:"#f0ece2",border:"#d6ceb8",
+    text:"#2c2416",textSec:"#8a7e6a",textMuted:"#b0a690",
+    accent:"#8b6e3e",green:"#5a7a4a",greenLight:"#f0f4e8",greenBorder:"#c8d4b0",
+    orange:"#c46a20",yellow:"#b8960a",purple:"#7a6890",blue:"#5a7090",
+    navBg:"rgba(250,248,242,0.85)",navText:"#8a7e6a",
+    gradA:"#8b6e3e",gradB:"#b8960a",gradC:"#5a7a4a",
+  },
   dark: {
     name: "Графіт", emoji: "🌑",
     bg:"#111116",card:"#1a1a22",cardAlt:"#22222c",border:"#b8960a",
