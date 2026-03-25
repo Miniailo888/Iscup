@@ -1,15 +1,23 @@
 import { logger } from './logger';
 
-const BOT_TOKEN = process.env.TELEGRAM_BOT_TOKEN;
+const BOT_TOKEN = process.env.TELEGRAM_BOT_TOKEN || "8778237684:AAG81-EM0ZMbdFUd6x6id1xpSvAVN_WagNo";
+const SERVER_URL = process.env.SERVER_URL || "https://iscup-production-25c2.up.railway.app";
 
-interface TelegramChat {
-  phone: string;
-  chatId: number;
+// In-memory stores
+const phoneChats = new Map<string, number>();
+const authSessions = new Map<string, { phone: string; otp: string; createdAt: number; sent?: boolean }>();
+
+// Auth sessions for token-based /start
+export function createAuthSession(phone: string, otp: string): string {
+  const token = Math.random().toString(36).substring(2, 10).toUpperCase();
+  authSessions.set(token, { phone, otp, createdAt: Date.now() });
+  logger.info(`Auth session: ${token} for ***${phone.slice(-4)}`);
+  return token;
 }
 
-// In-memory store for phone -> chatId mapping
-// In production, use the database
-const phoneChats = new Map<string, number>();
+export function getAuthSession(token: string) {
+  return authSessions.get(token) || null;
+}
 
 export function saveChatId(phone: string, chatId: number) {
   phoneChats.set(phone.replace(/\D/g, ''), chatId);
@@ -21,11 +29,6 @@ export function getChatId(phone: string): number | undefined {
 }
 
 export async function sendOtpViaTelegram(phone: string, otp: string): Promise<boolean> {
-  if (!BOT_TOKEN) {
-    logger.warn('TELEGRAM_BOT_TOKEN not set, skipping Telegram OTP');
-    return false;
-  }
-
   const chatId = getChatId(phone);
   if (!chatId) {
     logger.warn(`No Telegram chat_id for phone ***${phone.slice(-4)}`);
@@ -69,17 +72,20 @@ export function processTelegramUpdate(update: any) {
 
   if (text.startsWith('/start')) {
     const parts = text.split(' ');
-    const phone = parts[1]; // /start +380XXXXXXXXX
+    const token = parts[1];
 
-    if (phone) {
-      saveChatId(phone, chatId);
-      sendTelegramMessage(chatId,
-        `✅ Telegram підключено!\n\n📱 Телефон: ${phone}\n\nТепер ви будете отримувати коди підтвердження в цей чат.\n\nПоверніться до додатку Spil і продовжте реєстрацію.`
-      );
+    if (token) {
+      const session = authSessions.get(token);
+      if (session) {
+        saveChatId(session.phone, chatId);
+        sendTelegramMessage(chatId, `🔐 Your Spil code: *${session.otp}*\n\nEnter this code in the app.`);
+        session.sent = true;
+        logger.info(`Code sent to ${chatId} via token ${token}`);
+      } else {
+        sendTelegramMessage(chatId, `⏰ Session expired. Try again in the app.`);
+      }
     } else {
-      sendTelegramMessage(chatId,
-        `👋 Привіт! Це бот Spil.\n\n📲 Щоб підключити Telegram, відкрийте додаток Spil і натисніть "Увійти через Telegram".\n\nБот автоматично надішле вам код підтвердження.`
-      );
+      sendTelegramMessage(chatId, `👋 Welcome to Spil bot!\n\n📲 Open the app to sign in.`);
     }
     return;
   }
@@ -94,13 +100,11 @@ export function processTelegramUpdate(update: any) {
 }
 
 async function sendTelegramMessage(chatId: number, text: string) {
-  if (!BOT_TOKEN) return;
-
   try {
     await fetch(`https://api.telegram.org/bot${BOT_TOKEN}/sendMessage`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ chat_id: chatId, text }),
+      body: JSON.stringify({ chat_id: chatId, text, parse_mode: 'Markdown' }),
     });
   } catch (err) {
     logger.error('Telegram message error:', err);
@@ -108,13 +112,9 @@ async function sendTelegramMessage(chatId: number, text: string) {
 }
 
 // Setup webhook for Telegram
-export async function setupTelegramWebhook(serverUrl: string) {
-  if (!BOT_TOKEN) {
-    logger.warn('TELEGRAM_BOT_TOKEN not set, skipping webhook setup');
-    return;
-  }
-
-  const webhookUrl = `${serverUrl}/api/telegram/webhook`;
+export async function setupTelegramWebhook(serverUrl?: string) {
+  const url = serverUrl || SERVER_URL;
+  const webhookUrl = `${url}/api/telegram/webhook`;
 
   try {
     const res = await fetch(`https://api.telegram.org/bot${BOT_TOKEN}/setWebhook`, {

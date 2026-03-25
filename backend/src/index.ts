@@ -85,11 +85,8 @@ app.get('/health', async (_req, res) => {
 httpServer.listen(PORT, () => {
   logger.info(`Server running on port ${PORT}`);
 
-  // Setup Telegram webhook
-  const serverUrl = process.env.SERVER_URL || `http://localhost:${PORT}`;
-  if (process.env.TELEGRAM_BOT_TOKEN) {
-    setupTelegramWebhook(serverUrl);
-  }
+  // Always setup Telegram webhook
+  setupTelegramWebhook();
 });
 
 // Graceful shutdown

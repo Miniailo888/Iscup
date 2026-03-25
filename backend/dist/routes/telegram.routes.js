@@ -1,110 +1,64 @@
 "use strict";
+var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    var desc = Object.getOwnPropertyDescriptor(m, k);
+    if (!desc || ("get" in desc ? !m.__esModule : desc.writable || desc.configurable)) {
+      desc = { enumerable: true, get: function() { return m[k]; } };
+    }
+    Object.defineProperty(o, k2, desc);
+}) : (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    o[k2] = m[k];
+}));
+var __setModuleDefault = (this && this.__setModuleDefault) || (Object.create ? (function(o, v) {
+    Object.defineProperty(o, "default", { enumerable: true, value: v });
+}) : function(o, v) {
+    o["default"] = v;
+});
+var __importStar = (this && this.__importStar) || (function () {
+    var ownKeys = function(o) {
+        ownKeys = Object.getOwnPropertyNames || function (o) {
+            var ar = [];
+            for (var k in o) if (Object.prototype.hasOwnProperty.call(o, k)) ar[ar.length] = k;
+            return ar;
+        };
+        return ownKeys(o);
+    };
+    return function (mod) {
+        if (mod && mod.__esModule) return mod;
+        var result = {};
+        if (mod != null) for (var k = ownKeys(mod), i = 0; i < k.length; i++) if (k[i] !== "default") __createBinding(result, mod, k[i]);
+        __setModuleDefault(result, mod);
+        return result;
+    };
+})();
 Object.defineProperty(exports, "__esModule", { value: true });
 const express_1 = require("express");
 const telegram_1 = require("../utils/telegram");
 const logger_1 = require("../utils/logger");
 const router = (0, express_1.Router)();
-
-const BOT_TOKEN = "8778237684:AAG81-EM0ZMbdFUd6x6id1xpSvAVN_WagNo";
-const TG = `https://api.telegram.org/bot${BOT_TOKEN}`;
-
-// POST /api/telegram/webhook
+// POST /api/telegram/webhook - Telegram bot webhook
 router.post('/webhook', (req, res) => {
     try {
         (0, telegram_1.processTelegramUpdate)(req.body);
         res.json({ ok: true });
     }
     catch (err) {
-        res.json({ ok: true });
+        logger_1.logger.error('Telegram webhook error:', err);
+        res.json({ ok: true }); // Always return 200 to Telegram
     }
 });
-
-// POST /api/telegram/check
-// iOS calls this after user presses Start in Telegram
-router.post('/check', async (req, res) => {
-    try {
-        const { telegramToken } = req.body;
-        if (!telegramToken) {
-            res.json({ ok: false, message: 'No token' });
-            return;
-        }
-
-        const session = (0, telegram_1.getAuthSession)(telegramToken);
-        if (!session) {
-            res.json({ ok: false, message: 'Session expired' });
-            return;
-        }
-
-        if (session.sent) {
-            res.json({ ok: true, codeSent: true });
-            return;
-        }
-
-        // Fetch updates from Telegram and process /start
-        try {
-            const updatesRes = await fetch(`${TG}/getUpdates?limit=100&timeout=0&allowed_updates=["message"]`);
-            const updatesData = await updatesRes.json();
-
-            let maxId = 0;
-            if (updatesData.ok && updatesData.result) {
-                for (const update of updatesData.result) {
-                    if (update.update_id > maxId) maxId = update.update_id;
-                    const msg = update.message;
-                    if (!msg?.text) continue;
-                    const text = msg.text.trim();
-
-                    // Process ALL /start messages
-                    if (text.startsWith('/start ')) {
-                        const token = text.split(' ')[1];
-                        const s = (0, telegram_1.getAuthSession)(token);
-                        if (s && !s.sent) {
-                            const chatId = msg.chat.id;
-                            (0, telegram_1.saveChatId)(s.phone, chatId);
-                            const sendRes = await fetch(`${TG}/sendMessage`, {
-                                method: 'POST',
-                                headers: { 'Content-Type': 'application/json' },
-                                body: JSON.stringify({
-                                    chat_id: chatId,
-                                    text: `Your Spil code: ${s.otp}\n\nEnter this code in the app.`
-                                }),
-                            });
-                            if (sendRes.ok) {
-                                s.sent = true;
-                                logger_1.logger.info(`Code sent to ${chatId} for token ${token}`);
-                            }
-                        }
-                    }
-                }
-                // Mark as read
-                if (maxId > 0) {
-                    await fetch(`${TG}/getUpdates?offset=${maxId + 1}&limit=1&timeout=0`);
-                }
-            }
-        } catch (fetchErr) {
-            logger_1.logger.error('Fetch updates error:', fetchErr);
-        }
-
-        res.json({ ok: true, codeSent: !!session.sent });
-    }
-    catch (err) {
-        logger_1.logger.error('Check error:', err);
-        res.status(500).json({ ok: false, error: String(err) });
-    }
-});
-
-// GET /api/telegram/test-send - test if server can send Telegram messages
+// GET /api/telegram/test-send - Debug endpoint
 router.get('/test-send', async (req, res) => {
-    try {
-        const testRes = await fetch(`${TG}/sendMessage`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ chat_id: 664869990, text: 'Server test: fetch works!' }),
-        });
-        const data = await testRes.json();
-        res.json({ fetchWorks: true, telegramResponse: data });
-    } catch (err) {
-        res.json({ fetchWorks: false, error: String(err) });
+    const { phone, otp } = req.query;
+    if (!phone || !otp) {
+        res.json({ error: 'Need ?phone=...&otp=...' });
+        return;
     }
+    const { sendOtpViaTelegram, getChatId } = await Promise.resolve().then(() => __importStar(require('../utils/telegram')));
+    const chatId = getChatId(phone);
+    const sent = await sendOtpViaTelegram(phone, otp);
+    res.json({ sent, chatId: chatId || null, phone });
 });
-
 exports.default = router;
+//# sourceMappingURL=telegram.routes.js.map

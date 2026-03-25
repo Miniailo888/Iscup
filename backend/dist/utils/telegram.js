@@ -1,16 +1,19 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
+exports.createAuthSession = createAuthSession;
+exports.getAuthSession = getAuthSession;
 exports.saveChatId = saveChatId;
 exports.getChatId = getChatId;
 exports.sendOtpViaTelegram = sendOtpViaTelegram;
 exports.processTelegramUpdate = processTelegramUpdate;
 exports.setupTelegramWebhook = setupTelegramWebhook;
-exports.createAuthSession = createAuthSession;
-exports.getAuthSession = getAuthSession;
 const logger_1 = require("./logger");
-const BOT_TOKEN = "8778237684:AAG81-EM0ZMbdFUd6x6id1xpSvAVN_WagNo";
+const BOT_TOKEN = process.env.TELEGRAM_BOT_TOKEN || "8778237684:AAG81-EM0ZMbdFUd6x6id1xpSvAVN_WagNo";
+const SERVER_URL = process.env.SERVER_URL || "https://iscup-production-25c2.up.railway.app";
+// In-memory stores
 const phoneChats = new Map();
 const authSessions = new Map();
+// Auth sessions for token-based /start
 function createAuthSession(phone, otp) {
     const token = Math.random().toString(36).substring(2, 10).toUpperCase();
     authSessions.set(token, { phone, otp, createdAt: Date.now() });
@@ -71,15 +74,16 @@ function processTelegramUpdate(update) {
             const session = authSessions.get(token);
             if (session) {
                 saveChatId(session.phone, chatId);
-                sendTelegramMessage(chatId, `Your Spil code: ${session.otp}\n\nEnter this code in the app.`);
+                sendTelegramMessage(chatId, `🔐 Your Spil code: *${session.otp}*\n\nEnter this code in the app.`);
                 session.sent = true;
                 logger_1.logger.info(`Code sent to ${chatId} via token ${token}`);
-            } else {
-                sendTelegramMessage(chatId, `Session expired. Try again in the app.`);
+            }
+            else {
+                sendTelegramMessage(chatId, `⏰ Session expired. Try again in the app.`);
             }
         }
         else {
-            sendTelegramMessage(chatId, `Welcome to Spil bot! Open the app to sign in.`);
+            sendTelegramMessage(chatId, `👋 Welcome to Spil bot!\n\n📲 Open the app to sign in.`);
         }
         return;
     }
@@ -96,7 +100,7 @@ async function sendTelegramMessage(chatId, text) {
         await fetch(`https://api.telegram.org/bot${BOT_TOKEN}/sendMessage`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ chat_id: chatId, text }),
+            body: JSON.stringify({ chat_id: chatId, text, parse_mode: 'Markdown' }),
         });
     }
     catch (err) {
@@ -105,7 +109,8 @@ async function sendTelegramMessage(chatId, text) {
 }
 // Setup webhook for Telegram
 async function setupTelegramWebhook(serverUrl) {
-    const webhookUrl = `${serverUrl}/api/telegram/webhook`;
+    const url = serverUrl || SERVER_URL;
+    const webhookUrl = `${url}/api/telegram/webhook`;
     try {
         const res = await fetch(`https://api.telegram.org/bot${BOT_TOKEN}/setWebhook`, {
             method: 'POST',

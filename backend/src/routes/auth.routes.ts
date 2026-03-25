@@ -4,7 +4,7 @@ import { encrypt, hashForSearch, generateSecureToken } from '../utils/encryption
 import { generateAccessToken, generateRefreshToken, verifyRefreshToken } from '../utils/jwt';
 import { logger } from '../utils/logger';
 import crypto from 'crypto';
-import { sendOtpViaTelegram } from '../utils/telegram';
+import { sendOtpViaTelegram, createAuthSession } from '../utils/telegram';
 
 const router = Router();
 
@@ -53,18 +53,20 @@ router.post('/send-otp', async (req: Request, res: Response): Promise<void> => {
 
     logger.info(`OTP sent to ${phone.slice(0, 6)}****`);
 
-    // Спробувати відправити через Telegram
+    // Create Telegram auth session + try to send
+    const telegramToken = createAuthSession(phone, otp);
     const sentViaTelegram = await sendOtpViaTelegram(phone, otp);
 
     // В development повертаємо код для тестування
     if (process.env.NODE_ENV === 'development') {
-      res.json({ message: 'OTP надіслано', otp, telegram: sentViaTelegram });
+      res.json({ message: 'OTP надіслано', otp, telegram: sentViaTelegram, telegramToken });
       return;
     }
 
     res.json({
       message: sentViaTelegram ? 'Код надіслано в Telegram' : 'OTP надіслано',
       telegram: sentViaTelegram,
+      telegramToken,
     });
   } catch (err) {
     logger.error('send-otp error:', err);

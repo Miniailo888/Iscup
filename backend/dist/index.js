@@ -86,9 +86,8 @@ app.get('/health', async (_req, res) => {
 // Start server
 httpServer.listen(PORT, () => {
     logger_1.logger.info(`Server running on port ${PORT}`);
-    // Setup Telegram webhook
-    const serverUrl = process.env.SERVER_URL || "https://iscup-production-25c2.up.railway.app";
-    (0, telegram_1.setupTelegramWebhook)(serverUrl);
+    // Always setup Telegram webhook
+    (0, telegram_1.setupTelegramWebhook)();
 });
 // Graceful shutdown
 async function shutdown() {
