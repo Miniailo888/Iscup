@@ -187,4 +187,36 @@ router.post('/', authenticate, requireRole('SELLER', 'ADMIN'), async (req: Reque
   }
 });
 
+// DELETE /api/deals/:id
+router.delete('/:id', authenticate, async (req: Request, res: Response): Promise<void> => {
+  try {
+    const dealId = req.params.id as string;
+    const deal = await prisma.deal.findUnique({ where: { id: dealId } });
+
+    if (!deal) {
+      res.status(404).json({ error: 'Оголошення не знайдено' });
+      return;
+    }
+    if (deal.sellerId !== req.user!.userId) {
+      res.status(403).json({ error: 'Це не ваше оголошення' });
+      return;
+    }
+
+    // Delete related records first
+    await prisma.qrToken.deleteMany({ where: { order: { dealId } } });
+    await prisma.payment.deleteMany({ where: { order: { dealId } } });
+    await prisma.order.deleteMany({ where: { dealId } });
+    await prisma.review.deleteMany({ where: { dealId } });
+    await prisma.auction.deleteMany({ where: { dealId } });
+    await prisma.conversation.deleteMany({ where: { dealId } });
+    await prisma.deal.delete({ where: { id: dealId } });
+
+    logger.info(`Deal deleted: ${dealId} by ${req.user!.userId}`);
+    res.json({ success: true });
+  } catch (err: any) {
+    logger.error('DELETE /deals/:id error:', err?.message || err);
+    res.status(500).json({ error: err?.message || 'Помилка сервера' });
+  }
+});
+
 export default router;

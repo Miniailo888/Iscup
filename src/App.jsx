@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from "react";
-import { fetchDeals as apiFetchDeals, sendOtp, verifyOtp, logout as apiLogout, createOrder, createDeal, fetchMyOrders, fetchSellerOrders, fetchSellerDeals, generateQR, verifyQR, fetchConversations, createConversation, fetchMessages, sendMessageApi, isLoggedIn, API } from "./api";
+import { fetchDeals as apiFetchDeals, sendOtp, verifyOtp, logout as apiLogout, createOrder, createDeal, deleteDeal, fetchMyOrders, fetchSellerOrders, fetchSellerDeals, generateQR, verifyQR, fetchConversations, createConversation, fetchMessages, sendMessageApi, isLoggedIn, API } from "./api";
 
 // ── Теми ────────────────────────────────────────────────────────────────────
 const THEMES = {
@@ -1153,7 +1153,10 @@ function SellerDashboard({ deals, joined, onOpen, onBuy }) {
       </div>
       <ProgressBar value={p} color={pCol(p)} h={5}/>
       <div style={{...S.flex,justifyContent:"space-between",marginTop:4}}><span style={{fontSize:10,color:T.textSec}}>{d.joined}/{d.needed} учасників</span><span style={{fontSize:10,fontWeight:700,color:pCol(p)}}>{p}%</span></div>
-      {d._count?.orders>0&&<div style={{fontSize:10,color:T.accent,marginTop:4,fontWeight:700}}>{d._count.orders} замовлень</div>}
+      <div style={{...S.flex,justifyContent:"space-between",marginTop:6}}>
+        {d._count?.orders>0&&<div style={{fontSize:10,color:T.accent,fontWeight:700}}>{d._count.orders} замовлень</div>}
+        <button onClick={async(e)=>{e.stopPropagation();if(!confirm(`Видалити "${d.title}"?`))return;try{await deleteDeal(d.id);setSellerDeals(prev=>prev.filter(x=>x.id!==d.id));}catch(ex){alert(ex.message);}}} style={{...S.btn,padding:"4px 10px",borderRadius:8,background:"#ef444418",color:"#ef4444",fontSize:10}}>Видалити</button>
+      </div>
     </div>;})}
 
     {actSeller.length>0&&<>

@@ -74,6 +74,10 @@ export async function fetchSellerDeals() {
   return request('/deals/seller/my');
 }
 
+export async function deleteDeal(id) {
+  return request(`/deals/${id}`, { method: 'DELETE' });
+}
+
 // Orders
 export async function createOrder(dealId, quantity) {
   return request('/orders', { method: 'POST', body: JSON.stringify({ dealId, quantity }) });
