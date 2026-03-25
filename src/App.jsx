@@ -1329,16 +1329,16 @@ function WalletPage({ user, setUser, theme, onTheme }) {
   const txIcons={income:"↓",withdrawal:"↑",hold:"◷"}, txColors={income:T.green,withdrawal:T.orange,hold:T.yellow};
   const isGuest=!user||user.name==="Гість"||!localStorage.getItem("spilnokup_token");
 
-  // Load real wallet balance
-  const loadWallet=useCallback(()=>{
-    fetchWallet().then(w=>{setBalance(Number(w.availableBalance));setWalletData(w);}).catch(()=>{});
-  },[]);
+  // Load real wallet balance (once on mount + websocket)
+  const walletLoaded=useRef(false);
   useEffect(()=>{
-    if(isGuest) return;
-    loadWallet();
-    const unsub=onEvent('wallet:update',loadWallet);
+    if(isGuest||walletLoaded.current) return;
+    walletLoaded.current=true;
+    const load=()=>fetchWallet().then(w=>{setBalance(Number(w.availableBalance));setWalletData(w);}).catch(()=>{});
+    load();
+    const unsub=onEvent('wallet:update',load);
     return ()=>unsub();
-  },[isGuest,loadWallet]);
+  },[]);
   const initials=(user?.name||"Г").split(" ").map(w=>w[0]).join("").toUpperCase().slice(0,2);
 
   const doAuthSendOtp=async()=>{
