@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback } from "react";
 import { fetchDeals as apiFetchDeals, sendOtp, verifyOtp, logout as apiLogout, createOrder, createDeal, deleteDeal, fetchMyOrders, fetchSellerOrders, fetchSellerDeals, generateQR, verifyQR, fetchConversations, createConversation, fetchMessages, sendMessageApi, isLoggedIn, API } from "./api";
+import { connectSocket, disconnectSocket, onEvent, joinDeal, joinConversation } from "./socket";
 
 // ── Теми ────────────────────────────────────────────────────────────────────
 const THEMES = {
@@ -972,12 +973,19 @@ function ChatPage() {
   useEffect(()=>{
     if(!isLoggedIn()) { setLoading(false); return; }
     fetchConversations().then(setChats).catch(()=>{}).finally(()=>setLoading(false));
-    const interval=setInterval(()=>fetchConversations().then(setChats).catch(()=>{}),5000);
-    return ()=>clearInterval(interval);
-  },[]);
+    // Listen for new messages via WebSocket
+    const unsub=onEvent('chat:new',(data)=>{
+      fetchConversations().then(setChats).catch(()=>{});
+      if(data.conversationId===activeChat){
+        setMessages(prev=>[...prev,data.message]);
+      }
+    });
+    return ()=>unsub();
+  },[activeChat]);
 
   const openChat=async(chatId)=>{
     setActiveChat(chatId);
+    joinConversation(chatId);
     try{const msgs=await fetchMessages(chatId);setMessages(msgs);}catch{}
   };
 
@@ -989,14 +997,14 @@ function ChatPage() {
     }catch(e){alert(e.message);}
   };
 
-  // Poll for new messages
+  // WebSocket for live messages in active chat
   useEffect(()=>{
     if(!activeChat) return;
-    const interval=setInterval(async()=>{
-      try{const msgs=await fetchMessages(activeChat);setMessages(msgs);}catch{}
-    },3000);
-    return ()=>clearInterval(interval);
-  },[activeChat]);
+    const unsub=onEvent('chat:message',(data)=>{
+      if(data.senderId!==userId) setMessages(prev=>[...prev,data]);
+    });
+    return ()=>unsub();
+  },[activeChat,userId]);
 
   const fmtTime=(d)=>{const dt=new Date(d);return `${dt.getHours()}:${String(dt.getMinutes()).padStart(2,"0")}`;};
 
@@ -1058,21 +1066,23 @@ function SellerDashboard({ deals, joined, onOpen, onBuy }) {
   const userId=(() => { try { return JSON.parse(localStorage.getItem("spilnokup_user"))?.id; } catch { return null; } })();
   const userName=(() => { try { return JSON.parse(localStorage.getItem("spilnokup_user"))?.name; } catch { return ""; } })();
 
-  useEffect(()=>{
-    if(!isLoggedIn()){setLoading(false);return;}
-    Promise.all([
+  const loadAll=useCallback(()=>{
+    return Promise.all([
       fetchMyOrders().catch(()=>[]),
       fetchSellerOrders().catch(()=>[]),
       fetchSellerDeals().catch(()=>[]),
     ]).then(([my,seller,deals])=>{
       setMyOrders(my);setSellerOrders(seller);setSellerDeals(deals);
-    }).finally(()=>setLoading(false));
-    const interval=setInterval(()=>{
-      fetchMyOrders().then(setMyOrders).catch(()=>{});
-      fetchSellerOrders().then(setSellerOrders).catch(()=>{});
-      fetchSellerDeals().then(setSellerDeals).catch(()=>{});
-    },8000);
-    return ()=>clearInterval(interval);
+    });
+  },[]);
+
+  useEffect(()=>{
+    if(!isLoggedIn()){setLoading(false);return;}
+    loadAll().finally(()=>setLoading(false));
+    // WebSocket updates instead of polling
+    const unsub1=onEvent('deal:update',()=>loadAll());
+    const unsub2=onEvent('order:completed',()=>loadAll());
+    return ()=>{unsub1();unsub2();};
   },[]);
 
   const actSeller=sellerOrders.filter(o=>o.status==="PAID");
@@ -1219,7 +1229,7 @@ function WalletPage({ user, setUser, theme, onTheme }) {
     }catch(e){setAuthError(e.message);}
     finally{setAuthLoading(false);}
   };
-  const doLogout=()=>{apiLogout();const g={name:"Гість",email:"",phone:"",city:""};localStorage.setItem("spilnokup_user",JSON.stringify(g));setUser(g);};
+  const doLogout=()=>{disconnectSocket();apiLogout();const g={name:"Гість",email:"",phone:"",city:""};localStorage.setItem("spilnokup_user",JSON.stringify(g));setUser(g);};
 
   const payMethods=[
     {id:"card",name:"Картка",icon:"💳",desc:"Visa / Mastercard"},
@@ -1435,6 +1445,19 @@ export default function App() {
     }catch(e){console.warn("API unavailable, using mock data:",e.message);}
   },[]);
   useEffect(()=>{loadDeals();},[loadDeals]);
+
+  // WebSocket connection
+  useEffect(()=>{
+    if(!isLoggedIn()) return;
+    connectSocket();
+    const unsub1=onEvent('deal:update',(data)=>{
+      setDeals(prev=>prev.map(d=>d.id===data.dealId||d.dbId===data.dealId?{...d,joined:data.joined}:d));
+    });
+    const unsub2=onEvent('order:completed',(data)=>{
+      loadDeals();
+    });
+    return ()=>{unsub1();unsub2();};
+  },[user]);
 
   const onJoin=id=>setJoined(j=>({...j,[id]:!j[id]}));
   const onOpen=deal=>{setPage("detail");setBuyData({deal,qty:deal.min});};
