@@ -992,8 +992,34 @@ function WalletPage({ user, setUser, theme, onTheme }) {
   const [payMethod,setPayMethod]=useState(null);
   const [payAmount,setPayAmount]=useState("");
   const [payDone,setPayDone]=useState(false);
+  const [showAuth,setShowAuth]=useState(false);
+  const [authPhone,setAuthPhone]=useState(""),[authCode,setAuthCode]=useState(""),[authName,setAuthName]=useState(""),[authCity,setAuthCity]=useState("");
+  const [authStep,setAuthStep]=useState(0); // 0=phone, 1=city, 2=otp
+  const [authLoading,setAuthLoading]=useState(false),[authError,setAuthError]=useState("");
   const txIcons={income:"↓",withdrawal:"↑",hold:"◷"}, txColors={income:T.green,withdrawal:T.orange,hold:T.yellow};
+  const isGuest=!user||user.name==="Гість"||!localStorage.getItem("spilnokup_token");
   const initials=(user?.name||"Г").split(" ").map(w=>w[0]).join("").toUpperCase().slice(0,2);
+
+  const doAuthSendOtp=async()=>{
+    setAuthLoading(true);setAuthError("");
+    try{
+      const res=await sendOtp(authPhone);
+      if(res.otp) setAuthCode(res.otp);
+      setAuthStep(2);
+    }catch(e){setAuthError(e.message);}
+    finally{setAuthLoading(false);}
+  };
+  const doAuthVerify=async()=>{
+    setAuthLoading(true);setAuthError("");
+    try{
+      const data=await verifyOtp(authPhone,authCode);
+      const u={...data.user,name:authName||data.user.name,city:authCity||data.user.city};
+      localStorage.setItem("spilnokup_user",JSON.stringify(u));
+      setUser(u);setShowAuth(false);setAuthStep(0);
+    }catch(e){setAuthError(e.message);}
+    finally{setAuthLoading(false);}
+  };
+  const doLogout=()=>{apiLogout();const g={name:"Гість",email:"",phone:"",city:""};localStorage.setItem("spilnokup_user",JSON.stringify(g));setUser(g);};
 
   const payMethods=[
     {id:"card",name:"Картка",icon:"💳",desc:"Visa / Mastercard"},
@@ -1051,6 +1077,42 @@ function WalletPage({ user, setUser, theme, onTheme }) {
     </>}
   </div>;
 
+  // Auth form in wallet
+  if(showAuth) return <div style={S.page}>
+    <BackBtn onClick={()=>{setShowAuth(false);setAuthStep(0);setAuthError("");}}/>
+    {authStep===0?<>
+      <h2 style={{ fontSize:20,fontWeight:900,color:T.text,marginBottom:4 }}>Створити акаунт</h2>
+      <p style={{ fontSize:12,color:T.textSec,marginBottom:20 }}>Введіть дані для реєстрації</p>
+      <div style={{ display:"flex",flexDirection:"column",gap:12 }}>
+        <Input value={authName} onChange={e=>setAuthName(e.target.value)} placeholder="Ваше ім'я" icon={I.user}/>
+        <Input value={authPhone} onChange={e=>setAuthPhone(e.target.value)} placeholder="+380XXXXXXXXX" icon={I.phone} type="tel"/>
+      </div>
+      {authError&&<div style={{ color:"#ef4444",fontSize:12,marginTop:10 }}>{authError}</div>}
+      <button onClick={()=>setAuthStep(1)} disabled={!authName||!authPhone} style={{ ...S.btn,width:"100%",padding:14,background:(authName&&authPhone)?T.accent:T.cardAlt,color:(authName&&authPhone)?"#fff":T.textMuted,borderRadius:14,fontSize:14,marginTop:20 }}>Далі</button>
+    </>:authStep===1?<>
+      <h2 style={{ fontSize:20,fontWeight:900,color:T.text,marginBottom:4 }}>Ваше місто</h2>
+      <p style={{ fontSize:12,color:T.textSec,marginBottom:20 }}>Оберіть або введіть місто</p>
+      <Input value={authCity} onChange={e=>setAuthCity(e.target.value)} placeholder="Місто"/>
+      <div style={{ display:"flex",flexWrap:"wrap",gap:8,marginTop:14 }}>
+        {["Київ","Харків","Одеса","Дніпро","Львів","Бориспіль","Бровари","Черкаси"].map(c=>
+          <button key={c} onClick={()=>setAuthCity(c)} style={{ ...S.btn,padding:"7px 12px",borderRadius:10,fontSize:11,background:authCity===c?T.accent:T.cardAlt,color:authCity===c?"#fff":T.textSec }}>{c}</button>
+        )}
+      </div>
+      {authError&&<div style={{ color:"#ef4444",fontSize:12,marginTop:10 }}>{authError}</div>}
+      <button onClick={doAuthSendOtp} disabled={!authCity||authLoading} style={{ ...S.btn,width:"100%",padding:14,background:authCity?T.accent:T.cardAlt,color:authCity?"#fff":T.textMuted,borderRadius:14,fontSize:14,marginTop:20 }}>{authLoading?"Надсилаємо...":"Отримати код"}</button>
+    </>:<>
+      <h2 style={{ fontSize:20,fontWeight:900,color:T.text,marginBottom:4 }}>Код підтвердження</h2>
+      <div style={{ ...S.card,background:T.greenLight,textAlign:"center",marginBottom:16 }}><div style={{ fontSize:12,color:T.green }}>Код надіслано на {authPhone}</div></div>
+      <div style={{ ...S.flex,justifyContent:"center",gap:8,marginBottom:20 }}>
+        {[0,1,2,3,4,5].map(i=><input key={i} maxLength={1} value={authCode[i]||""} onChange={e=>{const v=e.target.value.replace(/\D/g,"");if(v){const nc=authCode.split("");nc[i]=v;setAuthCode(nc.join(""));if(i<5)e.target.nextSibling?.focus();}}}
+          style={{ width:40,height:48,textAlign:"center",fontSize:18,fontWeight:900,border:`2px solid ${authCode[i]?T.accent:T.border}`,borderRadius:12,outline:"none",color:T.text,fontFamily:"inherit",background:T.card }}/>)}
+      </div>
+      {authError&&<div style={{ color:"#ef4444",fontSize:12,marginBottom:8,textAlign:"center" }}>{authError}</div>}
+      <button onClick={doAuthVerify} disabled={authCode.length<6||authLoading}
+        style={{ ...S.btn,width:"100%",padding:14,background:authCode.length>=6?T.accent:T.cardAlt,color:authCode.length>=6?"#fff":T.textMuted,borderRadius:14,fontSize:14 }}>{authLoading?"Перевіряємо...":"Підтвердити"}</button>
+    </>}
+  </div>;
+
   return <div style={S.page}>
     <div style={{ ...S.card,marginBottom:16,textAlign:"center",position:"relative",overflow:"hidden" }}>
       <div style={{ position:"absolute",top:0,left:0,right:0,height:80,background:`linear-gradient(135deg,${T.accent},${T.purple},${T.blue})` }}/>
@@ -1060,7 +1122,11 @@ function WalletPage({ user, setUser, theme, onTheme }) {
         </div>
         <div style={{ fontSize:18,fontWeight:900,color:T.text }}>{user?.name||"Гість"}</div>
         <div style={{ fontSize:11,color:T.textSec,marginTop:2 }}>{user?.email||"Не вказано"}</div>
-        <button onClick={()=>setEditing(!editing)} style={{ ...S.btn,...S.flex,gap:4,justifyContent:"center",margin:"10px auto 0",padding:"6px 14px",borderRadius:10,background:T.cardAlt,color:T.textSec,fontSize:11 }}>{I.edit} {editing?"Закрити":"Редагувати"}</button>
+        <div style={{ ...S.flex,gap:8,justifyContent:"center",marginTop:10 }}>
+          {isGuest?<button onClick={()=>setShowAuth(true)} style={{ ...S.btn,...S.flex,gap:4,padding:"8px 16px",borderRadius:10,background:T.accent,color:"#fff",fontSize:12 }}>{I.user} Створити акаунт</button>
+          :<><button onClick={()=>setEditing(!editing)} style={{ ...S.btn,...S.flex,gap:4,padding:"6px 14px",borderRadius:10,background:T.cardAlt,color:T.textSec,fontSize:11 }}>{I.edit} {editing?"Закрити":"Редагувати"}</button>
+            <button onClick={doLogout} style={{ ...S.btn,padding:"6px 14px",borderRadius:10,background:T.cardAlt,color:T.orange,fontSize:11 }}>Вийти</button></>}
+        </div>
       </div>
       {editing&&<div style={{ textAlign:"left",marginTop:14,display:"flex",flexDirection:"column",gap:10 }}>
         <Input value={eName} onChange={e=>setEName(e.target.value)} placeholder="Ім'я" icon={I.user}/>
