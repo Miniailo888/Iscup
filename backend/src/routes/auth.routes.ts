@@ -4,6 +4,7 @@ import { encrypt, hashForSearch, generateSecureToken } from '../utils/encryption
 import { generateAccessToken, generateRefreshToken, verifyRefreshToken } from '../utils/jwt';
 import { logger } from '../utils/logger';
 import crypto from 'crypto';
+import { sendOtpViaTelegram } from '../utils/telegram';
 
 const router = Router();
 
@@ -52,14 +53,19 @@ router.post('/send-otp', async (req: Request, res: Response): Promise<void> => {
 
     logger.info(`OTP sent to ${phone.slice(0, 6)}****`);
 
+    // Спробувати відправити через Telegram
+    const sentViaTelegram = await sendOtpViaTelegram(phone, otp);
+
     // В development повертаємо код для тестування
     if (process.env.NODE_ENV === 'development') {
-      res.json({ message: 'OTP надіслано', otp });
+      res.json({ message: 'OTP надіслано', otp, telegram: sentViaTelegram });
       return;
     }
 
-    // В production тут буде SMS відправка
-    res.json({ message: 'OTP надіслано' });
+    res.json({
+      message: sentViaTelegram ? 'Код надіслано в Telegram' : 'OTP надіслано',
+      telegram: sentViaTelegram,
+    });
   } catch (err) {
     logger.error('send-otp error:', err);
     res.status(500).json({ error: 'Помилка сервера' });

@@ -15,7 +15,9 @@ import walletRoutes from './routes/wallet.routes';
 import ordersRoutes from './routes/orders.routes';
 import qrRoutes from './routes/qr.routes';
 import chatRoutes from './routes/chat.routes';
+import telegramRoutes from './routes/telegram.routes';
 import { setupSocket } from './socket';
+import { setupTelegramWebhook } from './utils/telegram';
 
 const app = express();
 const httpServer = http.createServer(app);
@@ -48,6 +50,7 @@ app.use('/api/wallet', walletRoutes);
 app.use('/api/orders', ordersRoutes);
 app.use('/api/qr', qrRoutes);
 app.use('/api/chat', chatRoutes);
+app.use('/api/telegram', telegramRoutes);
 
 // Health check
 app.get('/health', async (_req, res) => {
@@ -81,6 +84,12 @@ app.get('/health', async (_req, res) => {
 // Start server
 httpServer.listen(PORT, () => {
   logger.info(`Server running on port ${PORT}`);
+
+  // Setup Telegram webhook
+  const serverUrl = process.env.SERVER_URL || `http://localhost:${PORT}`;
+  if (process.env.TELEGRAM_BOT_TOKEN) {
+    setupTelegramWebhook(serverUrl);
+  }
 });
 
 // Graceful shutdown

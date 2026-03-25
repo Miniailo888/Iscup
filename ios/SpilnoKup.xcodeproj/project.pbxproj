@@ -24,6 +24,7 @@
 		B10000000000000000000F /* SellerDashboardView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F10000000000000000000F /* SellerDashboardView.swift */; };
 		B100000000000000000010 /* WalletView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F100000000000000000010 /* WalletView.swift */; };
 		B100000000000000000011 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = F100000000000000000011 /* Assets.xcassets */; };
+		B100000000000000000012 /* APIService.swift in Sources */ = {isa = PBXBuildFile; fileRef = F100000000000000000013 /* APIService.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -45,6 +46,7 @@
 		F100000000000000000010 /* WalletView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WalletView.swift; sourceTree = "<group>"; };
 		F100000000000000000011 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		F100000000000000000012 /* SpilnoKup.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = SpilnoKup.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		F100000000000000000013 /* APIService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = APIService.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -75,6 +77,7 @@
 				F100000000000000000004 /* AppTheme.swift */,
 				F100000000000000000005 /* AppState.swift */,
 				F100000000000000000006 /* SampleData.swift */,
+				F100000000000000000013 /* APIService.swift */,
 				G100000000000000000003 /* Views */,
 				G100000000000000000004 /* Components */,
 				F100000000000000000011 /* Assets.xcassets */,
@@ -199,6 +202,7 @@
 				B10000000000000000000E /* QRHubView.swift in Sources */,
 				B10000000000000000000F /* SellerDashboardView.swift in Sources */,
 				B100000000000000000010 /* WalletView.swift in Sources */,
+				B100000000000000000012 /* APIService.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
