@@ -20,7 +20,7 @@ export function connectSocket(token) {
   socket.on('connect', () => {});
   socket.on('disconnect', () => {});
 
-  ['deal:update', 'deal:new', 'deal:deleted', 'order:completed', 'chat:message', 'chat:new', 'chat:typing'].forEach(event => {
+  ['deal:update', 'deal:new', 'deal:deleted', 'order:completed', 'wallet:update', 'chat:message', 'chat:new', 'chat:typing'].forEach(event => {
     socket.on(event, (data) => {
       if (listeners[event]) listeners[event].forEach(cb => cb(data));
     });

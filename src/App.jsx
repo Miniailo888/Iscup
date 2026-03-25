@@ -1315,7 +1315,8 @@ function SellerDashboard({ deals, joined, onOpen, onBuy }) {
 // ── Гаманець + Профіль ──────────────────────────────────────────────────────
 function WalletPage({ user, setUser, theme, onTheme }) {
   const [editing,setEditing]=useState(false),[eName,setEName]=useState(user?.name||""),[eEmail,setEEmail]=useState(user?.email||""),[ePhone,setEPhone]=useState(user?.phone||""),[eCity,setECity]=useState(user?.city||"");
-  const [balance,setBalance]=useState(12840);
+  const [balance,setBalance]=useState(0);
+  const [walletData,setWalletData]=useState(null);
   const [showPay,setShowPay]=useState(null); // "topup" | "withdraw"
   const [payMethod,setPayMethod]=useState(null);
   const [payAmount,setPayAmount]=useState("");
@@ -1327,6 +1328,17 @@ function WalletPage({ user, setUser, theme, onTheme }) {
   const [authLoading,setAuthLoading]=useState(false),[authError,setAuthError]=useState("");
   const txIcons={income:"↓",withdrawal:"↑",hold:"◷"}, txColors={income:T.green,withdrawal:T.orange,hold:T.yellow};
   const isGuest=!user||user.name==="Гість"||!localStorage.getItem("spilnokup_token");
+
+  // Load real wallet balance
+  const loadWallet=useCallback(()=>{
+    fetchWallet().then(w=>{setBalance(Number(w.availableBalance));setWalletData(w);}).catch(()=>{});
+  },[]);
+  useEffect(()=>{
+    if(isGuest) return;
+    loadWallet();
+    const unsub=onEvent('wallet:update',loadWallet);
+    return ()=>unsub();
+  },[isGuest,loadWallet]);
   const initials=(user?.name||"Г").split(" ").map(w=>w[0]).join("").toUpperCase().slice(0,2);
 
   const doAuthSendOtp=async()=>{
@@ -1515,19 +1527,28 @@ function WalletPage({ user, setUser, theme, onTheme }) {
     <div style={{ ...S.card,background:`linear-gradient(135deg,${T.greenLight},${T.greenBorder})`,marginBottom:16,textAlign:"center",padding:20 }}>
       <div style={{ fontSize:11,color:T.green }}>Баланс</div>
       <div style={{ fontSize:32,fontWeight:900,color:T.text }}>₴{balance.toLocaleString()}</div>
-      <div style={{ fontSize:11,color:T.textSec,marginTop:2 }}>Доступно: ₴{Math.round(balance*0.75).toLocaleString()}</div>
+      {walletData&&Number(walletData.heldBalance)>0&&<div style={{ fontSize:11,color:T.yellow,marginTop:2 }}>Заморожено: ₴{Number(walletData.heldBalance).toLocaleString()}</div>}
       <div style={{ display:"flex",gap:8,marginTop:12,justifyContent:"center" }}>
         <button onClick={()=>setShowPay("topup")} style={{ ...S.btn,padding:"10px 20px",borderRadius:12,fontSize:12,background:T.accent,color:"#fff" }}>+ Поповнити</button>
         <button onClick={()=>setShowPay("withdraw")} style={{ ...S.btn,padding:"10px 20px",borderRadius:12,fontSize:12,background:T.cardAlt,color:T.text,border:`1px solid ${T.border}44` }}>Вивести</button>
       </div>
     </div>
 
-    <h3 style={{ color:T.text,fontSize:14,fontWeight:800,marginBottom:10 }}>Транзакції</h3>
-    {TRANSACTIONS.map(t=><div key={t.id} style={{ ...S.card,...S.flex,gap:10,marginBottom:8 }}>
-      <div style={{ width:36,height:36,borderRadius:10,background:txColors[t.type]+"18",...S.flex,justifyContent:"center",fontSize:16,fontWeight:900,color:txColors[t.type] }}>{txIcons[t.type]}</div>
-      <div style={{ flex:1 }}><div style={{ fontSize:12,fontWeight:700,color:T.text }}>{t.desc}</div><div style={{ fontSize:10,color:T.textSec }}>{t.date}</div></div>
-      <div style={{ fontSize:14,fontWeight:800,color:txColors[t.type] }}>{t.type==="income"?"+":t.type==="withdrawal"?"−":""}₴{t.amount}</div>
-    </div>)}
+    <h3 style={{ color:T.text,fontSize:14,fontWeight:800,marginBottom:10 }}>Історія транзакцій</h3>
+    {walletData?.transactions?.length>0?walletData.transactions.map(t=>{
+      const isIncome=t.type==='PAYMENT_RELEASE';
+      const isHold=t.type==='PAYMENT_HOLD'&&t.description?.startsWith('Очікує');
+      const icon=isIncome?"↓":isHold?"◷":"↑";
+      const color=isIncome?T.green:isHold?T.yellow:T.orange;
+      const sign=isIncome?"+":"−";
+      const date=new Date(t.createdAt);
+      const dateStr=`${String(date.getDate()).padStart(2,'0')}.${String(date.getMonth()+1).padStart(2,'0')} · ${String(date.getHours()).padStart(2,'0')}:${String(date.getMinutes()).padStart(2,'0')}`;
+      return <div key={t.id} style={{...S.card,...S.flex,gap:10,marginBottom:8}}>
+        <div style={{width:36,height:36,borderRadius:10,background:color+"18",...S.flex,justifyContent:"center",fontSize:16,fontWeight:900,color}}>{icon}</div>
+        <div style={{flex:1}}><div style={{fontSize:12,fontWeight:700,color:T.text}}>{t.description||t.type}</div><div style={{fontSize:10,color:T.textSec}}>{dateStr}</div></div>
+        <div style={{fontSize:14,fontWeight:800,color}}>{sign}₴{Number(t.amount)}</div>
+      </div>;
+    }):<div style={{...S.card,textAlign:"center",padding:20}}><div style={{fontSize:12,color:T.textMuted}}>Поки немає транзакцій</div></div>}
 
     <div style={{ ...S.card,marginTop:14 }}>
       <h3 style={{ color:T.text,fontSize:14,fontWeight:800,marginBottom:10 }}>ФОП</h3>

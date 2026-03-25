@@ -82,19 +82,16 @@ router.post('/send-otp', async (req, res) => {
             },
         });
         logger_1.logger.info(`OTP sent to ${phone.slice(0, 6)}****`);
-        // Create Telegram auth session token
-        const telegramToken = (0, telegram_1.createAuthSession)(phone, otp);
-        // Try to send via Telegram if already linked
+        // Спробувати відправити через Telegram
         const sentViaTelegram = await (0, telegram_1.sendOtpViaTelegram)(phone, otp);
         // В development повертаємо код для тестування
         if (process.env.NODE_ENV === 'development') {
-            res.json({ message: 'OTP надіслано', otp, telegram: sentViaTelegram, telegramToken });
+            res.json({ message: 'OTP надіслано', otp, telegram: sentViaTelegram });
             return;
         }
         res.json({
-            message: sentViaTelegram ? 'Код надіслано в Telegram' : 'Відкрийте Telegram для отримання коду',
+            message: sentViaTelegram ? 'Код надіслано в Telegram' : 'OTP надіслано',
             telegram: sentViaTelegram,
-            telegramToken,
         });
     }
     catch (err) {
@@ -164,9 +161,9 @@ router.post('/verify-otp', async (req, res) => {
                     isVerified: true,
                 },
             });
-            // Створюємо гаманець для нового юзера
+            // Створюємо гаманець з 10000 грн для нового юзера
             await prisma_1.prisma.wallet.create({
-                data: { userId: user.id },
+                data: { userId: user.id, availableBalance: 10000 },
             });
             logger_1.logger.info(`New user registered: ${user.id}`);
         }
