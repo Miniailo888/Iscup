@@ -5,14 +5,13 @@ import { logger } from '../utils/logger';
 const router = Router();
 
 // POST /api/telegram/webhook - Telegram bot webhook
-router.post('/webhook', (req: Request, res: Response) => {
+router.post('/webhook', async (req: Request, res: Response) => {
   try {
-    processTelegramUpdate(req.body);
-    res.json({ ok: true });
+    await processTelegramUpdate(req.body);
   } catch (err) {
     logger.error('Telegram webhook error:', err);
-    res.json({ ok: true }); // Always return 200 to Telegram
   }
+  res.json({ ok: true }); // Always return 200 to Telegram
 });
 
 // GET /api/telegram/test-send - Debug endpoint

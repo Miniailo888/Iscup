@@ -1,22 +1,43 @@
 import { logger } from './logger';
+import { prisma } from './prisma';
 
 const BOT_TOKEN = "8778237684:AAG81-EM0ZMbdFUd6x6id1xpSvAVN_WagNo";
 const SERVER_URL = process.env.SERVER_URL || "https://iscup-production-25c2.up.railway.app";
 
-// In-memory stores
+// In-memory chatId store (persists during server lifetime)
 const phoneChats = new Map<string, number>();
+
+// Auth sessions — store in memory + DB fallback
 const authSessions = new Map<string, { phone: string; otp: string; createdAt: number; sent?: boolean }>();
 
-// Auth sessions for token-based /start
 export function createAuthSession(phone: string, otp: string): string {
   const token = Math.random().toString(36).substring(2, 10).toUpperCase();
   authSessions.set(token, { phone, otp, createdAt: Date.now() });
+  // Also store in DB for persistence across restarts
+  prisma.phoneVerification.updateMany({
+    where: { phone, otpHash: require('crypto').createHash('sha256').update(otp).digest('hex'), isUsed: false },
+    data: { ipAddress: `tg:${token}` }, // Store token in ipAddress field
+  }).catch(() => {});
   logger.info(`Auth session: ${token} for ***${phone.slice(-4)}`);
   return token;
 }
 
 export function getAuthSession(token: string) {
   return authSessions.get(token) || null;
+}
+
+// Try to find session in DB if not in memory (after server restart)
+async function findSessionInDB(token: string): Promise<{ phone: string; otp: string } | null> {
+  try {
+    const record = await prisma.phoneVerification.findFirst({
+      where: { ipAddress: `tg:${token}`, isUsed: false, expiresAt: { gte: new Date() } },
+      orderBy: { createdAt: 'desc' },
+    });
+    if (record) {
+      return { phone: record.phone, otp: '' }; // We don't need OTP here, just phone→chatId mapping
+    }
+  } catch {}
+  return null;
 }
 
 export function saveChatId(phone: string, chatId: number) {
@@ -36,21 +57,15 @@ export async function sendOtpViaTelegram(phone: string, otp: string): Promise<bo
   }
 
   try {
-    const message = `🔐 Ваш код підтвердження Spil: *${otp}*\n\nДійсний 5 хвилин. Не повідомляйте нікому.`;
-
+    const message = `🔐 Ваш код Spil: *${otp}*\n\nДійсний 5 хвилин.`;
     const res = await fetch(`https://api.telegram.org/bot${BOT_TOKEN}/sendMessage`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        chat_id: chatId,
-        text: message,
-        parse_mode: 'Markdown',
-      }),
+      body: JSON.stringify({ chat_id: chatId, text: message, parse_mode: 'Markdown' }),
     });
 
     if (!res.ok) {
-      const err = await res.json();
-      logger.error('Telegram send error:', err);
+      logger.error('Telegram send error:', await res.json());
       return false;
     }
 
@@ -62,8 +77,7 @@ export async function sendOtpViaTelegram(phone: string, otp: string): Promise<bo
   }
 }
 
-// Process incoming Telegram updates (webhook)
-export function processTelegramUpdate(update: any) {
+export async function processTelegramUpdate(update: any) {
   const message = update.message;
   if (!message?.text) return;
 
@@ -75,43 +89,61 @@ export function processTelegramUpdate(update: any) {
     const token = parts[1];
 
     if (token) {
-      const session = authSessions.get(token);
+      // Check memory first, then DB
+      let session = authSessions.get(token);
+      if (!session) {
+        const dbSession = await findSessionInDB(token);
+        if (dbSession) session = { ...dbSession, createdAt: Date.now() };
+      }
+
       if (session) {
         saveChatId(session.phone, chatId);
-        sendTelegramMessage(chatId, `🔐 Your Spil code: *${session.otp}*\n\nEnter this code in the app.`);
-        session.sent = true;
-        logger.info(`Code sent to ${chatId} via token ${token}`);
+
+        // Find the latest OTP for this phone
+        const latestOtp = await prisma.phoneVerification.findFirst({
+          where: { phone: session.phone, isUsed: false, expiresAt: { gte: new Date() } },
+          orderBy: { createdAt: 'desc' },
+        }).catch(() => null);
+
+        if (latestOtp) {
+          // We need the actual OTP — get it from memory session or generate message without it
+          const otpCode = session.otp || '(введіть код з додатку)';
+          await sendTelegramMessage(chatId, `🔐 Ваш код Spil: *${otpCode}*\n\nВведіть цей код в додатку.`);
+          if (session.otp) session.sent = true;
+          logger.info(`Code sent to ${chatId} via token ${token}`);
+        } else {
+          await sendTelegramMessage(chatId, `⏰ Код прострочений. Спробуйте ще раз в додатку.`);
+        }
       } else {
-        sendTelegramMessage(chatId, `⏰ Session expired. Try again in the app.`);
+        await sendTelegramMessage(chatId, `⏰ Сесія не знайдена. Спробуйте ще раз в додатку.`);
       }
     } else {
-      sendTelegramMessage(chatId, `👋 Welcome to Spil bot!\n\n📲 Open the app to sign in.`);
+      await sendTelegramMessage(chatId, `👋 Привіт! Це бот Spil.\n\n📲 Відкрийте додаток Spil щоб увійти.`);
     }
     return;
   }
 
-  // If user sends a phone number directly
   const phoneMatch = text.match(/^\+?\d{10,13}$/);
   if (phoneMatch) {
     saveChatId(text, chatId);
-    sendTelegramMessage(chatId, `✅ Номер ${text} прив'язано! Тепер OTP коди будуть приходити сюди.`);
+    await sendTelegramMessage(chatId, `✅ Номер ${text} прив'язано!`);
     return;
   }
 }
 
 async function sendTelegramMessage(chatId: number, text: string) {
   try {
-    await fetch(`https://api.telegram.org/bot${BOT_TOKEN}/sendMessage`, {
+    const res = await fetch(`https://api.telegram.org/bot${BOT_TOKEN}/sendMessage`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ chat_id: chatId, text, parse_mode: 'Markdown' }),
     });
+    if (!res.ok) logger.error('TG send fail:', await res.text());
   } catch (err) {
     logger.error('Telegram message error:', err);
   }
 }
 
-// Setup webhook for Telegram
 export async function setupTelegramWebhook(serverUrl?: string) {
   const url = serverUrl || SERVER_URL;
   const webhookUrl = `${url}/api/telegram/webhook`;
@@ -122,10 +154,9 @@ export async function setupTelegramWebhook(serverUrl?: string) {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ url: webhookUrl }),
     });
-
     const data = await res.json();
-    logger.info('Telegram webhook setup:', data);
+    logger.info('Telegram webhook:', data);
   } catch (err) {
-    logger.error('Telegram webhook setup error:', err);
+    logger.error('Webhook setup error:', err);
   }
 }

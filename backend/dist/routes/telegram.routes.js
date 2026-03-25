@@ -38,15 +38,14 @@ const telegram_1 = require("../utils/telegram");
 const logger_1 = require("../utils/logger");
 const router = (0, express_1.Router)();
 // POST /api/telegram/webhook - Telegram bot webhook
-router.post('/webhook', (req, res) => {
+router.post('/webhook', async (req, res) => {
     try {
-        (0, telegram_1.processTelegramUpdate)(req.body);
-        res.json({ ok: true });
+        await (0, telegram_1.processTelegramUpdate)(req.body);
     }
     catch (err) {
         logger_1.logger.error('Telegram webhook error:', err);
-        res.json({ ok: true }); // Always return 200 to Telegram
     }
+    res.json({ ok: true }); // Always return 200 to Telegram
 });
 // GET /api/telegram/test-send - Debug endpoint
 router.get('/test-send', async (req, res) => {
