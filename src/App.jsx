@@ -865,34 +865,39 @@ function BuyerQRPage({ deal, qty, onBack, orderId }) {
     generateQR(orderId).then(data=>{setQrToken(data.token);}).catch(()=>{}).finally(()=>setQrLoading(false));
   },[orderId]);
 
-  const code=qrToken?qrToken.slice(0,12).toUpperCase():`SC-${String(Date.now()).slice(-6)}`;
+  // Listen for order completion via WebSocket
+  useEffect(()=>{
+    const unsub=onEvent('order:completed',(data)=>{
+      if(data.orderId===orderId) setStatus("done");
+    });
+    return ()=>unsub();
+  },[orderId]);
+
+  const code=qrToken||"";
+  const shortCode=code?code.slice(0,12).toUpperCase():"...";
 
   return <div style={S.page}>
     <BackBtn onClick={onBack}/>
     <div style={{ ...S.card,textAlign:"center",padding:20 }}>
       <div style={{ ...S.flex,justifyContent:"center",gap:6,marginBottom:14 }}>
-        <div style={{ width:8,height:8,borderRadius:"50%",background:status==="active"?T.accent:status==="scanned"?T.yellow:T.green,animation:status==="active"?"pulse 2s infinite":"none" }}/>
-        <span style={{ fontSize:11,fontWeight:700,color:status==="active"?T.green:status==="scanned"?"#a16207":T.green }}>{status==="active"?"Активний":status==="scanned"?"Зіскановано":"Отримано"}</span>
+        <div style={{ width:8,height:8,borderRadius:"50%",background:status==="done"?T.green:T.accent,animation:status==="active"?"pulse 2s infinite":"none" }}/>
+        <span style={{ fontSize:11,fontWeight:700,color:status==="done"?T.green:T.accent }}>{status==="done"?"Товар отримано!":"Покажіть продавцю"}</span>
       </div>
       {qrLoading?<div style={{padding:40,color:T.textSec}}>Генерація QR...</div>
-      :<div style={{ background:T.cardAlt,borderRadius:T.radius,padding:14,display:"inline-block",marginBottom:14 }}><QRCode value={qrToken||code} size={180}/></div>}
-      <div style={{ ...S.flex,justifyContent:"center",gap:6,marginBottom:4 }}>
-        <span style={{ fontSize:14,fontWeight:900,color:T.text,letterSpacing:1,wordBreak:"break-all" }}>{code}</span>
-        <button onClick={()=>{navigator.clipboard.writeText(qrToken||code);setCopied(true);setTimeout(()=>setCopied(false),2000);}} style={{ ...S.btn,background:"transparent",color:copied?T.green:T.textMuted,padding:2 }}>{copied?I.check:I.copy}</button>
-      </div>
-      <div style={{ fontSize:12,color:T.textSec,marginBottom:16 }}>{deal.title} × {qty} {deal.unit}</div>
-      <div style={{ ...S.card,background:T.greenLight,marginBottom:14 }}><div style={{ fontSize:11,color:T.green }}>Сума</div><div style={{ fontSize:28,fontWeight:900,color:T.green }}>₴{total}</div></div>
-      <div style={{ ...S.card,padding:10,marginBottom:10 }}>
-        {[["Продавець",deal.seller],["Місто",deal.city],["Дійсний",deal.days+" дн."]].map(([k,v])=><div key={k} style={{ ...S.flex,justifyContent:"space-between",padding:"4px 0" }}><span style={{ fontSize:11,color:T.textSec }}>{k}</span><span style={{ fontSize:11,fontWeight:700,color:T.text }}>{v}</span></div>)}
-      </div>
-      <div style={{ marginTop:10,marginBottom:10 }}>
-        <div style={{ fontSize:11,fontWeight:700,color:T.text,marginBottom:6 }}>Маршрут самовивозу</div>
-        <RouteMap status={status}/>
-      </div>
-      <div style={{ display:"flex",gap:8 }}>
-        <button onClick={()=>setStatus(status==="active"?"scanned":"done")} style={{ ...S.btn,flex:1,padding:11,borderRadius:10,fontSize:11,background:T.accent,color:"#fff" }}>{status==="active"?"Симуляція: скан":status==="scanned"?"Підтвердити":"Готово"}</button>
-        <button onClick={()=>{const t=`${code}: ${deal.title} ₴${total}`;if(navigator.share)navigator.share({title:code,text:t});else navigator.clipboard.writeText(t);}} style={{ ...S.btn,padding:11,borderRadius:10,background:T.cardAlt,color:T.textSec }}>{I.share}</button>
-      </div>
+      :status==="done"?<div style={{padding:30}}><div style={{fontSize:48,marginBottom:10}}>✅</div><div style={{fontSize:16,fontWeight:900,color:T.green}}>Видачу підтверджено!</div></div>
+      :<div style={{ background:"#fff",borderRadius:T.radius,padding:14,display:"inline-block",marginBottom:14 }}><QRCode value={code} size={200}/></div>}
+      {status!=="done"&&<>
+        <div style={{ ...S.flex,justifyContent:"center",gap:6,marginBottom:4 }}>
+          <span style={{ fontSize:13,fontWeight:900,color:T.text,letterSpacing:1 }}>{shortCode}</span>
+          <button onClick={()=>{navigator.clipboard.writeText(code);setCopied(true);setTimeout(()=>setCopied(false),2000);}} style={{ ...S.btn,background:"transparent",color:copied?T.green:T.textMuted,padding:2 }}>{copied?I.check:I.copy}</button>
+        </div>
+        <div style={{ fontSize:10,color:T.textMuted,marginBottom:12 }}>Продавець сканує цей код при видачі</div>
+      </>}
+      <div style={{ fontSize:13,fontWeight:700,color:T.text,marginBottom:8 }}>{deal.title}</div>
+      <div style={{ fontSize:12,color:T.textSec,marginBottom:12 }}>{qty} {deal.unit} · {deal.seller}</div>
+      <div style={{ ...S.card,background:T.greenLight }}><div style={{ fontSize:11,color:T.green }}>До сплати</div><div style={{ fontSize:28,fontWeight:900,color:T.green }}>₴{total}</div></div>
+      <button onClick={()=>{const t=`Spil: ${deal.title} — ${shortCode}`;if(navigator.share)navigator.share({title:"Spil QR",text:t});else{navigator.clipboard.writeText(code);alert("Код скопійовано!");}}}
+        style={{ ...S.btn,width:"100%",marginTop:12,padding:12,borderRadius:12,background:T.cardAlt,color:T.text,fontSize:12,...S.flex,justifyContent:"center",gap:6 }}>{I.share} Поділитись кодом</button>
     </div>
     <style>{`@keyframes pulse{0%,100%{opacity:1}50%{opacity:.4}}`}</style>
   </div>;
@@ -900,63 +905,115 @@ function BuyerQRPage({ deal, qty, onBack, orderId }) {
 
 // ── QR Хаб ──────────────────────────────────────────────────────────────────
 function QRHub() {
-  const [scanning,setScanning]=useState(false),[scanned,setScanned]=useState(null);
-  if(scanned) return <div style={{...S.page}}><BackBtn onClick={()=>setScanned(null)}/>
-    <div style={{ ...S.card,textAlign:"center",padding:20 }}>
-      <div style={{ fontSize:44,marginBottom:10 }}>✅</div>
-      <h3 style={{ color:T.text,fontSize:16,fontWeight:900,marginBottom:10 }}>Знайдено!</h3>
+  const [scanning,setScanning]=useState(false),[scanned,setScanned]=useState(null),[confirmed,setConfirmed]=useState(false);
+  const [manualCode,setManualCode]=useState(""),[verifyError,setVerifyError]=useState(""),[verifying,setVerifying]=useState(false);
+  const [sellerOrders,setSellerOrders]=useState([]);
+  const videoRef=useState(null);
+
+  useEffect(()=>{
+    if(!isLoggedIn()) return;
+    fetchSellerOrders().then(setSellerOrders).catch(()=>{});
+    const unsub=onEvent('deal:update',()=>fetchSellerOrders().then(setSellerOrders).catch(()=>{}));
+    return ()=>unsub();
+  },[]);
+
+  const doVerify=async(token)=>{
+    setVerifying(true);setVerifyError("");
+    try{
+      const res=await verifyQR(token);
+      setScanned(res.order);setConfirmed(true);setScanning(false);
+      fetchSellerOrders().then(setSellerOrders).catch(()=>{});
+    }catch(e){setVerifyError(e.message);}
+    finally{setVerifying(false);}
+  };
+
+  // Camera scanner
+  const startCamera=async()=>{
+    setScanning(true);
+    try{
+      const stream=await navigator.mediaDevices.getUserMedia({video:{facingMode:"environment"}});
+      if(videoRef[0]) videoRef[0].srcObject=stream;
+    }catch{}
+  };
+  const stopCamera=()=>{
+    if(videoRef[0]?.srcObject){videoRef[0].srcObject.getTracks().forEach(t=>t.stop());videoRef[0].srcObject=null;}
+    setScanning(false);
+  };
+
+  // Success screen
+  if(confirmed&&scanned) return <div style={S.page}>
+    <div style={{ ...S.card,textAlign:"center",padding:24 }}>
+      <div style={{ fontSize:48,marginBottom:10 }}>✅</div>
+      <h3 style={{ color:T.green,fontSize:18,fontWeight:900,marginBottom:14 }}>Видачу підтверджено!</h3>
       <div style={{ ...S.card,background:T.greenLight,textAlign:"left",marginBottom:14 }}>
-        {[["Покупець",scanned.buyer],["Товар",`${scanned.item} × ${scanned.qty} ${scanned.unit}`],["Сума",`₴${scanned.amount}`]].map(([k,v])=><div key={k} style={{ ...S.flex,justifyContent:"space-between",padding:"4px 0" }}><span style={{ fontSize:11,color:T.textSec }}>{k}</span><span style={{ fontSize:11,fontWeight:700,color:T.text }}>{v}</span></div>)}
+        {[["Покупець",scanned.buyer],["Товар",scanned.item],["Кількість",`${scanned.quantity} ${scanned.unit}`],["Сума",`₴${scanned.amount}`]].map(([k,v])=><div key={k} style={{ ...S.flex,justifyContent:"space-between",padding:"6px 0",borderBottom:`1px solid ${T.border}11` }}><span style={{ fontSize:12,color:T.textSec }}>{k}</span><span style={{ fontSize:12,fontWeight:700,color:T.text }}>{v}</span></div>)}
       </div>
-      <button onClick={()=>setScanned(null)} style={{ ...S.btn,width:"100%",padding:13,background:T.accent,borderRadius:12,color:"#fff",fontSize:13 }}>Підтвердити видачу</button>
+      <div style={{fontSize:10,color:T.textSec,marginBottom:14}}>Кошти зараховано на ваш баланс</div>
+      <button onClick={()=>{setScanned(null);setConfirmed(false);setManualCode("");}} style={{ ...S.btn,width:"100%",padding:14,background:T.accent,borderRadius:12,color:"#fff",fontSize:14 }}>Готово</button>
     </div>
   </div>;
 
-  if(scanning) return <div style={{...S.page}}><BackBtn onClick={()=>setScanning(false)}/>
-    <div style={{ ...S.card,textAlign:"center",padding:20 }}>
-      <div style={{ width:"100%",height:220,background:T.text,borderRadius:T.radius,marginBottom:14,...S.flex,justifyContent:"center",position:"relative",overflow:"hidden" }}>
-        <div style={{ width:160,height:160,border:`3px solid ${T.accent}`,borderRadius:14 }}/>
-        <div style={{ position:"absolute",width:160,height:2,background:T.accent,animation:"scanLine 2s linear infinite" }}/>
+  // Scanner screen
+  if(scanning) return <div style={S.page}>
+    <BackBtn onClick={stopCamera}/>
+    <div style={{ ...S.card,textAlign:"center",padding:16 }}>
+      <div style={{ fontSize:14,fontWeight:800,color:T.text,marginBottom:10 }}>Наведіть камеру на QR код</div>
+      <div style={{ width:"100%",height:240,background:"#000",borderRadius:T.radius,marginBottom:14,overflow:"hidden",position:"relative" }}>
+        <video ref={el=>videoRef[0]=el} autoPlay playsInline style={{width:"100%",height:"100%",objectFit:"cover"}}/>
+        <div style={{ position:"absolute",top:"50%",left:"50%",transform:"translate(-50%,-50%)",width:160,height:160,border:`3px solid ${T.accent}`,borderRadius:14 }}/>
       </div>
-      <button onClick={()=>{setScanning(false);setScanned(ORDERS[0]);}} style={{ ...S.btn,width:"100%",padding:12,background:T.cardAlt,borderRadius:12,color:T.text,fontSize:12 }}>Симуляція: сканувати</button>
+      <div style={{fontSize:12,fontWeight:700,color:T.text,marginBottom:8}}>Або введіть код вручну</div>
+      <div style={{...S.flex,gap:8}}>
+        <Input value={manualCode} onChange={e=>setManualCode(e.target.value)} placeholder="Вставте QR код покупця"/>
+        <button disabled={!manualCode||verifying} onClick={()=>doVerify(manualCode)} style={{...S.btn,padding:"12px 16px",borderRadius:12,background:manualCode?T.accent:T.cardAlt,color:manualCode?"#fff":T.textMuted,fontSize:12,whiteSpace:"nowrap"}}>{verifying?"...":"OK"}</button>
+      </div>
+      {verifyError&&<div style={{color:"#ef4444",fontSize:11,marginTop:8}}>{verifyError}</div>}
     </div>
-    <style>{`@keyframes scanLine{0%{top:20%}50%{top:70%}100%{top:20%}}`}</style>
   </div>;
 
-  const testScenarios=[
-    {id:"SC-9001",buyer:"Тест: Успішна видача",avatar:"✅",item:"Курчата бройлер",qty:3,unit:"кг",amount:204,status:"paid",scenario:"success"},
-    {id:"SC-9002",buyer:"Тест: Протермінований",avatar:"⏰",item:"Мед акацієвий",qty:1,unit:"банка",amount:260,status:"expired",scenario:"expired"},
-    {id:"SC-9003",buyer:"Тест: Вже видано",avatar:"📦",item:"Яйця домашні",qty:2,unit:"лотки",amount:190,status:"done",scenario:"done"},
-    {id:"SC-9004",buyer:"Тест: Часткова видача",avatar:"½",item:"Набір овочів",qty:5,unit:"кг",amount:290,status:"partial",scenario:"partial"},
-  ];
+  const paidOrders=sellerOrders.filter(o=>o.status==="PAID");
+  const doneOrders=sellerOrders.filter(o=>o.status==="COMPLETED");
 
-  return <div style={{...S.page}}>
-    <h2 style={{ color:T.text,fontSize:22,fontWeight:900,marginBottom:16 }}>QR-центр</h2>
-    <div onClick={()=>setScanning(true)} style={{ ...S.card,...S.flex,gap:14,padding:16,cursor:"pointer",marginBottom:12 }}><Ic emoji="📷" size={44}/><div><div style={{ fontSize:14,fontWeight:800,color:T.text }}>Сканувати QR</div><div style={{ fontSize:11,color:T.textSec }}>Підтвердити видачу товару</div></div></div>
+  return <div style={S.page}>
+    <h2 style={{ color:T.text,fontSize:22,fontWeight:900,marginBottom:4 }}>QR-центр</h2>
+    <p style={{fontSize:11,color:T.textSec,marginBottom:16}}>Скануйте QR покупця для підтвердження видачі</p>
 
-    <div style={{ fontSize:13,fontWeight:800,color:T.text,marginBottom:8 }}>Замовлення</div>
-    {ORDERS.map(o=><div key={o.id} style={{ ...S.card,...S.flex,gap:10,marginBottom:8 }}>
-      <QRCode value={o.id} size={44}/>
-      <div style={{ flex:1 }}><div style={{ fontSize:11,fontWeight:700,color:T.text }}>{o.id}</div><div style={{ fontSize:10,color:T.textSec }}>{o.buyer} · {o.item}</div></div>
-      <div style={{ textAlign:"right" }}><div style={{ fontSize:12,fontWeight:800,color:T.green }}>₴{o.amount}</div><Badge bg={o.status==="paid"?"#fef9c3":T.greenLight} color={o.status==="paid"?"#a16207":T.green}>{o.status==="paid"?"Оплачено":"Видано"}</Badge></div>
-    </div>)}
+    <div onClick={startCamera} style={{ ...S.card,...S.flex,gap:14,padding:18,cursor:"pointer",marginBottom:14,background:`linear-gradient(135deg,${T.greenLight},${T.greenBorder})` }}>
+      <div style={{fontSize:28}}>📷</div>
+      <div><div style={{ fontSize:15,fontWeight:800,color:T.text }}>Сканувати QR</div><div style={{ fontSize:11,color:T.textSec }}>Відкрити камеру для сканування</div></div>
+    </div>
 
-    <div style={{ fontSize:13,fontWeight:800,color:T.text,margin:"12px 0 8px" }}>Тестові сценарії</div>
-    <div style={{ fontSize:10,color:T.textSec,marginBottom:10 }}>Натисніть щоб протестувати різні ситуації</div>
-    {testScenarios.map(ts=><div key={ts.id} onClick={()=>setScanned(ts)} style={{ ...S.card,...S.flex,gap:10,marginBottom:8,cursor:"pointer" }}>
-      <div style={{ fontSize:20,width:36,height:36,borderRadius:10,background:T.cardAlt,...S.flex,justifyContent:"center" }}>{ts.avatar}</div>
-      <div style={{ flex:1 }}>
-        <div style={{ fontSize:11,fontWeight:700,color:T.text }}>{ts.buyer}</div>
-        <div style={{ fontSize:10,color:T.textSec }}>{ts.item} × {ts.qty} {ts.unit} · ₴{ts.amount}</div>
+    <div style={{...S.card,marginBottom:14}}>
+      <div style={{fontSize:12,fontWeight:700,color:T.text,marginBottom:8}}>Ввести код вручну</div>
+      <div style={{...S.flex,gap:8}}>
+        <Input value={manualCode} onChange={e=>setManualCode(e.target.value)} placeholder="Вставте код від покупця"/>
+        <button disabled={!manualCode||verifying} onClick={()=>doVerify(manualCode)} style={{...S.btn,padding:"12px 20px",borderRadius:12,background:manualCode?T.accent:T.cardAlt,color:manualCode?"#fff":T.textMuted,fontSize:13}}>{verifying?"Перевірка...":"Підтвердити"}</button>
       </div>
-      <Badge bg={ts.scenario==="success"?T.greenLight:ts.scenario==="expired"?"#fef2f2":ts.scenario==="done"?T.cardAlt:"#fefce8"}
-        color={ts.scenario==="success"?T.green:ts.scenario==="expired"?"#ef4444":ts.scenario==="done"?T.textSec:"#a16207"}>
-        {ts.scenario==="success"?"Оплачено":ts.scenario==="expired"?"Протермін.":ts.scenario==="done"?"Видано":"Частково"}
-      </Badge>
-    </div>)}
+      {verifyError&&<div style={{color:"#ef4444",fontSize:11,marginTop:8}}>{verifyError}</div>}
+    </div>
 
-    <div style={{ fontSize:13,fontWeight:800,color:T.text,margin:"12px 0 8px" }}>Карта точок видачі</div>
-    <MapView pin={{x:50,y:45}} label="Бориспіль, ринок" height={140}/>
+    {paidOrders.length>0&&<>
+      <h3 style={{fontSize:13,fontWeight:800,color:T.text,marginBottom:8}}>Очікують видачі ({paidOrders.length})</h3>
+      {paidOrders.map(o=><div key={o.id} style={{ ...S.card,...S.flex,gap:10,marginBottom:8 }}>
+        <Ic emoji="📦" size={40}/>
+        <div style={{ flex:1 }}><div style={{ fontSize:12,fontWeight:700,color:T.text }}>{o.buyer?.name||"Покупець"}</div><div style={{ fontSize:10,color:T.textSec }}>{o.deal?.title} × {o.quantity} {o.deal?.unit}</div></div>
+        <div style={{ textAlign:"right" }}><div style={{ fontSize:13,fontWeight:800,color:T.green }}>₴{Number(o.amount)}</div><Badge bg="#fef9c3" color="#a16207">Оплачено</Badge></div>
+      </div>)}
+    </>}
+
+    {doneOrders.length>0&&<>
+      <h3 style={{fontSize:13,fontWeight:800,color:T.text,margin:"12px 0 8px"}}>Видані ({doneOrders.length})</h3>
+      {doneOrders.slice(0,5).map(o=><div key={o.id} style={{ ...S.card,...S.flex,gap:10,marginBottom:8,opacity:.5 }}>
+        <Ic emoji="✅" size={36}/>
+        <div style={{ flex:1 }}><div style={{ fontSize:11,fontWeight:700,color:T.text }}>{o.buyer?.name||"Покупець"}</div><div style={{ fontSize:10,color:T.textSec }}>{o.deal?.title}</div></div>
+        <Badge>Видано</Badge>
+      </div>)}
+    </>}
+
+    {paidOrders.length===0&&doneOrders.length===0&&<div style={{textAlign:"center",padding:30,color:T.textMuted}}>
+      <div style={{fontSize:36,marginBottom:8}}>📦</div>
+      <div style={{fontSize:12}}>Поки немає замовлень</div>
+    </div>}
   </div>;
 }
 
