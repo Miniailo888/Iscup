@@ -161,9 +161,9 @@ router.post('/verify-otp', async (req, res) => {
                     isVerified: true,
                 },
             });
-            // Створюємо гаманець для нового юзера
+            // Створюємо гаманець з 10000 грн для нового юзера
             await prisma_1.prisma.wallet.create({
-                data: { userId: user.id },
+                data: { userId: user.id, availableBalance: 10000 },
             });
             logger_1.logger.info(`New user registered: ${user.id}`);
         }

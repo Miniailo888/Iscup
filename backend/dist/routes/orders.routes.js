@@ -44,6 +44,12 @@ router.post('/', auth_middleware_1.authenticate, async (req, res) => {
             return;
         }
         const amount = Number(deal.groupPrice) * quantity;
+        // Check buyer has enough balance
+        const buyerWallet = await prisma_1.prisma.wallet.findUnique({ where: { userId: req.user.userId } });
+        if (!buyerWallet || Number(buyerWallet.availableBalance) < amount) {
+            res.status(400).json({ error: `Недостатньо коштів. Баланс: ₴${buyerWallet ? Number(buyerWallet.availableBalance) : 0}` });
+            return;
+        }
         const order = await prisma_1.prisma.order.create({
             data: {
                 dealId,
@@ -63,6 +69,19 @@ router.post('/', auth_middleware_1.authenticate, async (req, res) => {
                 paidAt: new Date(),
             },
         });
+        // Списати з покупця
+        await prisma_1.prisma.wallet.update({
+            where: { userId: req.user.userId },
+            data: { availableBalance: { decrement: amount } },
+        });
+        // Заморозити на рахунку продавця (held)
+        const sellerWallet = await prisma_1.prisma.wallet.findUnique({ where: { userId: deal.sellerId } });
+        if (sellerWallet) {
+            await prisma_1.prisma.wallet.update({
+                where: { userId: deal.sellerId },
+                data: { heldBalance: { increment: amount } },
+            });
+        }
         await prisma_1.prisma.deal.update({
             where: { id: dealId },
             data: { joined: { increment: quantity } },

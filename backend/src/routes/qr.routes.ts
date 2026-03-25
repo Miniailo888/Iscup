@@ -83,17 +83,27 @@ router.post('/verify', authenticate, requireRole('SELLER', 'ADMIN'), async (req:
       return;
     }
 
-    // Mark as used and complete order
-    await prisma.$transaction([
-      prisma.qrToken.update({
-        where: { id: qrToken.id },
-        data: { isUsed: true, usedAt: new Date(), usedBy: req.user!.userId },
-      }),
-      prisma.order.update({
-        where: { id: qrToken.order.id },
-        data: { status: 'COMPLETED', completedAt: new Date() },
-      }),
-    ]);
+    // Mark as used, complete order, transfer money
+    const orderAmount = Number(qrToken.order.amount);
+
+    await prisma.qrToken.update({
+      where: { id: qrToken.id },
+      data: { isUsed: true, usedAt: new Date(), usedBy: req.user!.userId },
+    });
+    await prisma.order.update({
+      where: { id: qrToken.order.id },
+      data: { status: 'COMPLETED', completedAt: new Date() },
+    });
+
+    // Transfer held → available for seller
+    await prisma.wallet.update({
+      where: { userId: req.user!.userId },
+      data: {
+        heldBalance: { decrement: orderAmount },
+        availableBalance: { increment: orderAmount },
+        totalEarned: { increment: orderAmount },
+      },
+    });
 
     // Notify buyer in real-time
     try {

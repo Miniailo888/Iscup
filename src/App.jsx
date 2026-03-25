@@ -1315,7 +1315,8 @@ function SellerDashboard({ deals, joined, onOpen, onBuy }) {
 // ── Гаманець + Профіль ──────────────────────────────────────────────────────
 function WalletPage({ user, setUser, theme, onTheme }) {
   const [editing,setEditing]=useState(false),[eName,setEName]=useState(user?.name||""),[eEmail,setEEmail]=useState(user?.email||""),[ePhone,setEPhone]=useState(user?.phone||""),[eCity,setECity]=useState(user?.city||"");
-  const [balance,setBalance]=useState(12840);
+  const [balance,setBalance]=useState(0);
+  const [walletData,setWalletData]=useState(null);
   const [showPay,setShowPay]=useState(null); // "topup" | "withdraw"
   const [payMethod,setPayMethod]=useState(null);
   const [payAmount,setPayAmount]=useState("");
@@ -1327,6 +1328,15 @@ function WalletPage({ user, setUser, theme, onTheme }) {
   const [authLoading,setAuthLoading]=useState(false),[authError,setAuthError]=useState("");
   const txIcons={income:"↓",withdrawal:"↑",hold:"◷"}, txColors={income:T.green,withdrawal:T.orange,hold:T.yellow};
   const isGuest=!user||user.name==="Гість"||!localStorage.getItem("spilnokup_token");
+
+  // Load real wallet balance
+  useEffect(()=>{
+    if(isGuest) return;
+    fetchWallet().then(w=>{setBalance(Number(w.availableBalance));setWalletData(w);}).catch(()=>{});
+    const unsub1=onEvent('deal:update',()=>fetchWallet().then(w=>{setBalance(Number(w.availableBalance));setWalletData(w);}).catch(()=>{}));
+    const unsub2=onEvent('order:completed',()=>fetchWallet().then(w=>{setBalance(Number(w.availableBalance));setWalletData(w);}).catch(()=>{}));
+    return ()=>{unsub1();unsub2();};
+  },[isGuest]);
   const initials=(user?.name||"Г").split(" ").map(w=>w[0]).join("").toUpperCase().slice(0,2);
 
   const doAuthSendOtp=async()=>{
@@ -1515,19 +1525,20 @@ function WalletPage({ user, setUser, theme, onTheme }) {
     <div style={{ ...S.card,background:`linear-gradient(135deg,${T.greenLight},${T.greenBorder})`,marginBottom:16,textAlign:"center",padding:20 }}>
       <div style={{ fontSize:11,color:T.green }}>Баланс</div>
       <div style={{ fontSize:32,fontWeight:900,color:T.text }}>₴{balance.toLocaleString()}</div>
-      <div style={{ fontSize:11,color:T.textSec,marginTop:2 }}>Доступно: ₴{Math.round(balance*0.75).toLocaleString()}</div>
+      {walletData&&Number(walletData.heldBalance)>0&&<div style={{ fontSize:11,color:T.yellow,marginTop:2 }}>Заморожено: ₴{Number(walletData.heldBalance).toLocaleString()}</div>}
       <div style={{ display:"flex",gap:8,marginTop:12,justifyContent:"center" }}>
         <button onClick={()=>setShowPay("topup")} style={{ ...S.btn,padding:"10px 20px",borderRadius:12,fontSize:12,background:T.accent,color:"#fff" }}>+ Поповнити</button>
         <button onClick={()=>setShowPay("withdraw")} style={{ ...S.btn,padding:"10px 20px",borderRadius:12,fontSize:12,background:T.cardAlt,color:T.text,border:`1px solid ${T.border}44` }}>Вивести</button>
       </div>
     </div>
 
-    <h3 style={{ color:T.text,fontSize:14,fontWeight:800,marginBottom:10 }}>Транзакції</h3>
-    {TRANSACTIONS.map(t=><div key={t.id} style={{ ...S.card,...S.flex,gap:10,marginBottom:8 }}>
-      <div style={{ width:36,height:36,borderRadius:10,background:txColors[t.type]+"18",...S.flex,justifyContent:"center",fontSize:16,fontWeight:900,color:txColors[t.type] }}>{txIcons[t.type]}</div>
-      <div style={{ flex:1 }}><div style={{ fontSize:12,fontWeight:700,color:T.text }}>{t.desc}</div><div style={{ fontSize:10,color:T.textSec }}>{t.date}</div></div>
-      <div style={{ fontSize:14,fontWeight:800,color:txColors[t.type] }}>{t.type==="income"?"+":t.type==="withdrawal"?"−":""}₴{t.amount}</div>
-    </div>)}
+    <h3 style={{ color:T.text,fontSize:14,fontWeight:800,marginBottom:10 }}>Інформація</h3>
+    <div style={{...S.card,marginBottom:8}}>
+      {[["Доступно",`₴${balance.toLocaleString()}`,T.green],
+        walletData&&Number(walletData.heldBalance)>0?["Заморожено",`₴${Number(walletData.heldBalance).toLocaleString()}`,T.yellow]:null,
+        walletData?["Зароблено",`₴${Number(walletData.totalEarned).toLocaleString()}`,T.accent]:null,
+      ].filter(Boolean).map(([k,v,c])=><div key={k} style={{...S.flex,justifyContent:"space-between",padding:"8px 0",borderBottom:`1px solid ${T.border}11`}}><span style={{fontSize:12,color:T.textSec}}>{k}</span><span style={{fontSize:13,fontWeight:800,color:c}}>{v}</span></div>)}
+    </div>
 
     <div style={{ ...S.card,marginTop:14 }}>
       <h3 style={{ color:T.text,fontSize:14,fontWeight:800,marginBottom:10 }}>ФОП</h3>

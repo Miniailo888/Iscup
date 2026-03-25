@@ -75,17 +75,25 @@ router.post('/verify', auth_middleware_1.authenticate, (0, auth_middleware_1.req
             res.status(403).json({ error: 'Це замовлення не для вас' });
             return;
         }
-        // Mark as used and complete order
-        await prisma_1.prisma.$transaction([
-            prisma_1.prisma.qrToken.update({
-                where: { id: qrToken.id },
-                data: { isUsed: true, usedAt: new Date(), usedBy: req.user.userId },
-            }),
-            prisma_1.prisma.order.update({
-                where: { id: qrToken.order.id },
-                data: { status: 'COMPLETED', completedAt: new Date() },
-            }),
-        ]);
+        // Mark as used, complete order, transfer money
+        const orderAmount = Number(qrToken.order.amount);
+        await prisma_1.prisma.qrToken.update({
+            where: { id: qrToken.id },
+            data: { isUsed: true, usedAt: new Date(), usedBy: req.user.userId },
+        });
+        await prisma_1.prisma.order.update({
+            where: { id: qrToken.order.id },
+            data: { status: 'COMPLETED', completedAt: new Date() },
+        });
+        // Transfer held → available for seller
+        await prisma_1.prisma.wallet.update({
+            where: { userId: req.user.userId },
+            data: {
+                heldBalance: { decrement: orderAmount },
+                availableBalance: { increment: orderAmount },
+                totalEarned: { increment: orderAmount },
+            },
+        });
         // Notify buyer in real-time
         try {
             const io = (0, socket_1.getIO)();
