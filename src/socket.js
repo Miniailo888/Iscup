@@ -22,7 +22,7 @@ export function connectSocket() {
   socket.on('disconnect', () => console.log('Socket disconnected'));
 
   // Re-emit to stored listeners
-  ['deal:update', 'order:completed', 'chat:message', 'chat:new', 'chat:typing'].forEach(event => {
+  ['deal:update', 'deal:new', 'deal:deleted', 'order:completed', 'chat:message', 'chat:new', 'chat:typing'].forEach(event => {
     socket.on(event, (data) => {
       if (listeners[event]) listeners[event].forEach(cb => cb(data));
     });

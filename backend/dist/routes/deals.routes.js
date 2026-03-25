@@ -5,6 +5,7 @@ const prisma_1 = require("../utils/prisma");
 const auth_middleware_1 = require("../middleware/auth.middleware");
 const auth_middleware_2 = require("../middleware/auth.middleware");
 const logger_1 = require("../utils/logger");
+const socket_1 = require("../socket");
 const client_1 = require("@prisma/client");
 const router = (0, express_1.Router)();
 // GET /api/deals/seller/my
@@ -152,6 +153,10 @@ router.post('/', auth_middleware_1.authenticate, (0, auth_middleware_2.requireRo
             },
         });
         logger_1.logger.info(`Deal created: ${deal.id} by ${req.user.userId}`);
+        try {
+            (0, socket_1.getIO)().emit('deal:new', { dealId: deal.id });
+        }
+        catch { }
         res.status(201).json(deal);
     }
     catch (err) {
@@ -181,6 +186,10 @@ router.delete('/:id', auth_middleware_1.authenticate, async (req, res) => {
         await prisma_1.prisma.conversation.deleteMany({ where: { dealId } });
         await prisma_1.prisma.deal.delete({ where: { id: dealId } });
         logger_1.logger.info(`Deal deleted: ${dealId} by ${req.user.userId}`);
+        try {
+            (0, socket_1.getIO)().emit('deal:deleted', { dealId });
+        }
+        catch { }
         res.json({ success: true });
     }
     catch (err) {

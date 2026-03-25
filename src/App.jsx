@@ -1453,10 +1453,12 @@ export default function App() {
     const unsub1=onEvent('deal:update',(data)=>{
       setDeals(prev=>prev.map(d=>d.id===data.dealId||d.dbId===data.dealId?{...d,joined:data.joined}:d));
     });
-    const unsub2=onEvent('order:completed',(data)=>{
-      loadDeals();
+    const unsub2=onEvent('order:completed',()=>loadDeals());
+    const unsub3=onEvent('deal:new',()=>loadDeals());
+    const unsub4=onEvent('deal:deleted',(data)=>{
+      setDeals(prev=>prev.filter(d=>d.id!==data.dealId&&d.dbId!==data.dealId));
     });
-    return ()=>{unsub1();unsub2();};
+    return ()=>{unsub1();unsub2();unsub3();unsub4();};
   },[user]);
 
   const onJoin=id=>setJoined(j=>({...j,[id]:!j[id]}));
