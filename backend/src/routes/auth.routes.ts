@@ -17,13 +17,23 @@ function generateUserDisplayId(): string {
 }
 
 // POST /api/auth/send-otp
+function normalizePhone(raw: string): string {
+  let p = raw.replace(/[\s\-\(\)]/g, '');
+  if (p.startsWith('8') && p.length === 10) p = '+380' + p.slice(1);
+  if (p.startsWith('0') && p.length === 10) p = '+380' + p.slice(1);
+  if (p.startsWith('380')) p = '+' + p;
+  if (!p.startsWith('+')) p = '+' + p;
+  return p;
+}
+
 router.post('/send-otp', async (req: Request, res: Response): Promise<void> => {
   try {
-    const { phone } = req.body;
-    if (!phone || typeof phone !== 'string') {
+    const rawPhone = req.body.phone;
+    if (!rawPhone || typeof rawPhone !== 'string') {
       res.status(400).json({ error: 'Телефон обов\'язковий' });
       return;
     }
+    const phone = normalizePhone(rawPhone);
 
     // Перевірка rate limit: максимум 3 OTP за 10 хвилин
     const recentOtps = await prisma.phoneVerification.count({
@@ -77,11 +87,12 @@ router.post('/send-otp', async (req: Request, res: Response): Promise<void> => {
 // POST /api/auth/verify-otp
 router.post('/verify-otp', async (req: Request, res: Response): Promise<void> => {
   try {
-    const { phone, otp, name, city } = req.body;
-    if (!phone || !otp) {
+    const { phone: rawPhone, otp, name, city } = req.body;
+    if (!rawPhone || !otp) {
       res.status(400).json({ error: 'Телефон і OTP обов\'язкові' });
       return;
     }
+    const phone = normalizePhone(rawPhone);
 
     const otpHash = crypto.createHash('sha256').update(otp).digest('hex');
 
