@@ -159,5 +159,34 @@ router.post('/', auth_middleware_1.authenticate, (0, auth_middleware_2.requireRo
         res.status(500).json({ error: err?.message || 'Помилка сервера' });
     }
 });
+// DELETE /api/deals/:id
+router.delete('/:id', auth_middleware_1.authenticate, async (req, res) => {
+    try {
+        const dealId = req.params.id;
+        const deal = await prisma_1.prisma.deal.findUnique({ where: { id: dealId } });
+        if (!deal) {
+            res.status(404).json({ error: 'Оголошення не знайдено' });
+            return;
+        }
+        if (deal.sellerId !== req.user.userId) {
+            res.status(403).json({ error: 'Це не ваше оголошення' });
+            return;
+        }
+        // Delete related records first
+        await prisma_1.prisma.qrToken.deleteMany({ where: { order: { dealId } } });
+        await prisma_1.prisma.payment.deleteMany({ where: { order: { dealId } } });
+        await prisma_1.prisma.order.deleteMany({ where: { dealId } });
+        await prisma_1.prisma.review.deleteMany({ where: { dealId } });
+        await prisma_1.prisma.auction.deleteMany({ where: { dealId } });
+        await prisma_1.prisma.conversation.deleteMany({ where: { dealId } });
+        await prisma_1.prisma.deal.delete({ where: { id: dealId } });
+        logger_1.logger.info(`Deal deleted: ${dealId} by ${req.user.userId}`);
+        res.json({ success: true });
+    }
+    catch (err) {
+        logger_1.logger.error('DELETE /deals/:id error:', err?.message || err);
+        res.status(500).json({ error: err?.message || 'Помилка сервера' });
+    }
+});
 exports.default = router;
 //# sourceMappingURL=deals.routes.js.map

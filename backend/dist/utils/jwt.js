@@ -11,7 +11,7 @@ const jsonwebtoken_1 = __importDefault(require("jsonwebtoken"));
 const JWT_SECRET = process.env.JWT_SECRET || '';
 const JWT_REFRESH_SECRET = process.env.JWT_REFRESH_SECRET || '';
 function generateAccessToken(userId, role) {
-    return jsonwebtoken_1.default.sign({ userId, role }, JWT_SECRET, { expiresIn: '15m' });
+    return jsonwebtoken_1.default.sign({ userId, role }, JWT_SECRET, { expiresIn: '7d' });
 }
 function generateRefreshToken(userId) {
     return jsonwebtoken_1.default.sign({ userId }, JWT_REFRESH_SECRET, { expiresIn: '30d' });

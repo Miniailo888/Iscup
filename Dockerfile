@@ -1,28 +1,20 @@
-FROM node:22-alpine AS backend-build
-WORKDIR /app/backend
-COPY backend/package.json backend/package-lock.json ./
-RUN npm ci
-COPY backend/prisma ./prisma
-COPY backend/prisma.config.ts ./
-COPY backend/tsconfig.json ./
-COPY backend/src ./src
-RUN npx prisma generate
-RUN npx tsc
-
 FROM node:22-alpine
 WORKDIR /app
 
-# Backend production deps
+# Backend deps
 COPY backend/package.json backend/package-lock.json ./backend/
 RUN cd backend && npm ci --omit=dev
 
-# Copy compiled backend + prisma
-COPY --from=backend-build /app/backend/dist ./backend/dist
-COPY --from=backend-build /app/backend/prisma ./backend/prisma
-COPY --from=backend-build /app/backend/node_modules/.prisma ./backend/node_modules/.prisma
-COPY --from=backend-build /app/backend/node_modules/@prisma ./backend/node_modules/@prisma
+# Backend compiled code + prisma
+COPY backend/dist ./backend/dist
+COPY backend/prisma ./backend/prisma
+COPY backend/prisma.config.ts ./backend/
+COPY backend/tsconfig.json ./backend/
 
-# Copy frontend
+# Generate prisma client
+RUN cd backend && DATABASE_URL="postgresql://dummy:dummy@localhost:5432/dummy" npx prisma generate
+
+# Frontend
 COPY dist ./dist
 COPY server.js ./
 
