@@ -1247,7 +1247,7 @@ export default function App() {
   const [user,setUser]=useState(()=>{try{return JSON.parse(localStorage.getItem("spilnokup_user"));}catch{return null;}});
   const [authStep,setAuthStep]=useState(user?null:"welcome");
   const [tab,setTab]=useState("market"),[page,setPage]=useState(null),[joined,setJoined]=useState({}),[buyData,setBuyData]=useState(null);
-  const [deals,setDeals]=useState(INIT_DEALS);
+  const [deals,setDeals]=useState([]);
   const [theme,setTheme]=useState(()=>localStorage.getItem("spilnokup_theme")||"ocean");
   applyTheme(theme); S=getS();
   const changeTheme=(id)=>{setTheme(id);localStorage.setItem("spilnokup_theme",id);};
@@ -1264,7 +1264,7 @@ export default function App() {
         joined:d.joined,needed:d.needed,days:Math.max(0,Math.ceil((new Date(d.deadline)-Date.now())/(1000*60*60*24))),
         desc:d.description||"",tags:d.tags||[],hot:d.isHot,dbId:d.id,
       }));
-      if(mapped.length>0) setDeals(mapped);
+      setDeals(mapped);
     }catch(e){console.warn("API unavailable, using mock data:",e.message);}
   },[]);
   useEffect(()=>{loadDeals();},[loadDeals]);
