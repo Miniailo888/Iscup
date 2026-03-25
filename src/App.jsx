@@ -327,7 +327,7 @@ function DealPhoto({ deal, h=90 }) {
   </div>;
 }
 
-function DealCard({ deal, onOpen, joined, onJoin }) {
+function DealCard({ deal, onOpen, joined, onJoin, onRefresh }) {
   const p=pct(deal),d=disc(deal),isIn=joined[deal.id],col=pCol(p);
   const bc=discBorder(deal);
   return <div onClick={()=>onOpen(deal)} style={{ ...S.card,borderRadius:10,overflow:"hidden",cursor:"pointer",padding:0,border:`1px solid ${bc}44` }}>
@@ -340,7 +340,10 @@ function DealCard({ deal, onOpen, joined, onJoin }) {
           <div style={{flex:1}}><ProgressBar value={p} color={col} h={2}/></div>
           <span style={{fontSize:7,color:T.textMuted}}>{deal.joined}/{deal.needed}</span>
           <span style={{fontSize:7,color:T.textMuted}}>{deal.days}д</span>
-          {isLoggedIn()&&<button onClick={e=>{e.stopPropagation();onJoin(deal.id);}} style={{...S.btn,background:isIn?T.green:T.accent,color:"#fff",borderRadius:4,padding:"1px 6px",fontSize:8}}>{isIn?"✓":"+"}</button>}
+          {isLoggedIn()&&!isIn&&<button onClick={async e=>{e.stopPropagation();
+            try{await createOrder(deal.dbId||deal.id,deal.min);onJoin(deal.id);if(onRefresh)onRefresh();}catch(ex){alert(ex.message);}
+          }} style={{...S.btn,background:T.accent,color:"#fff",borderRadius:4,padding:"1px 6px",fontSize:8}}>+</button>}
+          {isIn&&<span style={{background:T.green,color:"#fff",borderRadius:4,padding:"1px 6px",fontSize:8,fontWeight:700}}>✓</span>}
         </div>
       </div>
       <div style={{flexShrink:0,padding:"6px 8px 6px 0",textAlign:"right",display:"flex",flexDirection:"column",alignItems:"flex-end",justifyContent:"center",gap:3}}>
@@ -458,7 +461,7 @@ function HotSlider({ deals, onOpen }) {
   </div>;
 }
 
-function MarketPage({ deals, joined, onJoin, onOpen, user, onCreateDeal, theme, onTheme }) {
+function MarketPage({ deals, joined, onJoin, onOpen, user, onCreateDeal, theme, onTheme, onRefresh }) {
   const [cat,setCat]=useState("all"),[search,setSearch]=useState(""),[sort,setSort]=useState("hot"),[showF,setShowF]=useState(false),[cityF,setCityF]=useState("all"),[priceF,setPriceF]=useState("all"),[discF,setDiscF]=useState("all"),[ratingF,setRatingF]=useState("all"),[daysF,setDaysF]=useState("all");
   const cities=["all",...new Set(deals.map(d=>d.city.split(",")[0].trim()))];
   const activeFilters=[cityF!=="all",priceF!=="all",discF!=="all",ratingF!=="all",daysF!=="all"].filter(Boolean).length;
@@ -545,7 +548,7 @@ function MarketPage({ deals, joined, onJoin, onOpen, user, onCreateDeal, theme, 
 
     <div style={{padding:"0 16px 4px",fontSize:10,color:T.textMuted}}>{list.length} оголошень</div>
     <div style={{ padding:"0 16px 90px",display:"flex",flexDirection:"column",gap:10 }}>
-      {list.map(d=><DealCard key={d.id} deal={d} onOpen={onOpen} joined={joined} onJoin={onJoin}/>)}
+      {list.map(d=><DealCard key={d.id} deal={d} onOpen={onOpen} joined={joined} onJoin={onJoin} onRefresh={onRefresh}/>)}
       {list.length===0&&<div style={{ textAlign:"center",padding:60,color:T.textMuted }}>Нічого не знайдено</div>}
     </div>
 
@@ -747,8 +750,9 @@ function CreateDealPage({ onBack, onSave }) {
 }
 
 // ── Деталі угоди ────────────────────────────────────────────────────────────
-function DealDetail({ deal, onBack, joined, onJoin, onBuy }) {
+function DealDetail({ deal, onBack, joined, onJoin, onBuy, onChat, onRefresh }) {
   const [qty,setQty]=useState(deal.min);
+  const [joining,setJoining]=useState(false);
   const p=pct(deal),d=disc(deal),isIn=joined[deal.id],col=pCol(p);
   return <div style={{ paddingBottom:100 }}>
     <div style={{ background:`linear-gradient(180deg,${T.greenLight},${T.card})`,padding:"20px 16px 20px" }}>
@@ -763,8 +767,8 @@ function DealDetail({ deal, onBack, joined, onJoin, onBuy }) {
         <div style={{ flex:1 }}>
           <div style={{ fontSize:14,fontWeight:800,color:T.text }}>{deal.seller}</div>
           <div style={{ ...S.flex,gap:4,fontSize:11,color:T.textSec,marginTop:2 }}>{I.pin} {deal.city}</div>
-          <div style={{ ...S.flex,gap:3,fontSize:11,color:T.yellow,marginTop:2 }}>{I.star} {deal.rating} · {deal.deals} угод</div>
         </div>
+        {isLoggedIn()&&deal.sellerId&&<button onClick={()=>onChat&&onChat(deal.sellerId,deal.dbId||deal.id)} style={{ ...S.btn,...S.flex,gap:4,padding:"8px 12px",borderRadius:10,background:T.accent,color:"#fff",fontSize:11 }}>{I.msg} Написати</button>}
       </div>
     </div>
     <div style={{ padding:14,display:"flex",flexDirection:"column",gap:14 }}>
@@ -810,11 +814,14 @@ function DealDetail({ deal, onBack, joined, onJoin, onBuy }) {
         <div style={{ fontSize:12,color:T.textSec,marginBottom:8 }}>Увійдіть щоб долучитись</div>
         <div style={{ fontSize:10,color:T.textMuted }}>Вкладка Гаманець → Увійти або Створити акаунт</div>
       </div>:isIn?<div style={{ ...S.flex,gap:8 }}>
-        <div style={{ flex:1,background:T.greenLight,borderRadius:12,padding:12,textAlign:"center" }}><div style={{ fontSize:13,fontWeight:800,color:T.green }}>В групі!</div></div>
+        <div style={{ flex:1,background:T.greenLight,borderRadius:12,padding:12,textAlign:"center" }}><div style={{ fontSize:13,fontWeight:800,color:T.green }}>В групі! ({qty} {deal.unit})</div></div>
         <button onClick={()=>onBuy(deal,qty)} style={{ ...S.btn,background:"#6366f1",color:"#fff",borderRadius:12,padding:"12px 18px",fontSize:12 }}>QR</button>
-      </div>:<button onClick={async()=>{
-        try{const order=await createOrder(deal.dbId||deal.id,qty);onJoin(deal.id);onBuy(deal,qty,order.id);}catch(e){alert(e.message);}
-      }} style={{ ...S.btn,width:"100%",padding:14,background:`linear-gradient(135deg,${T.accent},${T.green})`,borderRadius:14,color:"#fff",fontSize:15 }}>Долучитись · ₴{deal.group*qty}</button>}
+        {deal.sellerId&&<button onClick={()=>onChat&&onChat(deal.sellerId,deal.dbId||deal.id)} style={{ ...S.btn,background:T.cardAlt,color:T.text,borderRadius:12,padding:"12px 14px",fontSize:12 }}>{I.msg}</button>}
+      </div>:<button disabled={joining} onClick={async()=>{
+        setJoining(true);
+        try{const order=await createOrder(deal.dbId||deal.id,qty);onJoin(deal.id);if(onRefresh)onRefresh();onBuy(deal,qty,order.id);}catch(e){alert(e.message);}
+        finally{setJoining(false);}
+      }} style={{ ...S.btn,width:"100%",padding:14,background:joining?T.cardAlt:`linear-gradient(135deg,${T.accent},${T.green})`,borderRadius:14,color:"#fff",fontSize:15 }}>{joining?"Обробка...":(`Долучитись · ₴${deal.group*qty}`)}</button>}
     </div>
   </div>;
 }
@@ -1370,7 +1377,7 @@ export default function App() {
       const catMap={meat:"farm",dairy:"dairy",grocery:"food",bakery:"bakery",vegetables:"veggies",services:"services",clothing:"clothing",food:"food",sport:"sport",electronics:"electronics",handmade:"handmade",beauty:"beauty",home:"home",drinks:"drinks",other:"other"};
       const mapped=data.deals.map((d,i)=>({
         id:d.id,cat:catMap[d.category]||d.category,seller:d.seller?.name||"",avatar:d.seller?.avatarUrl||"🏪",
-        city:d.city||d.seller?.city||"",rating:4.8,deals:0,title:d.title,unit:d.unit,
+        sellerId:d.sellerId,city:d.city||d.seller?.city||"",rating:4.8,deals:0,title:d.title,unit:d.unit,
         retail:Number(d.retailPrice),group:Number(d.groupPrice),min:d.minQty,max:d.maxQty,
         joined:d.joined,needed:d.needed,days:Math.max(0,Math.ceil((new Date(d.deadline)-Date.now())/(1000*60*60*24))),
         desc:d.description||"",tags:d.tags||[],hot:d.isHot,dbId:d.id,
@@ -1392,11 +1399,13 @@ export default function App() {
   function render() {
     if(authStep==="welcome") return <WelcomeScreen onStart={()=>setAuthStep("register")} onGuest={onGuest}/>;
     if(authStep==="register") return <RegisterScreen onDone={onRegDone}/>;
-    if(page==="detail"&&buyData) return <DealDetail deal={buyData.deal} onBack={()=>setPage(null)} joined={joined} onJoin={onJoin} onBuy={onBuy}/>;
+    if(page==="detail"&&buyData) return <DealDetail deal={buyData.deal} onBack={()=>setPage(null)} joined={joined} onJoin={onJoin} onBuy={onBuy} onRefresh={loadDeals} onChat={async(sellerId,dealId)=>{
+      try{const conv=await createConversation(sellerId,dealId);setPage(null);setTab("chat");}catch(e){alert(e.message);}
+    }}/>;
     if(page==="qr"&&buyData) return <BuyerQRPage deal={buyData.deal} qty={buyData.qty} orderId={buyData.orderId} onBack={()=>setPage(null)}/>;
     if(page==="createDeal") return <CreateDealPage onBack={()=>setPage(null)} onSave={()=>{loadDeals();setPage(null);}}/>;
     switch(tab){
-      case"market":return <MarketPage deals={deals} joined={joined} onJoin={onJoin} onOpen={onOpen} user={user} onCreateDeal={()=>setPage("createDeal")} theme={theme} onTheme={changeTheme}/>;
+      case"market":return <MarketPage deals={deals} joined={joined} onJoin={onJoin} onOpen={onOpen} user={user} onCreateDeal={()=>setPage("createDeal")} theme={theme} onTheme={changeTheme} onRefresh={loadDeals}/>;
       case"qr":return <QRHub/>;
       case"chat":return <ChatPage/>;
       case"seller":return <SellerDashboard deals={deals} joined={joined} onOpen={onOpen}/>;
