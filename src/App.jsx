@@ -610,11 +610,15 @@ function CreateDealPage({ onBack, onSave }) {
   const deliveryOptions=["Самовивіз","Доставка","Нова Пошта","Укрпошта","Meest"];
   const toggleDelivery=(tag)=>setDeliveryTags(prev=>prev.includes(tag)?prev.filter(t=>t!==tag):[...prev,tag]);
 
+  const [tried,setTried]=useState(false);
   const canSave = title && price && retail && Number(price)<Number(retail) && city && desc && unit && needed && days;
+  const miss=(field)=>tried&&!field;
+  const reqStyle=(field)=>miss(field)?{border:`2px solid #ef4444`,borderRadius:14}:{};
   const allTags=[...deliveryTags,...(customTags?customTags.split(",").map(t=>t.trim()).filter(Boolean):[])];
 
-  const Label=({text,hint})=><div style={{marginBottom:6}}>
+  const Label=({text,hint,required})=><div style={{marginBottom:6}}>
     <span style={{fontSize:12,fontWeight:700,color:T.text}}>{text}</span>
+    {required&&<span style={{color:"#ef4444",marginLeft:2}}>*</span>}
     {hint&&<span style={{fontSize:10,color:T.textMuted,marginLeft:6}}>{hint}</span>}
   </div>;
 
@@ -633,30 +637,32 @@ function CreateDealPage({ onBack, onSave }) {
         </label>
       </div>
 
-      <div>
-        <Label text="Назва" hint="Що продаєте?"/>
+      <div style={reqStyle(title)}>
+        <Label text="Назва" hint="Що продаєте?" required/>
         <Input value={title} onChange={e=>setTitle(e.target.value)} placeholder="Наприклад: Мед акацієвий 1л"/>
+        {miss(title)&&<div style={{fontSize:10,color:"#ef4444",marginTop:4}}>Введіть назву товару</div>}
       </div>
 
       <div>
-        <Label text="Категорія"/>
+        <Label text="Категорія" required/>
         <div style={{ display:"flex",gap:6,flexWrap:"wrap" }}>
           {CATEGORIES.filter(c=>c.id!=="all").map(c=><button key={c.id} onClick={()=>setCat(c.id)} style={{ ...S.btn,padding:"6px 10px",borderRadius:10,fontSize:10,background:cat===c.id?T.accent:T.cardAlt,color:cat===c.id?"#fff":T.textSec }}>{c.icon} {c.label}</button>)}
         </div>
       </div>
 
       <div>
-        <Label text="Ціна (₴)" hint="Групова має бути менше роздрібної"/>
+        <Label text="Ціна (₴)" hint="Групова має бути менше роздрібної" required/>
         <div style={{ display:"flex",gap:8 }}>
-          <div style={{ flex:1 }}><Input value={price} onChange={e=>setPrice(e.target.value)} placeholder="Групова ціна, ₴" type="number"/></div>
-          <div style={{ flex:1 }}><Input value={retail} onChange={e=>setRetail(e.target.value)} placeholder="Роздрібна ціна, ₴" type="number"/></div>
+          <div style={{ flex:1,...reqStyle(price) }}><Input value={price} onChange={e=>setPrice(e.target.value)} placeholder="Групова ціна, ₴" type="number"/></div>
+          <div style={{ flex:1,...reqStyle(retail) }}><Input value={retail} onChange={e=>setRetail(e.target.value)} placeholder="Роздрібна ціна, ₴" type="number"/></div>
         </div>
+        {(miss(price)||miss(retail))&&<div style={{fontSize:10,color:"#ef4444",marginTop:4}}>Вкажіть обидві ціни</div>}
         {price&&retail&&Number(price)>=Number(retail)&&<div style={{fontSize:10,color:"#ef4444",marginTop:4}}>Групова ціна має бути менше роздрібної</div>}
         {price&&retail&&Number(price)<Number(retail)&&<div style={{fontSize:10,color:T.green,marginTop:4}}>Знижка: {Math.round((1-Number(price)/Number(retail))*100)}%</div>}
       </div>
 
       <div>
-        <Label text="Одиниця виміру"/>
+        <Label text="Одиниця виміру" required/>
         <div style={{ display:"flex",gap:6,flexWrap:"wrap" }}>
           {units.map(u=><button key={u} onClick={()=>setUnit(u)} style={{ ...S.btn,padding:"6px 12px",borderRadius:10,fontSize:11,background:unit===u?T.accent:T.cardAlt,color:unit===u?"#fff":T.textSec }}>{u}</button>)}
         </div>
@@ -672,20 +678,21 @@ function CreateDealPage({ onBack, onSave }) {
 
       <div>
         <div style={{ display:"flex",gap:8 }}>
-          <div style={{ flex:1 }}>
-            <Label text="Учасників потрібно"/>
+          <div style={{ flex:1,...reqStyle(needed) }}>
+            <Label text="Учасників потрібно" required/>
             <Input value={needed} onChange={e=>setNeeded(e.target.value)} placeholder="20" type="number"/>
           </div>
-          <div style={{ flex:1 }}>
-            <Label text="Термін (днів)"/>
+          <div style={{ flex:1,...reqStyle(days) }}>
+            <Label text="Термін (днів)" required/>
             <Input value={days} onChange={e=>setDays(e.target.value)} placeholder="7" type="number"/>
           </div>
         </div>
       </div>
 
-      <div>
-        <Label text="Опис товару" hint="Коротко про якість, склад, особливості"/>
+      <div style={reqStyle(desc)}>
+        <Label text="Опис товару" hint="Коротко про якість, склад, особливості" required/>
         <Input value={desc} onChange={e=>setDesc(e.target.value)} placeholder="Натуральний продукт без ГМО..." area/>
+        {miss(desc)&&<div style={{fontSize:10,color:"#ef4444",marginTop:4}}>Додайте опис</div>}
       </div>
 
       <div>
@@ -701,8 +708,9 @@ function CreateDealPage({ onBack, onSave }) {
       </div>
 
       <div style={{ ...S.card,background:T.greenLight }}>
-        <Label text="Місце отримання"/>
-        <Input value={city} onChange={e=>setCity(e.target.value)} placeholder="Місто" icon={I.pin}/>
+        <Label text="Місце отримання" required/>
+        <div style={reqStyle(city)}><Input value={city} onChange={e=>setCity(e.target.value)} placeholder="Місто" icon={I.pin}/></div>
+        {miss(city)&&<div style={{fontSize:10,color:"#ef4444",marginTop:4}}>Вкажіть місто</div>}
         <div style={{marginTop:8}}>
           <Input value={address} onChange={e=>setAddress(e.target.value)} placeholder="Адреса: вул. Хрещатик, 1"/>
         </div>
@@ -724,7 +732,7 @@ function CreateDealPage({ onBack, onSave }) {
       </div>}
 
       {error&&<div style={{ color:"#ef4444",fontSize:12 }}>{error}</div>}
-      <button onClick={async()=>{if(!canSave||saving) return;
+      <button onClick={async()=>{setTried(true);if(!canSave||saving) return;
         setSaving(true);setError("");
         try{
           const deadline=new Date();deadline.setDate(deadline.getDate()+parseInt(days));
