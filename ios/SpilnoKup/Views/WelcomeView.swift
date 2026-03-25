@@ -191,31 +191,25 @@ struct RegisterView: View {
                 .font(.subheadline)
                 .foregroundColor(state.theme.textSec)
 
-            HStack(spacing: 10) {
-                ForEach(0..<6, id: \.self) { i in
-                    let char = i < code.count ? String(code[code.index(code.startIndex, offsetBy: i)]) : ""
-                    Text(char)
-                        .font(.system(size: 20, weight: .bold))
-                        .foregroundColor(state.theme.text)
-                        .frame(width: 42, height: 50)
-                        .background(state.theme.cardAlt)
-                        .cornerRadius(12)
-                        .overlay(
-                            RoundedRectangle(cornerRadius: 12)
-                                .stroke(char.isEmpty ? state.theme.border : state.theme.accent, lineWidth: 2)
-                        )
-                }
-            }
-
-            TextField("Введіть 6-значний код", text: $code)
+            TextField("000000", text: $code)
                 .keyboardType(.numberPad)
+                .font(.system(size: 28, weight: .bold))
                 .foregroundColor(state.theme.text)
-                .padding(12)
+                .multilineTextAlignment(.center)
+                .padding(16)
                 .background(state.theme.cardAlt)
-                .cornerRadius(12)
+                .cornerRadius(14)
+                .overlay(
+                    RoundedRectangle(cornerRadius: 14)
+                        .stroke(code.isEmpty ? state.theme.border : state.theme.accent, lineWidth: 2)
+                )
                 .onChange(of: code) { newValue in
                     code = String(newValue.prefix(6).filter { $0.isNumber })
                 }
+
+            Text("Введіть 6-значний код з SMS")
+                .font(.caption)
+                .foregroundColor(state.theme.textMuted)
         }
     }
 
