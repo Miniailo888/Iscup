@@ -32,8 +32,8 @@ app.use((0, cors_1.default)({
     origin: process.env.NODE_ENV === 'development' ? true : process.env.FRONTEND_URL,
     credentials: true,
 }));
-app.use(express_1.default.json());
-app.use(express_1.default.urlencoded({ extended: true }));
+app.use(express_1.default.json({ limit: '10mb' }));
+app.use(express_1.default.urlencoded({ extended: true, limit: '10mb' }));
 app.use((0, express_rate_limit_1.default)({
     windowMs: 15 * 60 * 1000,
     max: 1000,

@@ -637,7 +637,7 @@ function CreateDealPage({ onBack, onSave }) {
         <label style={{ ...S.card,display:"flex",flexDirection:"column",alignItems:"center",gap:6,padding:16,cursor:"pointer",borderStyle:"dashed" }}>
           {photo?<img src={photo} alt="" style={{width:"100%",height:120,objectFit:"cover",borderRadius:8}}/>:
           <>{I.cam}<div style={{fontSize:11,color:T.textMuted}}>Натисніть щоб додати фото</div></>}
-          <input type="file" accept="image/*" style={{display:"none"}} onChange={e=>{const f=e.target.files[0];if(f){const r=new FileReader();r.onload=ev=>setPhoto(ev.target.result);r.readAsDataURL(f);}}}/>
+          <input type="file" accept="image/*" style={{display:"none"}} onChange={e=>{const f=e.target.files[0];if(f){const img=new Image();const r=new FileReader();r.onload=ev=>{img.onload=()=>{const max=800;let w=img.width,h=img.height;if(w>max||h>max){if(w>h){h=Math.round(h*max/w);w=max;}else{w=Math.round(w*max/h);h=max;}}const c=document.createElement('canvas');c.width=w;c.height=h;c.getContext('2d').drawImage(img,0,0,w,h);setPhoto(c.toDataURL('image/jpeg',0.7));};img.src=ev.target.result;};r.readAsDataURL(f);}}}/>
         </label>
       </div>
 
