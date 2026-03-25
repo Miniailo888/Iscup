@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback, useRef } from "react";
 import { fetchDeals as apiFetchDeals, sendOtp, verifyOtp, logout as apiLogout, createOrder, createDeal, deleteDeal, fetchMyOrders, fetchSellerOrders, fetchSellerDeals, generateQR, verifyQR, fetchConversations, createConversation, fetchMessages, sendMessageApi, isLoggedIn, API } from "./api";
 import { connectSocket, disconnectSocket, reconnectWithAuth, onEvent, joinDeal, joinConversation } from "./socket";
 import jsQR from "jsqr";
+import QRCodeLib from "qrcode";
 
 // ── Теми ────────────────────────────────────────────────────────────────────
 const THEMES = {
@@ -842,18 +843,16 @@ function MyDealsPage({ deals, joined, onOpen }) {
   </div>;
 }
 
-// ── QR-код ──────────────────────────────────────────────────────────────────
+// ── QR-код (справжній, сканується камерою) ───────────────────────────────────
 function QRCode({ value, size=180 }) {
-  const cells=25,cs=size/cells,hash=value.split("").reduce((a,c)=>((a<<5)-a+c.charCodeAt(0))|0,0);
-  const grid=Array.from({length:cells},(_,r)=>Array.from({length:cells},(_,c)=>{
-    const inF=(cr,cc)=>cr>=0&&cr<7&&cc>=0&&cc<7;
-    if(inF(r,c)||inF(r,c-(cells-7))||inF(r-(cells-7),c)){const fr=r<7?r:r-(cells-7),fc=c<7?c:c-(cells-7);if(fr===0||fr===6||fc===0||fc===6)return true;if(fr>=2&&fr<=4&&fc>=2&&fc<=4)return true;return false;}
-    if(r===6)return c%2===0;if(c===6)return r%2===0;
-    return(((hash^(r*37+c*53+r*c*7))>>>0)%100)>42;
-  }));
-  return <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`}><rect width={size} height={size} fill="#fff" rx={4}/>
-    {grid.map((row,r)=>row.map((on,c)=>on?<rect key={`${r}-${c}`} x={c*cs} y={r*cs} width={cs+.5} height={cs+.5} fill={T.text}/>:null))}
-  </svg>;
+  const [src,setSrc]=useState("");
+  useEffect(()=>{
+    if(!value) return;
+    QRCodeLib.toDataURL(value,{width:size,margin:2,color:{dark:"#000000",light:"#ffffff"}})
+      .then(setSrc).catch(()=>{});
+  },[value,size]);
+  if(!src) return <div style={{width:size,height:size,background:"#fff",borderRadius:8,...S.flex,justifyContent:"center"}}><div style={{color:"#999",fontSize:10}}>QR...</div></div>;
+  return <img src={src} alt="QR" width={size} height={size} style={{borderRadius:8}}/>;
 }
 
 function BuyerQRPage({ deal, qty, onBack, orderId }) {
