@@ -962,20 +962,21 @@ function QRHub() {
 
 // ── Дашборд продавця ────────────────────────────────────────────────────────
 // ── Месенджер ──────────────────────────────────────────────────────────────
+const chatCache={chats:null,loaded:false};
 function ChatPage() {
-  const [chats,setChats]=useState([]);
+  const [chats,setChats]=useState(chatCache.chats||[]);
   const [activeChat,setActiveChat]=useState(null);
   const [msg,setMsg]=useState("");
   const [messages,setMessages]=useState([]);
-  const [loading,setLoading]=useState(true);
+  const [loading,setLoading]=useState(!chatCache.loaded);
   const userId=(() => { try { return JSON.parse(localStorage.getItem("spilnokup_user"))?.id; } catch { return null; } })();
 
   useEffect(()=>{
     if(!isLoggedIn()) { setLoading(false); return; }
-    fetchConversations().then(setChats).catch(()=>{}).finally(()=>setLoading(false));
-    // Listen for new messages via WebSocket
+    // Load in background without blocking UI if cached
+    fetchConversations().then(c=>{setChats(c);chatCache.chats=c;chatCache.loaded=true;}).catch(()=>{}).finally(()=>setLoading(false));
     const unsub=onEvent('chat:new',(data)=>{
-      fetchConversations().then(setChats).catch(()=>{});
+      fetchConversations().then(c=>{setChats(c);chatCache.chats=c;}).catch(()=>{});
       if(data.conversationId===activeChat){
         setMessages(prev=>[...prev,data.message]);
       }
@@ -1057,12 +1058,13 @@ function ChatPage() {
   </div>;
 }
 
+const dashCache={data:null,loaded:false};
 function SellerDashboard({ deals, joined, onOpen, onBuy }) {
   const [subTab,setSubTab]=useState("biz");
-  const [myOrders,setMyOrders]=useState([]);
-  const [sellerOrders,setSellerOrders]=useState([]);
-  const [sellerDeals,setSellerDeals]=useState([]);
-  const [loading,setLoading]=useState(true);
+  const [myOrders,setMyOrders]=useState(dashCache.data?.my||[]);
+  const [sellerOrders,setSellerOrders]=useState(dashCache.data?.seller||[]);
+  const [sellerDeals,setSellerDeals]=useState(dashCache.data?.deals||[]);
+  const [loading,setLoading]=useState(!dashCache.loaded);
   const userId=(() => { try { return JSON.parse(localStorage.getItem("spilnokup_user"))?.id; } catch { return null; } })();
   const userName=(() => { try { return JSON.parse(localStorage.getItem("spilnokup_user"))?.name; } catch { return ""; } })();
 
@@ -1073,6 +1075,7 @@ function SellerDashboard({ deals, joined, onOpen, onBuy }) {
       fetchSellerDeals().catch(()=>[]),
     ]).then(([my,seller,deals])=>{
       setMyOrders(my);setSellerOrders(seller);setSellerDeals(deals);
+      dashCache.data={my,seller,deals};dashCache.loaded=true;
     });
   },[]);
 
