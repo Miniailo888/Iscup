@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from "react";
-import { fetchDeals as apiFetchDeals, sendOtp, verifyOtp, logout as apiLogout, createOrder, fetchMyOrders, fetchSellerOrders, fetchSellerDeals, generateQR, verifyQR, fetchConversations, createConversation, fetchMessages, sendMessageApi, isLoggedIn, API } from "./api";
+import { fetchDeals as apiFetchDeals, sendOtp, verifyOtp, logout as apiLogout, createOrder, createDeal, fetchMyOrders, fetchSellerOrders, fetchSellerDeals, generateQR, verifyQR, fetchConversations, createConversation, fetchMessages, sendMessageApi, isLoggedIn, API } from "./api";
 
 // ── Теми ────────────────────────────────────────────────────────────────────
 const THEMES = {
@@ -591,8 +591,9 @@ function RouteMap({ status }) {
 
 function CreateDealPage({ onBack, onSave }) {
   const [title,setTitle]=useState(""),[cat,setCat]=useState("farm"),[price,setPrice]=useState(""),[retail,setRetail]=useState(""),[unit,setUnit]=useState("кг"),[min,setMin]=useState("1"),[max,setMax]=useState("10"),[needed,setNeeded]=useState("20"),[days,setDays]=useState("7"),[desc,setDesc]=useState(""),[city,setCity]=useState(""),[tags,setTags]=useState(""),[pin,setPin]=useState({x:50,y:45}),[photo,setPhoto]=useState(null);
-
+  const [saving,setSaving]=useState(false),[error,setError]=useState("");
   const canSave = title && price && retail && city && desc;
+  const catMap={farm:"meat",honey:"grocery",veggies:"vegetables",dairy:"dairy",food:"bakery",handmade:"clothing",cafe:"services"};
   return <div style={S.page}>
     <BackBtn onClick={onBack}/>
     <h2 style={{ fontSize:22,fontWeight:900,color:T.text,marginBottom:4 }}>Нове оголошення</h2>
@@ -629,8 +630,16 @@ function CreateDealPage({ onBack, onSave }) {
       <MapView pin={pin} onPin={setPin} label={city||"Оберіть місце"}/>
       <Input value={desc} onChange={e=>setDesc(e.target.value)} placeholder="Опис товару..." area/>
       <Input value={tags} onChange={e=>setTags(e.target.value)} placeholder="Теги через кому"/>
-      <button onClick={()=>{if(canSave){onSave({id:Date.now(),cat,seller:"Моє оголошення",avatar:CATEGORIES.find(c=>c.id===cat)?.icon||"📦",city,rating:5.0,deals:0,title,unit,retail:+retail,group:+price,min:+min,max:+max,joined:0,needed:+needed,days:+days,desc,tags:tags?tags.split(",").map(t=>t.trim()):[],hot:false,photo:photo||null});}}}
-        style={{ ...S.btn,width:"100%",padding:15,background:canSave?`linear-gradient(135deg,${T.accent},${T.green})`:T.cardAlt,color:canSave?"#fff":T.textMuted,borderRadius:14,fontSize:15 }}>Опублікувати</button>
+      {error&&<div style={{ color:"#ef4444",fontSize:12,marginBottom:8 }}>{error}</div>}
+      <button onClick={async()=>{if(!canSave||saving) return;
+        setSaving(true);setError("");
+        try{
+          const deadline=new Date();deadline.setDate(deadline.getDate()+parseInt(days));
+          await createDeal({title,description:desc,category:catMap[cat]||cat,retailPrice:+retail,groupPrice:+price,unit,minQty:+min,maxQty:+max,needed:+needed,deadline:deadline.toISOString(),images:photo?[photo]:[],tags:tags?tags.split(",").map(t=>t.trim()):[],city});
+          onSave();
+        }catch(e){setError(e.message);}
+        finally{setSaving(false);}
+      }} style={{ ...S.btn,width:"100%",padding:15,background:canSave&&!saving?`linear-gradient(135deg,${T.accent},${T.green})`:T.cardAlt,color:canSave?"#fff":T.textMuted,borderRadius:14,fontSize:15 }}>{saving?"Публікуємо...":"Опублікувати"}</button>
     </div>
   </div>;
 }
@@ -1283,7 +1292,7 @@ export default function App() {
     if(authStep==="register") return <RegisterScreen onDone={onRegDone}/>;
     if(page==="detail"&&buyData) return <DealDetail deal={buyData.deal} onBack={()=>setPage(null)} joined={joined} onJoin={onJoin} onBuy={onBuy}/>;
     if(page==="qr"&&buyData) return <BuyerQRPage deal={buyData.deal} qty={buyData.qty} orderId={buyData.orderId} onBack={()=>setPage(null)}/>;
-    if(page==="createDeal") return <CreateDealPage onBack={()=>setPage(null)} onSave={d=>{setDeals(prev=>[d,...prev]);setPage(null);}}/>;
+    if(page==="createDeal") return <CreateDealPage onBack={()=>setPage(null)} onSave={()=>{loadDeals();setPage(null);}}/>;
     switch(tab){
       case"market":return <MarketPage deals={deals} joined={joined} onJoin={onJoin} onOpen={onOpen} user={user} onCreateDeal={()=>setPage("createDeal")} theme={theme} onTheme={changeTheme}/>;
       case"qr":return <QRHub/>;
