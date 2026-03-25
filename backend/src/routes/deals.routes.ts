@@ -181,7 +181,7 @@ router.post('/', authenticate, requireRole('SELLER', 'ADMIN'), async (req: Reque
     });
 
     logger.info(`Deal created: ${deal.id} by ${req.user!.userId}`);
-    try { getIO().emit('deal:new', { dealId: deal.id }); } catch {}
+    try { getIO().to('public').emit('deal:new', { dealId: deal.id }); } catch {}
     res.status(201).json(deal);
   } catch (err: any) {
     logger.error('POST /deals error:', err?.message || err);
@@ -214,7 +214,7 @@ router.delete('/:id', authenticate, async (req: Request, res: Response): Promise
     await prisma.deal.delete({ where: { id: dealId } });
 
     logger.info(`Deal deleted: ${dealId} by ${req.user!.userId}`);
-    try { getIO().emit('deal:deleted', { dealId }); } catch {}
+    try { getIO().to('public').emit('deal:deleted', { dealId }); } catch {}
     res.json({ success: true });
   } catch (err: any) {
     logger.error('DELETE /deals/:id error:', err?.message || err);

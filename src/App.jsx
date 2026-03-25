@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from "react";
 import { fetchDeals as apiFetchDeals, sendOtp, verifyOtp, logout as apiLogout, createOrder, createDeal, deleteDeal, fetchMyOrders, fetchSellerOrders, fetchSellerDeals, generateQR, verifyQR, fetchConversations, createConversation, fetchMessages, sendMessageApi, isLoggedIn, API } from "./api";
-import { connectSocket, disconnectSocket, onEvent, joinDeal, joinConversation } from "./socket";
+import { connectSocket, disconnectSocket, reconnectWithAuth, onEvent, joinDeal, joinConversation } from "./socket";
 
 // ── Теми ────────────────────────────────────────────────────────────────────
 const THEMES = {
@@ -1230,7 +1230,7 @@ function WalletPage({ user, setUser, theme, onTheme }) {
       const data=await verifyOtp(authPhone,authCode,authName,authCity);
       const u=data.user;
       localStorage.setItem("spilnokup_user",JSON.stringify(u));
-      setUser(u);setShowAuth(false);setAuthStep(0);
+      setUser(u);setShowAuth(false);setAuthStep(0);reconnectWithAuth();
     }catch(e){setAuthError(e.message);}
     finally{setAuthLoading(false);}
   };
@@ -1451,10 +1451,8 @@ export default function App() {
   },[]);
   useEffect(()=>{loadDeals();},[loadDeals]);
 
-  // WebSocket connection
+  // WebSocket — everyone gets public events, logged users get private
   useEffect(()=>{
-    if(!isLoggedIn()) return;
-    connectSocket();
     const unsub1=onEvent('deal:update',(data)=>{
       setDeals(prev=>prev.map(d=>d.id===data.dealId||d.dbId===data.dealId?{...d,joined:data.joined}:d));
     });
@@ -1469,7 +1467,7 @@ export default function App() {
   const onJoin=id=>setJoined(j=>({...j,[id]:!j[id]}));
   const onOpen=deal=>{setPage("detail");setBuyData({deal,qty:deal.min});};
   const onBuy=(deal,qty,orderId)=>{setBuyData({deal,qty,orderId});setPage("qr");};
-  const onRegDone=data=>{localStorage.setItem("spilnokup_user",JSON.stringify(data));setUser(data);setAuthStep(null);loadDeals();};
+  const onRegDone=data=>{localStorage.setItem("spilnokup_user",JSON.stringify(data));setUser(data);setAuthStep(null);loadDeals();reconnectWithAuth();};
   const onGuest=()=>{const g={name:"Гість",email:"",phone:"",city:""};localStorage.setItem("spilnokup_user",JSON.stringify(g));setUser(g);setAuthStep(null);};
 
   const showNav=!page&&!authStep;

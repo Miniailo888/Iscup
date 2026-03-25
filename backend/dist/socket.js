@@ -4,7 +4,6 @@ exports.getIO = getIO;
 exports.setupSocket = setupSocket;
 const socket_io_1 = require("socket.io");
 const jwt_1 = require("./utils/jwt");
-const logger_1 = require("./utils/logger");
 let io;
 function getIO() {
     return io;
@@ -12,28 +11,31 @@ function getIO() {
 function setupSocket(httpServer) {
     io = new socket_io_1.Server(httpServer, {
         cors: {
-            origin: process.env.FRONTEND_URL || 'http://localhost:3000',
+            origin: process.env.NODE_ENV === 'development' ? true : process.env.FRONTEND_URL,
             credentials: true,
         },
     });
+    // Auth is optional — guests get public events, logged users get private
     io.use((socket, next) => {
         const token = socket.handshake.auth?.token;
-        if (!token)
-            return next(new Error('Authentication required'));
-        try {
-            const payload = (0, jwt_1.verifyAccessToken)(token);
-            socket.userId = payload.userId;
-            socket.role = payload.role;
-            next();
+        if (token) {
+            try {
+                const payload = (0, jwt_1.verifyAccessToken)(token);
+                socket.userId = payload.userId;
+                socket.role = payload.role;
+            }
+            catch {
+                // Invalid token — connect as guest
+            }
         }
-        catch {
-            next(new Error('Invalid token'));
-        }
+        next();
     });
     io.on('connection', (socket) => {
         const userId = socket.userId;
-        socket.join(`user:${userId}`);
-        logger_1.logger.info(`Socket connected: ${userId}`);
+        if (userId)
+            socket.join(`user:${userId}`);
+        // Everyone joins public room for deal updates
+        socket.join('public');
         socket.on('join:deal', (dealId) => {
             socket.join(`deal:${dealId}`);
         });
@@ -41,14 +43,14 @@ function setupSocket(httpServer) {
             socket.leave(`deal:${dealId}`);
         });
         socket.on('join:conversation', (conversationId) => {
-            socket.join(`conversation:${conversationId}`);
+            if (userId)
+                socket.join(`conversation:${conversationId}`);
         });
         socket.on('chat:typing', (data) => {
-            socket.to(`conversation:${data.conversationId}`).emit('chat:typing', { userId, conversationId: data.conversationId });
+            if (userId)
+                socket.to(`conversation:${data.conversationId}`).emit('chat:typing', { userId, conversationId: data.conversationId });
         });
-        socket.on('disconnect', () => {
-            logger_1.logger.info(`Socket disconnected: ${userId}`);
-        });
+        socket.on('disconnect', () => { });
     });
     return io;
 }

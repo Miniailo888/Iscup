@@ -12,28 +12,32 @@ export function getIO(): Server {
 export function setupSocket(httpServer: HttpServer): Server {
   io = new Server(httpServer, {
     cors: {
-      origin: process.env.FRONTEND_URL || 'http://localhost:3000',
+      origin: process.env.NODE_ENV === 'development' ? true : process.env.FRONTEND_URL,
       credentials: true,
     },
   });
 
+  // Auth is optional — guests get public events, logged users get private
   io.use((socket, next) => {
     const token = socket.handshake.auth?.token;
-    if (!token) return next(new Error('Authentication required'));
-    try {
-      const payload = verifyAccessToken(token);
-      (socket as any).userId = payload.userId;
-      (socket as any).role = payload.role;
-      next();
-    } catch {
-      next(new Error('Invalid token'));
+    if (token) {
+      try {
+        const payload = verifyAccessToken(token);
+        (socket as any).userId = payload.userId;
+        (socket as any).role = payload.role;
+      } catch {
+        // Invalid token — connect as guest
+      }
     }
+    next();
   });
 
   io.on('connection', (socket: Socket) => {
     const userId = (socket as any).userId;
-    socket.join(`user:${userId}`);
-    logger.info(`Socket connected: ${userId}`);
+    if (userId) socket.join(`user:${userId}`);
+
+    // Everyone joins public room for deal updates
+    socket.join('public');
 
     socket.on('join:deal', (dealId: string) => {
       socket.join(`deal:${dealId}`);
@@ -44,16 +48,14 @@ export function setupSocket(httpServer: HttpServer): Server {
     });
 
     socket.on('join:conversation', (conversationId: string) => {
-      socket.join(`conversation:${conversationId}`);
+      if (userId) socket.join(`conversation:${conversationId}`);
     });
 
     socket.on('chat:typing', (data: { conversationId: string }) => {
-      socket.to(`conversation:${data.conversationId}`).emit('chat:typing', { userId, conversationId: data.conversationId });
+      if (userId) socket.to(`conversation:${data.conversationId}`).emit('chat:typing', { userId, conversationId: data.conversationId });
     });
 
-    socket.on('disconnect', () => {
-      logger.info(`Socket disconnected: ${userId}`);
-    });
+    socket.on('disconnect', () => {});
   });
 
   return io;

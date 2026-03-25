@@ -7,26 +7,31 @@ const SOCKET_URL = window.location.hostname === 'localhost'
 let socket = null;
 const listeners = {};
 
-export function connectSocket() {
-  const token = localStorage.getItem('spilnokup_token');
-  if (!token || socket?.connected) return;
+export function connectSocket(token) {
+  if (socket?.connected) return;
 
   socket = io(SOCKET_URL, {
-    auth: { token },
+    auth: token ? { token } : {},
     transports: ['websocket', 'polling'],
     reconnection: true,
     reconnectionDelay: 1000,
   });
 
-  socket.on('connect', () => console.log('Socket connected'));
-  socket.on('disconnect', () => console.log('Socket disconnected'));
+  socket.on('connect', () => {});
+  socket.on('disconnect', () => {});
 
-  // Re-emit to stored listeners
   ['deal:update', 'deal:new', 'deal:deleted', 'order:completed', 'chat:message', 'chat:new', 'chat:typing'].forEach(event => {
     socket.on(event, (data) => {
       if (listeners[event]) listeners[event].forEach(cb => cb(data));
     });
   });
+}
+
+// Reconnect with auth token (after login)
+export function reconnectWithAuth() {
+  const token = localStorage.getItem('spilnokup_token');
+  if (socket) { socket.disconnect(); socket = null; }
+  connectSocket(token);
 }
 
 export function disconnectSocket() {
@@ -54,3 +59,6 @@ export function joinConversation(convId) {
 export function emitTyping(conversationId) {
   socket?.emit('chat:typing', { conversationId });
 }
+
+// Connect immediately (even guests)
+connectSocket(localStorage.getItem('spilnokup_token'));
