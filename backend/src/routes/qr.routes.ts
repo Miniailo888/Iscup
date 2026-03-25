@@ -96,6 +96,7 @@ router.post('/verify', authenticate, requireRole('SELLER', 'ADMIN'), async (req:
     });
 
     // Transfer held → available for seller
+    const sellerWallet = await prisma.wallet.findUnique({ where: { userId: req.user!.userId } });
     await prisma.wallet.update({
       where: { userId: req.user!.userId },
       data: {
@@ -105,13 +106,31 @@ router.post('/verify', authenticate, requireRole('SELLER', 'ADMIN'), async (req:
       },
     });
 
-    // Notify buyer in real-time
+    // Transaction record for seller (release)
+    if (sellerWallet) {
+      await prisma.transaction.create({
+        data: {
+          walletId: sellerWallet.id,
+          orderId: qrToken.order.id,
+          type: 'PAYMENT_RELEASE',
+          amount: orderAmount,
+          netAmount: orderAmount,
+          balanceBefore: Number(sellerWallet.availableBalance),
+          balanceAfter: Number(sellerWallet.availableBalance) + orderAmount,
+          description: `Отримано: ${qrToken.order.deal.title} (${qrToken.order.buyer.name})`,
+        },
+      });
+    }
+
+    // Notify buyer + seller wallets
     try {
       const io = getIO();
       io.to(`user:${qrToken.order.buyerId}`).emit('order:completed', {
         orderId: qrToken.order.id,
         dealTitle: qrToken.order.deal.title,
       });
+      io.to(`user:${qrToken.order.buyerId}`).emit('wallet:update');
+      io.to(`user:${req.user!.userId}`).emit('wallet:update');
     } catch {}
 
     logger.info(`QR verified: order ${qrToken.order.id}`);

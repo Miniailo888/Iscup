@@ -74,9 +74,24 @@ router.post('/', authenticate, async (req: Request, res: Response): Promise<void
     });
 
     // Списати з покупця
+    const buyerBefore = Number(buyerWallet.availableBalance);
     await prisma.wallet.update({
       where: { userId: req.user!.userId },
       data: { availableBalance: { decrement: amount } },
+    });
+
+    // Записати транзакцію покупця
+    await prisma.transaction.create({
+      data: {
+        walletId: buyerWallet.id,
+        orderId: order.id,
+        type: 'PAYMENT_HOLD',
+        amount,
+        netAmount: amount,
+        balanceBefore: buyerBefore,
+        balanceAfter: buyerBefore - amount,
+        description: `Оплата: ${deal.title} × ${quantity}`,
+      },
     });
 
     // Заморозити на рахунку продавця (held)
@@ -86,12 +101,33 @@ router.post('/', authenticate, async (req: Request, res: Response): Promise<void
         where: { userId: deal.sellerId },
         data: { heldBalance: { increment: amount } },
       });
+
+      // Записати транзакцію продавця (hold)
+      await prisma.transaction.create({
+        data: {
+          walletId: sellerWallet.id,
+          orderId: order.id,
+          type: 'PAYMENT_HOLD',
+          amount,
+          netAmount: amount,
+          balanceBefore: Number(sellerWallet.availableBalance),
+          balanceAfter: Number(sellerWallet.availableBalance),
+          description: `Очікує видачі: ${deal.title}`,
+        },
+      });
     }
 
     await prisma.deal.update({
       where: { id: dealId },
       data: { joined: { increment: quantity } },
     });
+
+    // Notify wallets
+    try {
+      const io = getIO();
+      io.to(`user:${req.user!.userId}`).emit('wallet:update');
+      io.to(`user:${deal.sellerId}`).emit('wallet:update');
+    } catch {}
 
     // Emit real-time update
     try {

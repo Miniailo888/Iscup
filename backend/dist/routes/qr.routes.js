@@ -86,6 +86,7 @@ router.post('/verify', auth_middleware_1.authenticate, (0, auth_middleware_1.req
             data: { status: 'COMPLETED', completedAt: new Date() },
         });
         // Transfer held → available for seller
+        const sellerWallet = await prisma_1.prisma.wallet.findUnique({ where: { userId: req.user.userId } });
         await prisma_1.prisma.wallet.update({
             where: { userId: req.user.userId },
             data: {
@@ -94,13 +95,30 @@ router.post('/verify', auth_middleware_1.authenticate, (0, auth_middleware_1.req
                 totalEarned: { increment: orderAmount },
             },
         });
-        // Notify buyer in real-time
+        // Transaction record for seller (release)
+        if (sellerWallet) {
+            await prisma_1.prisma.transaction.create({
+                data: {
+                    walletId: sellerWallet.id,
+                    orderId: qrToken.order.id,
+                    type: 'PAYMENT_RELEASE',
+                    amount: orderAmount,
+                    netAmount: orderAmount,
+                    balanceBefore: Number(sellerWallet.availableBalance),
+                    balanceAfter: Number(sellerWallet.availableBalance) + orderAmount,
+                    description: `Отримано: ${qrToken.order.deal.title} (${qrToken.order.buyer.name})`,
+                },
+            });
+        }
+        // Notify buyer + seller wallets
         try {
             const io = (0, socket_1.getIO)();
             io.to(`user:${qrToken.order.buyerId}`).emit('order:completed', {
                 orderId: qrToken.order.id,
                 dealTitle: qrToken.order.deal.title,
             });
+            io.to(`user:${qrToken.order.buyerId}`).emit('wallet:update');
+            io.to(`user:${req.user.userId}`).emit('wallet:update');
         }
         catch { }
         logger_1.logger.info(`QR verified: order ${qrToken.order.id}`);
