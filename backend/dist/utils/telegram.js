@@ -5,11 +5,21 @@ exports.getChatId = getChatId;
 exports.sendOtpViaTelegram = sendOtpViaTelegram;
 exports.processTelegramUpdate = processTelegramUpdate;
 exports.setupTelegramWebhook = setupTelegramWebhook;
+exports.createAuthSession = createAuthSession;
+exports.getAuthSession = getAuthSession;
 const logger_1 = require("./logger");
 const BOT_TOKEN = "8778237684:AAG81-EM0ZMbdFUd6x6id1xpSvAVN_WagNo";
-// In-memory store for phone -> chatId mapping
-// In production, use the database
 const phoneChats = new Map();
+const authSessions = new Map();
+function createAuthSession(phone, otp) {
+    const token = Math.random().toString(36).substring(2, 10).toUpperCase();
+    authSessions.set(token, { phone, otp, createdAt: Date.now() });
+    logger_1.logger.info(`Auth session: ${token} for ***${phone.slice(-4)}`);
+    return token;
+}
+function getAuthSession(token) {
+    return authSessions.get(token) || null;
+}
 function saveChatId(phone, chatId) {
     phoneChats.set(phone.replace(/\D/g, ''), chatId);
     logger_1.logger.info(`Saved chat_id ${chatId} for phone ***${phone.slice(-4)}`);
@@ -56,13 +66,20 @@ function processTelegramUpdate(update) {
     const text = message.text.trim();
     if (text.startsWith('/start')) {
         const parts = text.split(' ');
-        const phone = parts[1]; // /start +380XXXXXXXXX
-        if (phone) {
-            saveChatId(phone, chatId);
-            sendTelegramMessage(chatId, `✅ Telegram підключено!\n\n📱 Телефон: ${phone}\n\nТепер ви будете отримувати коди підтвердження в цей чат.\n\nПоверніться до додатку Spil і продовжте реєстрацію.`);
+        const token = parts[1];
+        if (token) {
+            const session = authSessions.get(token);
+            if (session) {
+                saveChatId(session.phone, chatId);
+                sendTelegramMessage(chatId, `Your Spil code: ${session.otp}\n\nEnter this code in the app.`);
+                session.sent = true;
+                logger_1.logger.info(`Code sent to ${chatId} via token ${token}`);
+            } else {
+                sendTelegramMessage(chatId, `Session expired. Try again in the app.`);
+            }
         }
         else {
-            sendTelegramMessage(chatId, `👋 Привіт! Це бот Spil.\n\n📲 Щоб підключити Telegram, відкрийте додаток Spil і натисніть "Увійти через Telegram".\n\nБот автоматично надішле вам код підтвердження.`);
+            sendTelegramMessage(chatId, `Welcome to Spil bot! Open the app to sign in.`);
         }
         return;
     }
