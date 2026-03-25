@@ -266,13 +266,7 @@ function RegisterScreen({ onDone }) {
     finally{setLoading(false);}
   };
 
-  const openTelegram=()=>{
-    if(telegramToken){
-      window.open(`https://t.me/spilnokupbot?start=${telegramToken}`,"_blank");
-    }else{
-      window.open("https://t.me/spilnokupbot","_blank");
-    }
-  };
+  const tgLink=telegramToken?`https://t.me/spilnokupbot?start=${telegramToken}`:"https://t.me/spilnokupbot";
 
   const doVerify=async()=>{
     setLoading(true);setError("");
@@ -309,7 +303,7 @@ function RegisterScreen({ onDone }) {
     <p style={{ fontSize:13,color:T.textSec,marginBottom:20 }}>Крок 2 з 3</p>
     <div style={{ fontSize:60,margin:"20px 0" }}>✈️</div>
     <p style={{ fontSize:13,color:T.textSec,marginBottom:20,lineHeight:1.6 }}>Натисніть кнопку нижче — відкриється Telegram.<br/>Натисніть <b>Start</b> — бот надішле код.</p>
-    <button onClick={openTelegram} style={{ ...S.btn,width:"100%",padding:15,background:"#0088cc",color:"#fff",borderRadius:14,fontSize:15,marginBottom:14 }}>✈️ Відкрити Telegram</button>
+    <a href={tgLink} target="_blank" rel="noopener noreferrer" style={{ ...S.btn,display:"block",width:"100%",padding:15,background:"#0088cc",color:"#fff",borderRadius:14,fontSize:15,marginBottom:14,textAlign:"center",textDecoration:"none",boxSizing:"border-box" }}>✈ Відкрити Telegram</a>
     <div style={{ fontSize:11,color:T.textMuted,lineHeight:1.6,marginBottom:20 }}>1. Натисніть Start в боті<br/>2. Бот надішле 6-значний код<br/>3. Введіть код на наступному кроці</div>
     {error&&<div style={{ color:"#ef4444",fontSize:12,marginBottom:8 }}>{error}</div>}
     <button onClick={()=>setStep(3)} style={{ ...S.btn,width:"100%",padding:15,background:T.accent,color:"#fff",borderRadius:14,fontSize:15 }}>Я отримав код</button>
@@ -1473,10 +1467,11 @@ function WalletPage({ user, setUser, theme, onTheme }) {
           <button onClick={()=>{setAuthMode("register");setAuthStep(0);setAuthError("");}} style={{ ...S.btn,background:"none",color:T.accent,fontSize:11,padding:0 }}>Створити</button>
         </div>
       </>:authStep===1?<>
-        <h2 style={{ fontSize:20,fontWeight:900,color:T.text,marginBottom:4 }}>Отримайте код</h2>
-        <div style={{ fontSize:50,textAlign:"center",margin:"16px 0" }}>✈️</div>
-        <p style={{ fontSize:13,color:T.textSec,marginBottom:16,textAlign:"center",lineHeight:1.6 }}>Натисніть кнопку — відкриється Telegram.<br/>Натисніть <b>Start</b> — бот надішле код.</p>
-        <button onClick={openAuthTelegram} style={{ ...S.btn,width:"100%",padding:14,background:"#0088cc",color:"#fff",borderRadius:14,fontSize:14,marginBottom:12 }}>✈️ Відкрити Telegram</button>
+        <h2 style={{ fontSize:20,fontWeight:900,color:T.text,marginBottom:4,textAlign:"center" }}>Отримайте код</h2>
+        <div style={{ fontSize:50,textAlign:"center",margin:"16px 0" }}>✈</div>
+        <p style={{ fontSize:12,color:T.textSec,marginBottom:16,textAlign:"center",lineHeight:1.6 }}>Натисніть кнопку — відкриється Telegram.<br/>Натисніть <b>Start</b> — бот надішле код.</p>
+        <a href={`https://t.me/spilnokupbot?start=${authTgToken}`} target="_blank" rel="noopener noreferrer" style={{ ...S.btn,display:"block",width:"100%",padding:14,background:"#0088cc",color:"#fff",borderRadius:14,fontSize:14,marginBottom:12,textAlign:"center",textDecoration:"none",boxSizing:"border-box" }}>✈ Відкрити Telegram</a>
+        <div style={{ fontSize:10,color:T.textMuted,textAlign:"center",marginBottom:16 }}>1. Натисніть Start в боті → 2. Отримайте код → 3. Введіть нижче</div>
         <button onClick={()=>setAuthStep(2)} style={{ ...S.btn,width:"100%",padding:14,background:T.accent,color:"#fff",borderRadius:14,fontSize:14 }}>Я отримав код</button>
       </>:<>
         <h2 style={{ fontSize:20,fontWeight:900,color:T.text,marginBottom:4 }}>Код підтвердження</h2>
@@ -1519,10 +1514,11 @@ function WalletPage({ user, setUser, theme, onTheme }) {
         {authError&&<div style={{ color:"#ef4444",fontSize:12,marginTop:10 }}>{authError}</div>}
         <button onClick={()=>doAuthSendOtp(2)} disabled={!authCity||authLoading} style={{ ...S.btn,width:"100%",padding:14,background:authCity?T.accent:T.cardAlt,color:authCity?"#fff":T.textMuted,borderRadius:14,fontSize:14,marginTop:20 }}>{authLoading?"Зачекайте...":"Далі"}</button>
       </>:authStep===2?<>
-        <h2 style={{ fontSize:20,fontWeight:900,color:T.text,marginBottom:4 }}>Отримайте код</h2>
-        <div style={{ fontSize:50,textAlign:"center",margin:"16px 0" }}>✈️</div>
-        <p style={{ fontSize:13,color:T.textSec,marginBottom:16,textAlign:"center",lineHeight:1.6 }}>Натисніть кнопку — відкриється Telegram.<br/>Натисніть <b>Start</b> — бот надішле код.</p>
-        <button onClick={openAuthTelegram} style={{ ...S.btn,width:"100%",padding:14,background:"#0088cc",color:"#fff",borderRadius:14,fontSize:14,marginBottom:12 }}>✈️ Відкрити Telegram</button>
+        <h2 style={{ fontSize:20,fontWeight:900,color:T.text,marginBottom:4,textAlign:"center" }}>Отримайте код</h2>
+        <div style={{ fontSize:50,textAlign:"center",margin:"16px 0" }}>✈</div>
+        <p style={{ fontSize:12,color:T.textSec,marginBottom:16,textAlign:"center",lineHeight:1.6 }}>Натисніть кнопку — відкриється Telegram.<br/>Натисніть <b>Start</b> — бот надішле код.</p>
+        <a href={`https://t.me/spilnokupbot?start=${authTgToken}`} target="_blank" rel="noopener noreferrer" style={{ ...S.btn,display:"block",width:"100%",padding:14,background:"#0088cc",color:"#fff",borderRadius:14,fontSize:14,marginBottom:12,textAlign:"center",textDecoration:"none",boxSizing:"border-box" }}>✈ Відкрити Telegram</a>
+        <div style={{ fontSize:10,color:T.textMuted,textAlign:"center",marginBottom:16 }}>1. Натисніть Start → 2. Отримайте код → 3. Введіть нижче</div>
         <button onClick={()=>setAuthStep(3)} style={{ ...S.btn,width:"100%",padding:14,background:T.accent,color:"#fff",borderRadius:14,fontSize:14 }}>Я отримав код</button>
       </>:<>
         <h2 style={{ fontSize:20,fontWeight:900,color:T.text,marginBottom:4 }}>Код підтвердження</h2>
