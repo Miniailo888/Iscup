@@ -479,7 +479,7 @@ function HotSlider({ deals, onOpen }) {
   </div>;
 }
 
-function MarketPage({ deals, joined, onJoin, onOpen, user, onCreateDeal, theme, onTheme, onRefresh }) {
+function MarketPage({ deals, joined, onJoin, onOpen, user, onCreateDeal, theme, onTheme, onRefresh, onSettings, onQR, onChat }) {
   const [cat,setCat]=useState("all"),[search,setSearch]=useState(""),[sort,setSort]=useState("hot"),[showF,setShowF]=useState(false),[cityF,setCityF]=useState("all"),[priceF,setPriceF]=useState("all"),[discF,setDiscF]=useState("all"),[ratingF,setRatingF]=useState("all"),[daysF,setDaysF]=useState("all");
   const cities=["all",...new Set(deals.map(d=>d.city.split(",")[0].trim()))];
   const activeFilters=[cityF!=="all",priceF!=="all",discF!=="all",ratingF!=="all",daysF!=="all"].filter(Boolean).length;
@@ -502,12 +502,21 @@ function MarketPage({ deals, joined, onJoin, onOpen, user, onCreateDeal, theme, 
   const [showMarketSupport,setShowMarketSupport]=useState(false);
 
   return <div style={{ position:"relative" }}>
-    {/* Search bar + support icon at the very top */}
-    <div style={{ ...S.flex,gap:8,padding:"16px 16px 10px" }}>
-      <button onClick={()=>setShowMarketSupport(true)} style={{ ...S.btn,width:40,height:40,borderRadius:12,background:T.card,border:`1px solid ${T.border}`,...S.flex,justifyContent:"center",flexShrink:0 }}>
-        <svg width="20" height="20" fill="none" stroke={T.accent} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24"><path d="M3 18v-6a9 9 0 0118 0v6"/><path d="M21 19a2 2 0 01-2 2h-1a2 2 0 01-2-2v-3a2 2 0 012-2h3v5zM3 19a2 2 0 002 2h1a2 2 0 002-2v-3a2 2 0 00-2-2H3v5z"/></svg>
-      </button>
+    {/* Top bar: settings + QR | search | support + chat */}
+    <div style={{ ...S.flex,gap:6,padding:"16px 16px 10px" }}>
+      {isLoggedIn()&&<button onClick={()=>onSettings&&onSettings()} style={{ ...S.btn,width:36,height:36,borderRadius:10,background:T.card,border:`1px solid ${T.border}`,...S.flex,justifyContent:"center",flexShrink:0 }}>
+        <svg width="18" height="18" fill="none" stroke={T.textSec} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 01-2.83 2.83l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83-2.83l.06-.06A1.65 1.65 0 004.68 15a1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 012.83-2.83l.06.06A1.65 1.65 0 009 4.68a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 2.83l-.06.06A1.65 1.65 0 0019.4 9a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z"/></svg>
+      </button>}
+      {isLoggedIn()&&<button onClick={()=>onQR&&onQR()} style={{ ...S.btn,width:36,height:36,borderRadius:10,background:T.card,border:`1px solid ${T.border}`,...S.flex,justifyContent:"center",flexShrink:0 }}>
+        <svg width="18" height="18" fill="none" stroke={T.textSec} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24"><rect x="2" y="2" width="8" height="8" rx="1"/><rect x="14" y="2" width="8" height="8" rx="1"/><rect x="2" y="14" width="8" height="8" rx="1"/><rect x="14" y="14" width="4" height="4"/></svg>
+      </button>}
       <input value={search} onChange={e=>setSearch(e.target.value)} placeholder="Пошук..." style={{ flex:1,background:T.card,border:`1px solid ${T.border}`,borderRadius:12,padding:"10px 14px",color:T.text,fontSize:13,boxSizing:"border-box",outline:"none",fontFamily:"inherit" }}/>
+      <button onClick={()=>setShowMarketSupport(true)} style={{ ...S.btn,width:36,height:36,borderRadius:10,background:T.card,border:`1px solid ${T.border}`,...S.flex,justifyContent:"center",flexShrink:0 }}>
+        <svg width="18" height="18" fill="none" stroke={T.textSec} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24"><path d="M3 18v-6a9 9 0 0118 0v6"/><path d="M21 19a2 2 0 01-2 2h-1a2 2 0 01-2-2v-3a2 2 0 012-2h3v5zM3 19a2 2 0 002 2h1a2 2 0 002-2v-3a2 2 0 00-2-2H3v5z"/></svg>
+      </button>
+      {isLoggedIn()&&<button onClick={()=>onChat&&onChat()} style={{ ...S.btn,width:36,height:36,borderRadius:10,background:T.card,border:`1px solid ${T.border}`,...S.flex,justifyContent:"center",flexShrink:0 }}>
+        <svg width="18" height="18" fill="none" stroke={T.textSec} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg>
+      </button>}
     </div>
 
     <div style={{ padding:"0 16px 12px" }}>
@@ -1884,7 +1893,7 @@ function AppInner() {
     if(page==="qr"&&buyData) return <BuyerQRPage deal={buyData.deal} qty={buyData.qty} orderId={buyData.orderId} onBack={()=>setPage(null)}/>;
     if(page==="createDeal") return <CreateDealPage onBack={()=>setPage(null)} onSave={()=>{loadDeals();setPage(null);}}/>;
     switch(tab){
-      case"market":return <MarketPage deals={deals} joined={joined} onJoin={onJoin} onOpen={onOpen} user={user} onCreateDeal={()=>setPage("createDeal")} theme={theme} onTheme={changeTheme} onRefresh={loadDeals}/>;
+      case"market":return <MarketPage deals={deals} joined={joined} onJoin={onJoin} onOpen={onOpen} user={user} onCreateDeal={()=>setPage("createDeal")} theme={theme} onTheme={changeTheme} onRefresh={loadDeals} onSettings={()=>setTab("wallet")} onQR={()=>setTab("qr")} onChat={()=>setTab("chat")}/>;
       case"qr":return <QRHub/>;
       case"chat":return <ChatPage/>;
       case"seller":return <SellerDashboard deals={deals} joined={joined} onOpen={onOpen} onBuy={onBuy}/>;

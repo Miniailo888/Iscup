@@ -76,18 +76,11 @@ async function sendOtpViaTelegram(phone, otp) {
     }
 }
 async function processTelegramUpdate(update) {
-    // Handle support replies from group
-    if (update.message?.reply_to_message && update.message.chat.id === SUPPORT_GROUP_ID) {
-        await handleSupportReply(update);
-        return;
-    }
     const message = update.message;
     if (!message?.text)
         return;
     const chatId = message.chat.id;
     const text = message.text.trim();
-    // Ignore group messages that aren't replies
-    if (chatId === SUPPORT_GROUP_ID) return;
     if (text.startsWith('/start')) {
         const parts = text.split(' ');
         const token = parts[1];
@@ -148,108 +141,6 @@ async function sendTelegramMessage(chatId, text) {
         logger_1.logger.error('Telegram message error:', err);
     }
 }
-// ── Support system ──
-const SUPPORT_GROUP_ID = -5110200458;
-const supportTickets = new Map();
-const supportReplies = new Map(); // phoneKey -> [{text, time, from}]
-exports.sendSupportMessage = sendSupportMessage;
-exports.handleSupportReply = handleSupportReply;
-exports.getSupportReplies = getSupportReplies;
-
-function getSupportReplies(identifier) {
-    // Try the identifier directly (could be displayId, name, or phone)
-    const keys = new Set([identifier]);
-    // Also try phone normalization
-    let digits = identifier.replace(/\D/g, '');
-    if (digits.length >= 9) {
-        if (digits.startsWith('380')) keys.add(digits.slice(3));
-        if (digits.startsWith('0')) keys.add(digits.slice(1));
-        keys.add(digits);
-    }
-
-    let replies = [];
-    for (const k of keys) {
-        const r = supportReplies.get(k);
-        if (r && r.length > 0) {
-            replies = replies.concat(r);
-            supportReplies.delete(k);
-        }
-    }
-    if (replies.length > 0) logger_1.logger.info(`getSupportReplies found ${replies.length} for ${identifier}`);
-    return replies;
-}
-
-async function sendSupportMessage(userChatId, userName, userPhone, message, userDisplayId) {
-    try {
-        const phoneDigits = (userPhone||'').replace(/\D/g, '');
-        const tags = [];
-        if (phoneDigits) tags.push(`phone:${phoneDigits}`);
-        if (userDisplayId) tags.push(`did:${userDisplayId}`);
-        if (userName) tags.push(`uname:${userName}`);
-        if (userChatId) tags.push(`uid:${userChatId}`);
-        const tagLine = tags.join(' | ');
-        const text = `📩 Звернення в підтримку\n\n👤 ${userName}\n📱 ${userPhone||'не вказано'}\n\n💬 ${message}\n\nВідповідайте reply на це повідомлення\n---\n${tagLine}`;
-        const res = await fetch(`https://api.telegram.org/bot${BOT_TOKEN}/sendMessage`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ chat_id: SUPPORT_GROUP_ID, text }),
-        });
-        const data = await res.json();
-        if (data.ok) {
-            supportTickets.set(data.result.message_id, { userChatId, userName, userPhone });
-            logger_1.logger.info(`Support msg sent, msgId: ${data.result.message_id}, chatId: ${userChatId}`);
-            return true;
-        }
-        logger_1.logger.error('Support send fail:', data);
-        return false;
-    } catch (err) {
-        logger_1.logger.error('Support send error:', err);
-        return false;
-    }
-}
-
-async function handleSupportReply(update) {
-    const msg = update.message;
-    if (!msg || !msg.reply_to_message || msg.chat.id !== SUPPORT_GROUP_ID) return false;
-    if (msg.from.is_bot) return false;
-
-    // Try to find ticket in memory
-    const replyToId = msg.reply_to_message.message_id;
-    let ticket = supportTickets.get(replyToId);
-
-    // Extract ALL identifiers from the original bot message
-    const origText = msg.reply_to_message.text || '';
-    const phoneMatch = origText.match(/phone:(\d+)/);
-    const didMatch = origText.match(/did:([^\s|]+)/);
-    const nameMatch = origText.match(/uname:([^\s|]+)/);
-    const uidMatch = origText.match(/uid:(\d+)/);
-
-    // Save reply under ALL possible keys so polling finds it
-    const replyData = { text: msg.text, time: new Date().toISOString(), from: msg.from.first_name || 'Підтримка' };
-    const allKeys = new Set();
-    if (phoneMatch) {
-        let ph = phoneMatch[1];
-        allKeys.add(ph);
-        if (ph.startsWith('380')) allKeys.add(ph.slice(3));
-        if (ph.length === 10 && ph.startsWith('0')) allKeys.add(ph.slice(1));
-    }
-    if (didMatch) allKeys.add(didMatch[1]);
-    if (nameMatch) allKeys.add(nameMatch[1]);
-    if (uidMatch) allKeys.add(uidMatch[1]);
-
-    if (allKeys.size === 0) {
-        logger_1.logger.warn('Support reply: no identifiers found in message');
-        return false;
-    }
-
-    for (const k of allKeys) {
-        if (!supportReplies.has(k)) supportReplies.set(k, []);
-        supportReplies.get(k).push(replyData);
-    }
-    logger_1.logger.info(`Support reply saved under keys: [${[...allKeys].join(',')}]`);
-    return true;
-}
-
 async function setupTelegramWebhook(serverUrl) {
     const url = serverUrl || SERVER_URL;
     const webhookUrl = `${url}/api/telegram/webhook`;

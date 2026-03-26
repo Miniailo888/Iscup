@@ -59,35 +59,5 @@ router.get('/test-send', async (req, res) => {
     const sent = await sendOtpViaTelegram(phone, otp);
     res.json({ sent, chatId: chatId || null, phone });
 });
-// GET /api/telegram/support/replies - Get support replies for user
-router.get('/support/replies', async (req, res) => {
-    try {
-        const phone = req.query.phone;
-        if (!phone) { res.json({ replies: [] }); return; }
-        const { getSupportReplies } = require('../utils/telegram');
-        const replies = getSupportReplies(phone);
-        res.json({ replies });
-    } catch (err) {
-        res.json({ replies: [] });
-    }
-});
-
-// POST /api/telegram/support - Send support message
-router.post('/support', async (req, res) => {
-    try {
-        const { message, userName, userPhone, userChatId, userDisplayId } = req.body;
-        if (!message) {
-            res.status(400).json({ ok: false, error: 'Message required' });
-            return;
-        }
-        const { sendSupportMessage, getChatId } = require('../utils/telegram');
-        const chatId = userChatId || getChatId(userPhone) || null;
-        const sent = await sendSupportMessage(chatId, userName || 'User', userPhone || '', message, userDisplayId || '');
-        res.json({ ok: sent });
-    } catch (err) {
-        logger_1.logger.error('Support error:', err);
-        res.status(500).json({ ok: false });
-    }
-});
 exports.default = router;
 //# sourceMappingURL=telegram.routes.js.map
