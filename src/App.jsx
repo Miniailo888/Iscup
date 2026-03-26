@@ -351,15 +351,81 @@ function Nav({ tab, setTab, unread }) {
 }
 
 // ── Welcome + Реєстрація ────────────────────────────────────────────────────
-function WelcomeScreen({ onStart, onGuest }) {
+function WelcomeScreen({ onRegister, onLogin, onGuest }) {
   return <div style={{ minHeight:"100%",display:"flex",flexDirection:"column",justifyContent:"center",padding:32,textAlign:"center" }}>
     <div style={{width:64,height:64,borderRadius:16,background:T.accent,margin:"0 auto 20px",...S.flex,justifyContent:"center"}}>
       <svg width="32" height="32" fill="none" stroke="#fff" strokeWidth="2" viewBox="0 0 24 24"><path d="M16 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="8.5" cy="7" r="4"/><line x1="20" y1="8" x2="20" y2="14"/><line x1="23" y1="11" x2="17" y2="11"/></svg>
     </div>
-    <h1 style={{ fontSize:26,fontWeight:800,color:T.text,marginBottom:8,letterSpacing:"-0.02em" }}>СпільноКуп</h1>
+    <h1 style={{ fontSize:26,fontWeight:800,color:T.text,marginBottom:8,letterSpacing:"-0.02em" }}>Spil</h1>
     <p style={{ fontSize:14,color:T.textSec,marginBottom:36,lineHeight:1.6 }}>Платформа спільних покупок<br/>від малого бізнесу України</p>
-    <button onClick={onStart} style={{ ...S.btn,width:"100%",padding:14,background:T.accent,color:"#fff",borderRadius:8,fontSize:15,marginBottom:10,letterSpacing:"0.01em" }}>Увійти</button>
-    <button onClick={onGuest} style={{ ...S.btn,width:"100%",padding:13,background:"transparent",color:T.textSec,borderRadius:8,fontSize:13,border:`1px solid ${T.border}` }}>Переглянути як гість</button>
+    <button onClick={onRegister} style={{ ...S.btn,width:"100%",padding:14,background:T.accent,color:"#fff",borderRadius:12,fontSize:15,marginBottom:10 }}>Створити акаунт</button>
+    <button onClick={onLogin} style={{ ...S.btn,width:"100%",padding:14,background:"#0088cc",color:"#fff",borderRadius:12,fontSize:15,marginBottom:10 }}>Увійти</button>
+    <button onClick={onGuest} style={{ ...S.btn,width:"100%",padding:13,background:"transparent",color:T.textSec,borderRadius:12,fontSize:13,border:`1px solid ${T.border}` }}>Переглянути як гість</button>
+  </div>;
+}
+
+function LoginScreen({ onDone }) {
+  const [step,setStep]=useState(0),[phone,setPhone]=useState(""),[code,setCode]=useState("");
+  const [telegramToken,setTelegramToken]=useState(""),[loading,setLoading]=useState(false),[error,setError]=useState("");
+
+  const doSendOtp=async()=>{
+    setLoading(true);setError("");
+    try{
+      const res=await sendOtp(phone);
+      if(res.telegramToken) setTelegramToken(res.telegramToken);
+      setStep(1);
+    }catch(e){setError(e.message);}
+    finally{setLoading(false);}
+  };
+  const tgLink=telegramToken?`https://t.me/spilnokupbot?start=${telegramToken}`:"https://t.me/spilnokupbot";
+
+  const doVerify=async()=>{
+    setLoading(true);setError("");
+    try{
+      const data=await verifyOtp(phone,code,null,null,"login");
+      onDone(data.user);
+    }catch(e){setError(e.message);}
+    finally{setLoading(false);}
+  };
+
+  if(step===0) return <div style={{ minHeight:"100%",display:"flex",flexDirection:"column",padding:24 }}>
+    <BackBtn onClick={()=>{}}/>
+    <h2 style={{ fontSize:22,fontWeight:900,color:T.text,marginBottom:4 }}>Вхід в акаунт</h2>
+    <p style={{ fontSize:13,color:T.textSec,marginBottom:20 }}>Введіть номер телефону</p>
+    <Input value={phone} onChange={e=>setPhone(e.target.value)} placeholder="+380..." icon={I.phone} type="tel"/>
+    {error&&<div style={{ color:"#ef4444",fontSize:12,marginTop:8 }}>{error}</div>}
+    <div style={{flex:1}}/>
+    <button onClick={doSendOtp} disabled={!phone||loading} style={{ ...S.btn,width:"100%",padding:15,background:phone?T.accent:T.cardAlt,color:phone?"#fff":T.textMuted,borderRadius:14,fontSize:15,marginTop:20 }}>{loading?"Зачекайте...":"Далі"}</button>
+  </div>;
+
+  if(step===1) return <div style={{ minHeight:"100%",display:"flex",flexDirection:"column",padding:24,textAlign:"center" }}>
+    <BackBtn onClick={()=>setStep(0)}/>
+    <h2 style={{ fontSize:22,fontWeight:900,color:T.text,marginBottom:4 }}>Отримайте код</h2>
+    <div style={{ fontSize:50,margin:"20px 0" }}>
+      <svg width="50" height="50" fill="none" stroke={T.accent} strokeWidth="1.5" viewBox="0 0 24 24"><path d="M22 2L11 13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
+    </div>
+    <p style={{ fontSize:13,color:T.textSec,marginBottom:20,lineHeight:1.6 }}>Натисніть кнопку — відкриється Telegram.<br/>Натисніть <b>Start</b> — бот надішле код.</p>
+    <a href={tgLink} target="_blank" rel="noopener noreferrer" style={{ ...S.btn,display:"block",width:"100%",padding:15,background:"#0088cc",color:"#fff",borderRadius:14,fontSize:15,marginBottom:14,textDecoration:"none",boxSizing:"border-box" }}>Відкрити Telegram</a>
+    <div style={{ fontSize:11,color:T.textMuted,marginBottom:20 }}>1. Start в боті → 2. Отримайте код → 3. Введіть нижче</div>
+    <button onClick={()=>setStep(2)} style={{ ...S.btn,width:"100%",padding:15,background:T.accent,color:"#fff",borderRadius:14,fontSize:15 }}>Я отримав код</button>
+  </div>;
+
+  return <div style={{ minHeight:"100%",display:"flex",flexDirection:"column",padding:24 }}>
+    <BackBtn onClick={()=>setStep(1)}/>
+    <h2 style={{ fontSize:22,fontWeight:900,color:T.text,marginBottom:4 }}>Введіть код</h2>
+    <div style={{ ...S.card,background:T.greenLight,textAlign:"center",marginBottom:16,...S.flex,justifyContent:"center",gap:6 }}>
+      <span style={{fontSize:16}}>
+        <svg width="16" height="16" fill="none" stroke={T.green} strokeWidth="2" viewBox="0 0 24 24"><path d="M22 2L11 13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
+      </span>
+      <span style={{ fontSize:12,color:T.green }}>Код надіслано в Telegram</span>
+    </div>
+    <div style={{ ...S.flex,justifyContent:"center",gap:8,marginBottom:20 }}>
+      {[0,1,2,3,4,5].map(i=><input key={i} maxLength={1} inputMode="numeric" pattern="[0-9]*" value={code[i]||""} onChange={e=>{const v=e.target.value.replace(/\D/g,"");const nc=code.split("");nc[i]=v;setCode(nc.join(""));if(v&&i<5)e.target.nextSibling?.focus();}} onKeyDown={e=>{if(e.key==="Backspace"&&!code[i]&&i>0){const nc=code.split("");nc[i-1]="";setCode(nc.join(""));e.target.previousSibling?.focus();}}}
+        style={{ width:46,height:54,textAlign:"center",fontSize:24,fontWeight:900,border:`2px solid ${code[i]?T.accent:T.border}`,borderRadius:12,outline:"none",color:T.text,fontFamily:"inherit",background:T.card }}/>)}
+    </div>
+    {error&&<div style={{ color:"#ef4444",fontSize:12,marginBottom:8,textAlign:"center" }}>{error}</div>}
+    <button onClick={doVerify} disabled={code.length<6||loading}
+      style={{ ...S.btn,width:"100%",padding:15,background:code.length>=6?T.accent:T.cardAlt,color:code.length>=6?"#fff":T.textMuted,borderRadius:14,fontSize:15 }}>{loading?"Перевіряємо...":"Увійти"}</button>
   </div>;
 }
 
@@ -2003,8 +2069,9 @@ function AppInner() {
   const isMobile=typeof window!=="undefined"&&window.innerWidth<=500;
 
   function render() {
-    if(authStep==="welcome") return <WelcomeScreen onStart={()=>setAuthStep("register")} onGuest={onGuest}/>;
+    if(authStep==="welcome") return <WelcomeScreen onRegister={()=>setAuthStep("register")} onLogin={()=>setAuthStep("login")} onGuest={onGuest}/>;
     if(authStep==="register") return <RegisterScreen onDone={onRegDone}/>;
+    if(authStep==="login") return <LoginScreen onDone={onRegDone}/>;
     if(page==="detail"&&buyData) return <DealDetail deal={buyData.deal} onBack={()=>setPage(null)} joined={joined} onJoin={onJoin} onBuy={onBuy} onRefresh={loadDeals} onChat={async(sellerId,dealId)=>{
       try{const conv=await createConversation(sellerId,dealId);setPage(null);setTab("chat");}catch(e){alert(e.message);}
     }}/>;
