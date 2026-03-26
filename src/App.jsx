@@ -226,7 +226,7 @@ function Input({ value, onChange, placeholder, icon, type="text", area }) {
 }
 
 // ── Навігація (напівпрозора + анімація) ─────────────────────────────────────
-const NAV = [["market",I.home,"Маркет"],["qr",I.qr,"QR"],["chat",I.msg,"Чат"],["seller",I.chart,"Бізнес"],["wallet",I.wallet,"Гаманець"]];
+const NAV = [["market",I.home,"Головна"],["create",I.plus,"Оголошення"],["seller",I.chart,"Бізнес"],["wallet",I.wallet,"Гаманець"]];
 
 function SettingsMenu({ user, theme, onTheme, onBack, onLogout }) {
   const [subPage,setSubPage]=useState(null);
@@ -335,18 +335,20 @@ function SettingsMenu({ user, theme, onTheme, onBack, onLogout }) {
 }
 
 function Nav({ tab, setTab, unread }) {
-  const isCenter=(t)=>t==="chat";
   const logged=isLoggedIn();
   const guestTabs=["market","wallet"];
-  return <div style={{ position:"absolute",bottom:0,left:0,right:0,height:68,background:T.navBg,backdropFilter:"blur(32px)",WebkitBackdropFilter:"blur(32px)",borderTop:`1px solid ${T.border}22`,...S.flex,zIndex:100,padding:"0 4px" }}>
-    {NAV.filter(([t])=>logged||guestTabs.includes(t)).map(([t,icon,label])=>(
-      <button key={t} onClick={()=>setTab(t)} style={{ ...S.btn,flex:1,display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",gap:isCenter(t)?2:3,background:"transparent",color:tab===t?T.accent:T.navText,transition:"all .25s",transform:tab===t?"scale(1.15)":"scale(1)",marginTop:isCenter(t)?-8:0,position:"relative" }}>
-        <div style={{ opacity:tab===t?1:0.45,transform:isCenter(t)?"scale(1.2)":"scale(1)" }}>{icon}</div>
-        {t==="chat"&&unread>0&&<div style={{position:"absolute",top:6,right:"calc(50% - 16px)",width:16,height:16,borderRadius:"50%",background:"#ef4444",fontSize:9,fontWeight:800,color:"#fff",display:"flex",alignItems:"center",justifyContent:"center"}}>{unread>9?"9+":unread}</div>}
-        <span style={{ fontSize:isCenter(t)?10:9,fontWeight:tab===t?800:500,opacity:tab===t?1:0.45 }}>{label}</span>
-        {tab===t&&<div style={{ width:20,height:3,background:`linear-gradient(90deg,${T.gradA},${T.gradB})`,borderRadius:2,marginTop:-1 }}/>}
-      </button>
-    ))}
+  return <div style={{ position:"absolute",bottom:0,left:0,right:0,height:64,background:T.navBg,backdropFilter:"blur(32px)",WebkitBackdropFilter:"blur(32px)",borderTop:`1px solid ${T.border}22`,...S.flex,zIndex:100,padding:"0 8px" }}>
+    {NAV.filter(([t])=>logged||guestTabs.includes(t)).map(([t,icon,label])=>{
+      const isCreate=t==="create";
+      const active=tab===t;
+      return <button key={t} onClick={()=>setTab(t)} style={{ ...S.btn,flex:1,display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",gap:3,background:"transparent",color:active?T.accent:T.navText,position:"relative" }}>
+        {isCreate?<div style={{width:44,height:44,borderRadius:14,background:T.accent,marginTop:-18,...S.flex,justifyContent:"center",boxShadow:"0 4px 12px rgba(0,0,0,0.2)"}}>
+          <svg width="24" height="24" fill="none" stroke="#fff" strokeWidth="2.5" strokeLinecap="round" viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+        </div>:<div style={{ opacity:active?1:0.5 }}>{icon}</div>}
+        <span style={{ fontSize:9,fontWeight:active?700:500,opacity:active?1:0.5 }}>{label}</span>
+        {active&&!isCreate&&<div style={{ width:16,height:2,background:T.accent,borderRadius:1,marginTop:-1 }}/>}
+      </button>;
+    })}
   </div>;
 }
 
@@ -654,7 +656,7 @@ function HotSlider({ deals, onOpen }) {
   </div>;
 }
 
-function MarketPage({ deals, joined, onJoin, onOpen, user, onCreateDeal, theme, onTheme, onRefresh, onSettings, onQR, onChat }) {
+function MarketPage({ deals, joined, onJoin, onOpen, user, onCreateDeal, theme, onTheme, onRefresh, onSettings, onScan, onChat, unreadCount }) {
   const [cat,setCat]=useState("all"),[search,setSearch]=useState(""),[sort,setSort]=useState("hot"),[showF,setShowF]=useState(false),[cityF,setCityF]=useState("all"),[priceF,setPriceF]=useState("all"),[discF,setDiscF]=useState("all"),[ratingF,setRatingF]=useState("all"),[daysF,setDaysF]=useState("all");
   const cities=["all",...new Set(deals.map(d=>d.city.split(",")[0].trim()))];
   const activeFilters=[cityF!=="all",priceF!=="all",discF!=="all",ratingF!=="all",daysF!=="all"].filter(Boolean).length;
@@ -677,20 +679,21 @@ function MarketPage({ deals, joined, onJoin, onOpen, user, onCreateDeal, theme, 
   const [showMarketSupport,setShowMarketSupport]=useState(false);
 
   return <div style={{ position:"relative" }}>
-    {/* Top bar: settings + QR | search | support + chat */}
+    {/* Top bar: profile + scanner | search | support + chat */}
     <div style={{ ...S.flex,gap:6,padding:"16px 16px 10px" }}>
       {isLoggedIn()&&<button onClick={()=>onSettings&&onSettings()} style={{ ...S.btn,width:36,height:36,borderRadius:10,background:T.card,border:`1px solid ${T.border}`,...S.flex,justifyContent:"center",flexShrink:0 }}>
-        <svg width="18" height="18" fill="none" stroke={T.textSec} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 01-2.83 2.83l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83-2.83l.06-.06A1.65 1.65 0 004.68 15a1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 012.83-2.83l.06.06A1.65 1.65 0 009 4.68a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 2.83l-.06.06A1.65 1.65 0 0019.4 9a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z"/></svg>
+        <svg width="18" height="18" fill="none" stroke={T.textSec} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
       </button>}
-      {isLoggedIn()&&<button onClick={()=>onQR&&onQR()} style={{ ...S.btn,width:36,height:36,borderRadius:10,background:T.card,border:`1px solid ${T.border}`,...S.flex,justifyContent:"center",flexShrink:0 }}>
-        <svg width="18" height="18" fill="none" stroke={T.textSec} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24"><rect x="2" y="2" width="8" height="8" rx="1"/><rect x="14" y="2" width="8" height="8" rx="1"/><rect x="2" y="14" width="8" height="8" rx="1"/><rect x="14" y="14" width="4" height="4"/></svg>
+      {isLoggedIn()&&<button onClick={()=>onScan&&onScan()} style={{ ...S.btn,width:36,height:36,borderRadius:10,background:T.card,border:`1px solid ${T.border}`,...S.flex,justifyContent:"center",flexShrink:0 }}>
+        <svg width="18" height="18" fill="none" stroke={T.textSec} strokeWidth="2" viewBox="0 0 24 24"><path d="M2 7V2h5M17 2h5v5M22 17v5h-5M7 22H2v-5"/><rect x="7" y="7" width="10" height="10" rx="1"/></svg>
       </button>}
       <input value={search} onChange={e=>setSearch(e.target.value)} placeholder="Пошук..." style={{ flex:1,background:T.card,border:`1px solid ${T.border}`,borderRadius:12,padding:"10px 14px",color:T.text,fontSize:13,boxSizing:"border-box",outline:"none",fontFamily:"inherit" }}/>
       <button onClick={()=>setShowMarketSupport(true)} style={{ ...S.btn,width:36,height:36,borderRadius:10,background:T.card,border:`1px solid ${T.border}`,...S.flex,justifyContent:"center",flexShrink:0 }}>
         <svg width="18" height="18" fill="none" stroke={T.textSec} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24"><path d="M3 18v-6a9 9 0 0118 0v6"/><path d="M21 19a2 2 0 01-2 2h-1a2 2 0 01-2-2v-3a2 2 0 012-2h3v5zM3 19a2 2 0 002 2h1a2 2 0 002-2v-3a2 2 0 00-2-2H3v5z"/></svg>
       </button>
-      {isLoggedIn()&&<button onClick={()=>onChat&&onChat()} style={{ ...S.btn,width:36,height:36,borderRadius:10,background:T.card,border:`1px solid ${T.border}`,...S.flex,justifyContent:"center",flexShrink:0 }}>
+      {isLoggedIn()&&<button onClick={()=>onChat&&onChat()} style={{ ...S.btn,width:36,height:36,borderRadius:10,background:T.card,border:`1px solid ${T.border}`,...S.flex,justifyContent:"center",flexShrink:0,position:"relative" }}>
         <svg width="18" height="18" fill="none" stroke={T.textSec} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg>
+        {unreadCount>0&&<div style={{position:"absolute",top:-2,right:-2,width:14,height:14,borderRadius:7,background:"#ef4444",fontSize:8,fontWeight:800,color:"#fff",...S.flex,justifyContent:"center"}}>{unreadCount>9?"9+":unreadCount}</div>}
       </button>}
     </div>
 
@@ -1939,10 +1942,6 @@ function WalletPage({ user, setUser, theme, onTheme }) {
 
   return <div style={S.page}>
     <div style={{ position:"relative" }}>
-      <button onClick={()=>setShowSettings(true)} style={{ ...S.btn,position:"absolute",top:12,right:12,zIndex:10,width:36,height:36,borderRadius:12,background:"rgba(255,255,255,0.15)",backdropFilter:"blur(8px)",...S.flex,justifyContent:"center" }}>
-        <svg width="18" height="18" fill="none" stroke={T.text} strokeWidth="2" strokeLinecap="round" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83-2.83l.06-.06A1.65 1.65 0 004.68 15a1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 012.83-2.83l.06.06A1.65 1.65 0 009 4.68a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 2.83l-.06.06A1.65 1.65 0 0019.4 9a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z"/></svg>
-      </button>
-    </div>
     <div style={{ ...S.card,marginBottom:16,textAlign:"center",position:"relative",overflow:"hidden" }}>
       <div style={{ position:"absolute",top:0,left:0,right:0,height:80,background:`linear-gradient(135deg,${T.accent},${T.purple},${T.blue})` }}/>
       <div style={{ position:"relative",paddingTop:40 }}>
@@ -2078,9 +2077,10 @@ function AppInner() {
     if(page==="qr"&&buyData) return <BuyerQRPage deal={buyData.deal} qty={buyData.qty} orderId={buyData.orderId} onBack={()=>setPage(null)}/>;
     if(page==="createDeal") return <CreateDealPage onBack={()=>setPage(null)} onSave={()=>{loadDeals();setPage(null);}}/>;
     if(page==="settings") return <SettingsMenu user={user} theme={theme} onTheme={changeTheme} onBack={()=>setPage(null)} onLogout={()=>{disconnectSocket();apiLogout();const g={name:"Гість",email:"",phone:"",city:""};localStorage.setItem("spilnokup_user",JSON.stringify(g));setUser(g);setPage(null);setTab("market");setAuthStep("welcome");}}/>;
+    if(page==="scanner") return <QRHub onBack={()=>setPage(null)} isPage/>;
     switch(tab){
-      case"market":return <MarketPage deals={deals} joined={joined} onJoin={onJoin} onOpen={onOpen} user={user} onCreateDeal={()=>setPage("createDeal")} theme={theme} onTheme={changeTheme} onRefresh={loadDeals} onSettings={()=>setPage("settings")} onQR={()=>setTab("qr")} onChat={()=>setTab("chat")}/>;
-      case"qr":return <QRHub/>;
+      case"market":return <MarketPage deals={deals} joined={joined} onJoin={onJoin} onOpen={onOpen} user={user} onCreateDeal={()=>setPage("createDeal")} theme={theme} onTheme={changeTheme} onRefresh={loadDeals} onSettings={()=>setPage("settings")} onScan={()=>setPage("scanner")} onChat={()=>setTab("chat")} unreadCount={unreadCount}/>;
+      case"create":return <CreateDealPage onBack={()=>setTab("market")} onSave={()=>{loadDeals();setTab("market");}}/>;
       case"chat":return <ChatPage/>;
       case"seller":return <SellerDashboard deals={deals} joined={joined} onOpen={onOpen} onBuy={onBuy}/>;
       case"wallet":return <WalletPage user={user} setUser={setUser} theme={theme} onTheme={changeTheme}/>;
