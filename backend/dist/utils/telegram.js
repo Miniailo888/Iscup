@@ -183,15 +183,16 @@ async function sendSupportMessage(userChatId, userName, userPhone, message, user
     try {
         const phoneDigits = (userPhone||'').replace(/\D/g, '');
         const tags = [];
-        if (phoneDigits) tags.push(`[phone:${phoneDigits}]`);
-        if (userDisplayId) tags.push(`[did:${userDisplayId}]`);
-        if (userName) tags.push(`[name:${userName}]`);
-        if (userChatId) tags.push(`[uid:${userChatId}]`);
-        const text = `📩 *Звернення в підтримку*\n\n👤 ${userName}\n📱 ${userPhone||'не вказано'}\n\n💬 ${message}\n\n_Відповідайте reply на це повідомлення_\n${tags.join(' ')}`;
+        if (phoneDigits) tags.push(`phone:${phoneDigits}`);
+        if (userDisplayId) tags.push(`did:${userDisplayId}`);
+        if (userName) tags.push(`uname:${userName}`);
+        if (userChatId) tags.push(`uid:${userChatId}`);
+        const tagLine = tags.join(' | ');
+        const text = `📩 Звернення в підтримку\n\n👤 ${userName}\n📱 ${userPhone||'не вказано'}\n\n💬 ${message}\n\nВідповідайте reply на це повідомлення\n---\n${tagLine}`;
         const res = await fetch(`https://api.telegram.org/bot${BOT_TOKEN}/sendMessage`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ chat_id: SUPPORT_GROUP_ID, text, parse_mode: 'Markdown' }),
+            body: JSON.stringify({ chat_id: SUPPORT_GROUP_ID, text }),
         });
         const data = await res.json();
         if (data.ok) {
@@ -218,10 +219,10 @@ async function handleSupportReply(update) {
 
     // Extract ALL identifiers from the original bot message
     const origText = msg.reply_to_message.text || '';
-    const phoneMatch = origText.match(/\[phone:(\d+)\]/);
-    const didMatch = origText.match(/\[did:([^\]]+)\]/);
-    const nameMatch = origText.match(/\[name:([^\]]+)\]/);
-    const uidMatch = origText.match(/\[uid:(\d+)\]/);
+    const phoneMatch = origText.match(/phone:(\d+)/);
+    const didMatch = origText.match(/did:([^\s|]+)/);
+    const nameMatch = origText.match(/uname:([^\s|]+)/);
+    const uidMatch = origText.match(/uid:(\d+)/);
 
     // Save reply under ALL possible keys so polling finds it
     const replyData = { text: msg.text, time: new Date().toISOString(), from: msg.from.first_name || 'Підтримка' };
