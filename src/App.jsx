@@ -1941,7 +1941,6 @@ function WalletPage({ user, setUser, theme, onTheme }) {
   </div>;
 
   return <div style={S.page}>
-    <div style={{ position:"relative" }}>
     <div style={{ ...S.card,marginBottom:16,textAlign:"center",position:"relative",overflow:"hidden" }}>
       <div style={{ position:"absolute",top:0,left:0,right:0,height:80,background:`linear-gradient(135deg,${T.accent},${T.purple},${T.blue})` }}/>
       <div style={{ position:"relative",paddingTop:40 }}>
