@@ -29,7 +29,7 @@ struct CreateDealView: View {
                     VStack(spacing: 16) {
                         // Photo placeholder
                         ZStack {
-                            RoundedRectangle(cornerRadius: 16)
+                            RoundedRectangle(cornerRadius: 10)
                                 .strokeBorder(state.theme.textMuted, style: StrokeStyle(lineWidth: 2, dash: [8]))
                                 .frame(height: 120)
                             VStack(spacing: 8) {
@@ -43,51 +43,47 @@ struct CreateDealView: View {
                         }
 
                         Group {
-                            ThemedTextField(placeholder: "Назва товару", text: $title, icon: "📦")
+                            ThemedTextField(placeholder: "Назва товару", text: $title, icon: "shippingbox.fill")
 
                             HStack(spacing: 12) {
-                                ThemedTextField(placeholder: "Гурт ₴", text: $groupPrice, icon: "💰")
-                                ThemedTextField(placeholder: "Роздріб ₴", text: $retailPrice, icon: "🏷")
+                                ThemedTextField(placeholder: "Гурт", text: $groupPrice, icon: "banknote.fill")
+                                ThemedTextField(placeholder: "Роздрiб", text: $retailPrice, icon: "tag.fill")
                             }
                         }
 
                         // Category
                         VStack(alignment: .leading, spacing: 8) {
-                            Text("Категорія")
+                            Text("Категорiя")
                                 .font(.subheadline)
                                 .foregroundColor(state.theme.textSec)
                             LazyVGrid(columns: [GridItem(.adaptive(minimum: 90))], spacing: 6) {
                                 ForEach(DealCategory.allCases.filter { $0 != .all }, id: \.self) { cat in
                                     Button(action: { category = cat }) {
-                                        HStack(spacing: 4) {
-                                            Text(cat.icon)
-                                                .font(.caption)
-                                            Text(cat.label)
-                                                .font(.caption2)
-                                        }
-                                        .foregroundColor(category == cat ? .white : state.theme.textSec)
-                                        .padding(.horizontal, 8)
-                                        .padding(.vertical, 6)
-                                        .frame(maxWidth: .infinity)
-                                        .background(category == cat ? state.theme.accent : state.theme.cardAlt)
-                                        .cornerRadius(8)
+                                        Text(cat.label)
+                                            .font(.caption2)
+                                            .foregroundColor(category == cat ? .white : state.theme.textSec)
+                                            .padding(.horizontal, 8)
+                                            .padding(.vertical, 6)
+                                            .frame(maxWidth: .infinity)
+                                            .background(category == cat ? state.theme.accent : state.theme.cardAlt)
+                                            .cornerRadius(8)
                                     }
                                 }
                             }
                         }
 
                         HStack(spacing: 12) {
-                            ThemedTextField(placeholder: "Одиниця", text: $unit, icon: "📏")
-                            ThemedTextField(placeholder: "Учасників", text: $needed, icon: "👥")
+                            ThemedTextField(placeholder: "Одиниця", text: $unit, icon: "scalemass.fill")
+                            ThemedTextField(placeholder: "Учасникiв", text: $needed, icon: "person.2.fill")
                         }
 
                         HStack(spacing: 12) {
-                            ThemedTextField(placeholder: "Мін.", text: $minQty)
+                            ThemedTextField(placeholder: "Мiн.", text: $minQty)
                             ThemedTextField(placeholder: "Макс.", text: $maxQty)
-                            ThemedTextField(placeholder: "Днів", text: $days, icon: "📅")
+                            ThemedTextField(placeholder: "Днiв", text: $days, icon: "calendar")
                         }
 
-                        ThemedTextField(placeholder: "Місто", text: $city, icon: "📍")
+                        ThemedTextField(placeholder: "Мiсто", text: $city, icon: "mappin.and.ellipse")
 
                         // City quick select
                         ScrollView(.horizontal, showsIndicators: false) {
@@ -115,20 +111,20 @@ struct CreateDealView: View {
                                 .frame(height: 80)
                                 .padding(8)
                                 .background(state.theme.cardAlt)
-                                .cornerRadius(12)
+                                .cornerRadius(10)
                                 .scrollContentBackground(.hidden)
                         }
 
-                        ThemedTextField(placeholder: "Теги (через кому)", text: $tags, icon: "🏷")
+                        ThemedTextField(placeholder: "Теги (через кому)", text: $tags, icon: "tag.fill")
 
                         Button(action: publish) {
-                            Text("Опублікувати")
+                            Text("Опублiкувати")
                                 .font(.headline)
                                 .foregroundColor(.white)
                                 .frame(maxWidth: .infinity)
                                 .padding(.vertical, 14)
                                 .background(canPublish ? state.theme.accent : state.theme.cardAlt)
-                                .cornerRadius(14)
+                                .cornerRadius(10)
                         }
                         .disabled(!canPublish)
                     }

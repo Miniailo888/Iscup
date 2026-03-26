@@ -22,11 +22,11 @@ struct SellerDashboardView: View {
                     VStack(spacing: 16) {
                         // Tab switcher
                         HStack(spacing: 0) {
-                            tabButton("Бізнес", index: 0)
-                            tabButton("Мої покупки", index: 1)
+                            tabButton("Бiзнес", index: 0)
+                            tabButton("Моi покупки", index: 1)
                         }
                         .background(state.theme.card)
-                        .cornerRadius(12)
+                        .cornerRadius(10)
                         .padding(.horizontal)
 
                         if tab == 0 {
@@ -39,7 +39,7 @@ struct SellerDashboardView: View {
                     .padding(.bottom, 20)
                 }
             }
-            .navigationTitle("Кабінет")
+            .navigationTitle("Кабiнет")
             .navigationDestination(item: $selectedDeal) { deal in
                 DealDetailView(deal: deal)
             }
@@ -54,19 +54,22 @@ struct SellerDashboardView: View {
                 .frame(maxWidth: .infinity)
                 .padding(.vertical, 10)
                 .background(tab == index ? state.theme.accent : Color.clear)
-                .cornerRadius(12)
+                .cornerRadius(10)
         }
     }
 
     var businessTab: some View {
         VStack(spacing: 16) {
-            // Seller card
+            // Seller card with initials
             HStack(spacing: 12) {
-                Text(SampleData.seller.avatar)
-                    .font(.largeTitle)
-                    .frame(width: 56, height: 56)
-                    .background(state.theme.cardAlt)
-                    .cornerRadius(28)
+                ZStack {
+                    Circle()
+                        .fill(state.theme.accent)
+                        .frame(width: 56, height: 56)
+                    Text(sellerInitials)
+                        .font(.title3.bold())
+                        .foregroundColor(.white)
+                }
                 VStack(alignment: .leading, spacing: 4) {
                     Text(SampleData.seller.name)
                         .font(.headline)
@@ -78,7 +81,7 @@ struct SellerDashboardView: View {
                         Text(String(format: "%.1f", SampleData.seller.rating))
                             .font(.caption)
                             .foregroundColor(state.theme.textSec)
-                        Text("· \(SampleData.seller.city)")
+                        Text("- \(SampleData.seller.city)")
                             .font(.caption)
                             .foregroundColor(state.theme.textMuted)
                     }
@@ -87,13 +90,13 @@ struct SellerDashboardView: View {
             }
             .padding(14)
             .background(state.theme.card)
-            .cornerRadius(14)
+            .cornerRadius(10)
             .padding(.horizontal)
 
             // Stats grid
             LazyVGrid(columns: [GridItem(.flexible()), GridItem(.flexible())], spacing: 8) {
-                statCard("Дохід", "₴\(totalRev)", state.theme.green)
-                statCard("Активні", "\(paidOrders.count)", state.theme.accent)
+                statCard("Дохiд", "\(totalRev) грн", state.theme.green)
+                statCard("Активнi", "\(paidOrders.count)", state.theme.accent)
                 statCard("Завершено", "\(doneOrders.count)", state.theme.yellow)
                 statCard("Всього", "\(state.orders.count)", state.theme.purple)
             }
@@ -101,14 +104,14 @@ struct SellerDashboardView: View {
 
             // Revenue chart
             VStack(alignment: .leading, spacing: 12) {
-                Text("Дохід за тиждень")
+                Text("Дохiд за тиждень")
                     .font(.headline)
                     .foregroundColor(state.theme.text)
 
                 HStack(alignment: .bottom, spacing: 8) {
                     ForEach(0..<7, id: \.self) { i in
                         VStack(spacing: 4) {
-                            Text("₴\(revenue[i])")
+                            Text("\(revenue[i])")
                                 .font(.system(size: 8))
                                 .foregroundColor(state.theme.textMuted)
                             RoundedRectangle(cornerRadius: 4)
@@ -125,12 +128,12 @@ struct SellerDashboardView: View {
             }
             .padding(14)
             .background(state.theme.card)
-            .cornerRadius(14)
+            .cornerRadius(10)
             .padding(.horizontal)
 
             // Awaiting delivery
             if !paidOrders.isEmpty {
-                sectionHeader("Очікують видачі")
+                sectionHeader("Очiкують видачi")
                 ForEach(paidOrders) { order in
                     orderRow(order)
                 }
@@ -138,7 +141,7 @@ struct SellerDashboardView: View {
 
             // Completed
             if !doneOrders.isEmpty {
-                sectionHeader("Завершені")
+                sectionHeader("Завершенi")
                 ForEach(doneOrders) { order in
                     orderRow(order)
                         .opacity(0.6)
@@ -147,14 +150,22 @@ struct SellerDashboardView: View {
         }
     }
 
+    var sellerInitials: String {
+        let parts = SampleData.seller.name.components(separatedBy: " ")
+        let first = parts.first?.prefix(1) ?? ""
+        let last = parts.count > 1 ? parts[1].prefix(1) : ""
+        return "\(first)\(last)".uppercased()
+    }
+
     var myPurchasesTab: some View {
         VStack(spacing: 12) {
             let myDeals = state.deals.filter { state.isJoined($0.id) }
             if myDeals.isEmpty {
                 VStack(spacing: 12) {
-                    Text("🛒")
-                        .font(.system(size: 50))
-                    Text("Ви ще не приєдналися до жодної покупки")
+                    Image(systemName: "cart")
+                        .font(.system(size: 40))
+                        .foregroundColor(state.theme.textMuted)
+                    Text("Ви ще не приєдналися до жодноi покупки")
                         .font(.subheadline)
                         .foregroundColor(state.theme.textSec)
                         .multilineTextAlignment(.center)
@@ -181,7 +192,7 @@ struct SellerDashboardView: View {
         .frame(maxWidth: .infinity)
         .padding(12)
         .background(state.theme.card)
-        .cornerRadius(12)
+        .cornerRadius(10)
     }
 
     func sectionHeader(_ title: String) -> some View {
@@ -196,27 +207,37 @@ struct SellerDashboardView: View {
 
     func orderRow(_ order: Order) -> some View {
         HStack(spacing: 10) {
-            Text(order.avatar)
-                .font(.title3)
-                .frame(width: 40, height: 40)
-                .background(state.theme.cardAlt)
-                .cornerRadius(20)
+            ZStack {
+                Circle()
+                    .fill(state.theme.accent.opacity(0.2))
+                    .frame(width: 40, height: 40)
+                Text(orderInitials(order.buyer))
+                    .font(.system(size: 12, weight: .bold))
+                    .foregroundColor(state.theme.accent)
+            }
             VStack(alignment: .leading, spacing: 2) {
                 Text(order.buyer)
                     .font(.subheadline)
                     .foregroundColor(state.theme.text)
-                Text("\(order.item) × \(order.qty) \(order.unit)")
+                Text("\(order.item) x \(order.qty) \(order.unit)")
                     .font(.caption)
                     .foregroundColor(state.theme.textSec)
             }
             Spacer()
-            Text("₴\(order.amount)")
+            Text("\(order.amount) грн")
                 .font(.subheadline.bold())
                 .foregroundColor(state.theme.green)
         }
         .padding(12)
         .background(state.theme.card)
-        .cornerRadius(12)
+        .cornerRadius(10)
         .padding(.horizontal)
+    }
+
+    func orderInitials(_ name: String) -> String {
+        let parts = name.components(separatedBy: " ")
+        let first = parts.first?.prefix(1) ?? ""
+        let last = parts.count > 1 ? parts[1].prefix(1) : ""
+        return "\(first)\(last)".uppercased()
     }
 }

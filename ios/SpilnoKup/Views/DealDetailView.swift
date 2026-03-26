@@ -15,17 +15,22 @@ struct DealDetailView: View {
 
             ScrollView {
                 VStack(spacing: 16) {
-                    // Photo
+                    // Photo / Category gradient header
                     ZStack {
                         categoryGradient(for: deal.cat)
                             .frame(height: 200)
-                        Text(deal.avatar)
-                            .font(.system(size: 70))
+                        // Large initial letter
+                        Circle()
+                            .fill(categorySolidColor(for: deal.cat))
+                            .frame(width: 80, height: 80)
+                        Text(String(deal.title.prefix(1)).uppercased())
+                            .font(.system(size: 36, weight: .bold))
+                            .foregroundColor(.white)
                         if deal.hot {
                             VStack {
                                 HStack {
                                     Spacer()
-                                    BadgeView(text: "🔥 HOT", bg: Color.red.opacity(0.8), fg: .white)
+                                    BadgeView(text: "HOT", bg: Color.red.opacity(0.8), fg: .white)
                                         .padding(12)
                                 }
                                 Spacer()
@@ -47,13 +52,16 @@ struct DealDetailView: View {
                             .font(.title2.bold())
                             .foregroundColor(state.theme.text)
 
-                        // Seller card
+                        // Seller card with initials
                         HStack(spacing: 12) {
-                            Text(deal.avatar)
-                                .font(.title)
-                                .frame(width: 50, height: 50)
-                                .background(state.theme.cardAlt)
-                                .cornerRadius(25)
+                            ZStack {
+                                Circle()
+                                    .fill(state.theme.accent)
+                                    .frame(width: 50, height: 50)
+                                Text(sellerInitials)
+                                    .font(.headline)
+                                    .foregroundColor(.white)
+                            }
 
                             VStack(alignment: .leading, spacing: 4) {
                                 Text(deal.seller)
@@ -85,24 +93,24 @@ struct DealDetailView: View {
                         }
                         .padding(12)
                         .background(state.theme.card)
-                        .cornerRadius(14)
+                        .cornerRadius(10)
 
                         // Price section
                         HStack {
                             VStack(alignment: .leading, spacing: 4) {
-                                Text("Гуртова ціна")
+                                Text("Гуртова цiна")
                                     .font(.caption)
                                     .foregroundColor(state.theme.textSec)
-                                Text("₴\(deal.group)/\(deal.unit)")
+                                Text("\(deal.group) грн/\(deal.unit)")
                                     .font(.title.bold())
                                     .foregroundColor(state.theme.accent)
                             }
                             Spacer()
                             VStack(alignment: .trailing, spacing: 4) {
-                                Text("Роздріб")
+                                Text("Роздрiб")
                                     .font(.caption)
                                     .foregroundColor(state.theme.textSec)
-                                Text("₴\(deal.retail)")
+                                Text("\(deal.retail) грн")
                                     .font(.title3)
                                     .foregroundColor(state.theme.textMuted)
                                     .strikethrough()
@@ -110,9 +118,9 @@ struct DealDetailView: View {
                         }
                         .padding(14)
                         .background(state.theme.card)
-                        .cornerRadius(14)
+                        .cornerRadius(10)
 
-                        Text("Економія: ₴\(deal.savings)/\(deal.unit)")
+                        Text("Економiя: \(deal.savings) грн/\(deal.unit)")
                             .font(.subheadline.bold())
                             .foregroundColor(state.theme.green)
 
@@ -120,7 +128,7 @@ struct DealDetailView: View {
                         VStack(spacing: 6) {
                             DealProgressBar(value: deal.pct, color: priceColor(for: deal.pct), height: 8)
                             HStack {
-                                Text("Учасників: \(deal.joined)/\(deal.needed)")
+                                Text("Учасникiв: \(deal.joined)/\(deal.needed)")
                                     .font(.caption)
                                     .foregroundColor(state.theme.textSec)
                                 Spacer()
@@ -131,12 +139,14 @@ struct DealDetailView: View {
                         }
                         .padding(14)
                         .background(state.theme.card)
-                        .cornerRadius(14)
+                        .cornerRadius(10)
 
                         // Tags
-                        HStack(spacing: 6) {
-                            ForEach(deal.tags, id: \.self) { tag in
-                                BadgeView(text: tag, bg: state.theme.greenLight, fg: state.theme.green)
+                        ScrollView(.horizontal, showsIndicators: false) {
+                            HStack(spacing: 6) {
+                                ForEach(deal.tags, id: \.self) { tag in
+                                    BadgeView(text: tag, bg: state.theme.greenLight, fg: state.theme.green)
+                                }
                             }
                         }
 
@@ -146,7 +156,7 @@ struct DealDetailView: View {
                             .foregroundColor(state.theme.textSec)
                             .padding(14)
                             .background(state.theme.card)
-                            .cornerRadius(14)
+                            .cornerRadius(10)
 
                         // Deadline
                         HStack(spacing: 6) {
@@ -160,7 +170,7 @@ struct DealDetailView: View {
                         // Quantity selector
                         if !isJoined {
                             VStack(spacing: 10) {
-                                Text("Кількість (\(deal.unit))")
+                                Text("Кiлькiсть (\(deal.unit))")
                                     .font(.subheadline)
                                     .foregroundColor(state.theme.textSec)
 
@@ -181,27 +191,27 @@ struct DealDetailView: View {
                                     }
                                 }
 
-                                Text("від \(deal.minQty) до \(deal.maxQty) \(deal.unit)")
+                                Text("вiд \(deal.minQty) до \(deal.maxQty) \(deal.unit)")
                                     .font(.caption)
                                     .foregroundColor(state.theme.textMuted)
                             }
                             .padding(14)
                             .background(state.theme.card)
-                            .cornerRadius(14)
+                            .cornerRadius(10)
                         }
 
                         // Share
                         Button(action: share) {
                             HStack {
                                 Image(systemName: "square.and.arrow.up")
-                                Text("Поділитись")
+                                Text("Подiлитись")
                             }
                             .font(.subheadline)
                             .foregroundColor(state.theme.accent)
                             .frame(maxWidth: .infinity)
                             .padding(12)
                             .background(state.theme.card)
-                            .cornerRadius(12)
+                            .cornerRadius(10)
                         }
                     }
                     .padding(.horizontal)
@@ -217,13 +227,13 @@ struct DealDetailView: View {
                         state.joinDeal(deal.id)
                     }
                 }) {
-                    Text(isJoined ? "✓ Ви долучились" : "Долучитись · ₴\(total)")
+                    Text(isJoined ? "Ви долучились" : "Долучитись - \(total) грн")
                         .font(.headline)
                         .foregroundColor(.white)
                         .frame(maxWidth: .infinity)
                         .padding(.vertical, 16)
                         .background(isJoined ? state.theme.green : state.theme.accent)
-                        .cornerRadius(16)
+                        .cornerRadius(10)
                 }
                 .padding(.horizontal)
                 .padding(.bottom, 8)
@@ -237,8 +247,15 @@ struct DealDetailView: View {
         .onAppear { qty = deal.minQty }
     }
 
+    var sellerInitials: String {
+        let parts = deal.seller.components(separatedBy: " ")
+        let first = parts.first?.prefix(1) ?? ""
+        let last = parts.count > 1 ? parts[1].prefix(1) : ""
+        return "\(first)\(last)".uppercased()
+    }
+
     func share() {
-        let text = "\(deal.title) — ₴\(deal.group) замість ₴\(deal.retail)! -\(deal.disc)%"
+        let text = "\(deal.title) -- \(deal.group) грн замiсть \(deal.retail) грн! -\(deal.disc)%"
         let av = UIActivityViewController(activityItems: [text], applicationActivities: nil)
         if let scene = UIApplication.shared.connectedScenes.first as? UIWindowScene,
            let root = scene.windows.first?.rootViewController {

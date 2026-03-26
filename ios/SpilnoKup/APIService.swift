@@ -69,6 +69,13 @@ class APIService {
         return URL(string: "https://t.me/\(botUsername)?start=\(cleanPhone)")
     }
 
+    // MARK: - Send Support Message
+
+    func sendSupportMessage(message: String) async throws {
+        let body: [String: Any] = ["message": message]
+        _ = try await request(path: "/telegram/support", method: "POST", body: body)
+    }
+
     // MARK: - Logout
 
     func logout() {

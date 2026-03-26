@@ -46,12 +46,12 @@ struct DealProgressBar: View {
 // MARK: - Icon Container
 
 struct IconContainer: View {
-    let emoji: String
+    let sfSymbol: String
     var size: CGFloat = 36
 
     var body: some View {
-        Text(emoji)
-            .font(.system(size: size * 0.55))
+        Image(systemName: sfSymbol)
+            .font(.system(size: size * 0.45))
             .frame(width: size, height: size)
             .background(Color.white.opacity(0.06))
             .cornerRadius(size * 0.3)
@@ -75,8 +75,9 @@ struct ThemedTextField: View {
     var body: some View {
         HStack(spacing: 10) {
             if let icon = icon {
-                Text(icon)
-                    .font(.system(size: 16))
+                Image(systemName: icon)
+                    .font(.system(size: 14))
+                    .foregroundColor(state.theme.textMuted)
             }
             if isSecure {
                 SecureField(placeholder, text: $text)
@@ -88,9 +89,9 @@ struct ThemedTextField: View {
         }
         .padding(12)
         .background(state.theme.cardAlt)
-        .cornerRadius(12)
+        .cornerRadius(10)
         .overlay(
-            RoundedRectangle(cornerRadius: 12)
+            RoundedRectangle(cornerRadius: 10)
                 .stroke(state.theme.border, lineWidth: 1)
         )
     }
