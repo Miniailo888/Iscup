@@ -75,14 +75,14 @@ router.get('/support/replies', async (req, res) => {
 // POST /api/telegram/support - Send support message
 router.post('/support', async (req, res) => {
     try {
-        const { message, userName, userPhone, userChatId } = req.body;
+        const { message, userName, userPhone, userChatId, userDisplayId } = req.body;
         if (!message) {
             res.status(400).json({ ok: false, error: 'Message required' });
             return;
         }
         const { sendSupportMessage, getChatId } = require('../utils/telegram');
         const chatId = userChatId || getChatId(userPhone) || null;
-        const sent = await sendSupportMessage(chatId, userName || 'User', userPhone || '', message);
+        const sent = await sendSupportMessage(chatId, userName || 'User', userPhone || '', message, userDisplayId || '');
         res.json({ ok: sent });
     } catch (err) {
         logger_1.logger.error('Support error:', err);

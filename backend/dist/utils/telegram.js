@@ -156,14 +156,17 @@ exports.sendSupportMessage = sendSupportMessage;
 exports.handleSupportReply = handleSupportReply;
 exports.getSupportReplies = getSupportReplies;
 
-function getSupportReplies(phone) {
-    let digits = phone.replace(/\D/g, '');
-    // Normalize: 0964908386 -> 964908386, 380964908386 -> 964908386
-    if (digits.startsWith('380')) digits = digits.slice(3);
-    if (digits.startsWith('0')) digits = digits.slice(1);
-    // Now digits = 964908386 (9 digits without prefix)
+function getSupportReplies(identifier) {
+    // Try the identifier directly (could be displayId, name, or phone)
+    const keys = new Set([identifier]);
+    // Also try phone normalization
+    let digits = identifier.replace(/\D/g, '');
+    if (digits.length >= 9) {
+        if (digits.startsWith('380')) keys.add(digits.slice(3));
+        if (digits.startsWith('0')) keys.add(digits.slice(1));
+        keys.add(digits);
+    }
 
-    const keys = [digits, '380' + digits, '0' + digits];
     let replies = [];
     for (const k of keys) {
         const r = supportReplies.get(k);
@@ -172,15 +175,19 @@ function getSupportReplies(phone) {
             supportReplies.delete(k);
         }
     }
-    if (replies.length > 0) logger_1.logger.info(`getSupportReplies found ${replies.length} for ${digits}`);
+    if (replies.length > 0) logger_1.logger.info(`getSupportReplies found ${replies.length} for ${identifier}`);
     return replies;
 }
 
-async function sendSupportMessage(userChatId, userName, userPhone, message) {
+async function sendSupportMessage(userChatId, userName, userPhone, message, userDisplayId) {
     try {
-        // Include chatId in text so we can extract it from reply
-        const chatIdTag = userChatId ? `[uid:${userChatId}]` : `[phone:${(userPhone||'').replace(/\D/g,'')}]`;
-        const text = `📩 *Звернення в підтримку*\n\n👤 ${userName}\n📱 ${userPhone||'не вказано'}\n\n💬 ${message}\n\n_Відповідайте reply на це повідомлення_\n${chatIdTag}`;
+        const phoneDigits = (userPhone||'').replace(/\D/g, '');
+        const tags = [];
+        if (phoneDigits) tags.push(`[phone:${phoneDigits}]`);
+        if (userDisplayId) tags.push(`[did:${userDisplayId}]`);
+        if (userName) tags.push(`[name:${userName}]`);
+        if (userChatId) tags.push(`[uid:${userChatId}]`);
+        const text = `📩 *Звернення в підтримку*\n\n👤 ${userName}\n📱 ${userPhone||'не вказано'}\n\n💬 ${message}\n\n_Відповідайте reply на це повідомлення_\n${tags.join(' ')}`;
         const res = await fetch(`https://api.telegram.org/bot${BOT_TOKEN}/sendMessage`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
@@ -209,43 +216,36 @@ async function handleSupportReply(update) {
     const replyToId = msg.reply_to_message.message_id;
     let ticket = supportTickets.get(replyToId);
 
-    // If not in memory, extract phone from the original message text
-    if (!ticket && msg.reply_to_message.text) {
-        const phoneMatch = msg.reply_to_message.text.match(/\[phone:(\d+)\]/);
-        const uidMatch = msg.reply_to_message.text.match(/\[uid:(\d+)\]/);
-        if (phoneMatch) {
-            ticket = { userPhone: phoneMatch[1], userChatId: getChatId(phoneMatch[1]) };
-        } else if (uidMatch) {
-            ticket = { userChatId: parseInt(uidMatch[1]) };
-        }
-    }
+    // Extract ALL identifiers from the original bot message
+    const origText = msg.reply_to_message.text || '';
+    const phoneMatch = origText.match(/\[phone:(\d+)\]/);
+    const didMatch = origText.match(/\[did:([^\]]+)\]/);
+    const nameMatch = origText.match(/\[name:([^\]]+)\]/);
+    const uidMatch = origText.match(/\[uid:(\d+)\]/);
 
-    // Extract phone from original message text as fallback
-    let phoneKey = '';
-    if (ticket?.userPhone) {
-        phoneKey = ticket.userPhone.replace(/\D/g, '');
-    } else if (msg.reply_to_message.text) {
-        const directPhone = msg.reply_to_message.text.match(/📱\s*\+?(\d+)/);
-        if (directPhone) phoneKey = directPhone[1];
+    // Save reply under ALL possible keys so polling finds it
+    const replyData = { text: msg.text, time: new Date().toISOString(), from: msg.from.first_name || 'Підтримка' };
+    const allKeys = new Set();
+    if (phoneMatch) {
+        let ph = phoneMatch[1];
+        allKeys.add(ph);
+        if (ph.startsWith('380')) allKeys.add(ph.slice(3));
+        if (ph.length === 10 && ph.startsWith('0')) allKeys.add(ph.slice(1));
     }
+    if (didMatch) allKeys.add(didMatch[1]);
+    if (nameMatch) allKeys.add(nameMatch[1]);
+    if (uidMatch) allKeys.add(uidMatch[1]);
 
-    if (!phoneKey && ticket?.userChatId) {
-        phoneKey = String(ticket.userChatId);
-    }
-
-    if (!phoneKey) {
-        logger_1.logger.warn('Support reply: no phone found for msgId ' + replyToId);
+    if (allKeys.size === 0) {
+        logger_1.logger.warn('Support reply: no identifiers found in message');
         return false;
     }
-    // Normalize to 9-digit key (without 380 or 0 prefix)
-    let normalizedKey = phoneKey;
-    if (normalizedKey.startsWith('380')) normalizedKey = normalizedKey.slice(3);
-    if (normalizedKey.startsWith('0')) normalizedKey = normalizedKey.slice(1);
 
-    const replyData = { text: msg.text, time: new Date().toISOString(), from: msg.from.first_name || 'Підтримка' };
-    if (!supportReplies.has(normalizedKey)) supportReplies.set(normalizedKey, []);
-    supportReplies.get(normalizedKey).push(replyData);
-    logger_1.logger.info(`Support reply saved under key: ${normalizedKey}`);
+    for (const k of allKeys) {
+        if (!supportReplies.has(k)) supportReplies.set(k, []);
+        supportReplies.get(k).push(replyData);
+    }
+    logger_1.logger.info(`Support reply saved under keys: [${[...allKeys].join(',')}]`);
     return true;
 }
 

@@ -1074,30 +1074,32 @@ function ChatPage() {
 
   const saveSupportMsgs=(msgs)=>{setSupportMessages(msgs);localStorage.setItem("spilnokup_support_msgs",JSON.stringify(msgs));};
 
-  // Normalize phone helper
-  const getNormalizedPhone=()=>{
+  // Get user identifier for support polling
+  const getSupportId=()=>{
     const u=(() => { try { return JSON.parse(localStorage.getItem("spilnokup_user")); } catch { return null; } })();
-    if(!u?.phone) return null;
-    let ph=u.phone.replace(/[\s\-\(\)]/g,'');
-    if(ph.startsWith('0')&&ph.length===10) ph='+380'+ph.slice(1);
-    if(ph.startsWith('380')) ph='+'+ph;
-    if(!ph.startsWith('+')) ph='+'+ph;
-    return ph;
+    if(!u) return null;
+    // Try phone first, then displayId, then name
+    if(u.phone) {
+      let ph=u.phone.replace(/[\s\-\(\)]/g,'');
+      if(ph.startsWith('0')&&ph.length===10) ph='+380'+ph.slice(1);
+      if(ph.startsWith('380')) ph='+'+ph;
+      if(!ph.startsWith('+')) ph='+'+ph;
+      return ph;
+    }
+    return u.displayId || u.name || u.id;
   };
 
-  // Poll for support replies - runs when Chat tab OR support chat is active
+  // Poll for support replies every 3 seconds
   useEffect(()=>{
-    const ph=getNormalizedPhone();
-    if(!ph) return;
-    console.log('[Support] Polling started for phone:', ph);
+    const sid=getSupportId();
+    if(!sid) return;
+    console.log('[Support] Polling started, id:', sid);
     const poll=setInterval(async()=>{
       try{
-        const url=`${API}/telegram/support/replies?phone=${encodeURIComponent(ph)}`;
-        console.log('[Support] Polling:', url);
-        const res=await fetch(url);
+        const res=await fetch(`${API}/telegram/support/replies?phone=${encodeURIComponent(sid)}`);
         const data=await res.json();
-        console.log('[Support] Response:', data);
         if(data.replies&&data.replies.length>0){
+          console.log('[Support] Got replies:', data.replies);
           setSupportMessages(prev=>{
             const newMsgs=data.replies.map(r=>({id:Date.now()+Math.random(),text:r.text,from:"support",time:r.time}));
             const updated=[...prev,...newMsgs];
@@ -1650,7 +1652,7 @@ function WalletPage({ user, setUser, theme, onTheme }) {
         try{
           const token=localStorage.getItem("spilnokup_token");
           await fetch(`${API}/telegram/support`,{method:"POST",headers:{"Content-Type":"application/json",...(token?{Authorization:`Bearer ${token}`}:{})},
-            body:JSON.stringify({message:supportMsg,userName:user?.name||"Гість",userPhone:user?.phone||""})});
+            body:JSON.stringify({message:supportMsg,userName:user?.name||"Гість",userPhone:user?.phone||"",userDisplayId:user?.displayId||""})});
           // Save to support chat
           const newMsg={id:Date.now(),text:supportMsg.trim(),from:"me",time:new Date().toISOString()};
           const prev=JSON.parse(localStorage.getItem("spilnokup_support_msgs")||"[]");
