@@ -1233,7 +1233,7 @@ function QRHub({ autoScan, onBack }) {
         {[["Покупець",scanned.buyer],["Товар",scanned.item],["Кількість",`${scanned.quantity} ${scanned.unit}`],["Сума",`₴${scanned.amount}`]].map(([k,v])=><div key={k} style={{ ...S.flex,justifyContent:"space-between",padding:"6px 0",borderBottom:`1px solid ${T.border}11` }}><span style={{ fontSize:12,color:T.textSec }}>{k}</span><span style={{ fontSize:12,fontWeight:700,color:T.text }}>{v}</span></div>)}
       </div>
       <div style={{fontSize:10,color:T.textSec,marginBottom:14}}>Кошти зараховано на ваш баланс</div>
-      <button onClick={()=>{setScanned(null);setConfirmed(false);setManualCode("");if(autoScan&&onBack) onBack();}} style={{ ...S.btn,width:"100%",padding:14,background:T.accent,borderRadius:12,color:"#fff",fontSize:14 }}>Готово</button>
+      <button onClick={()=>{setScanned(null);setConfirmed(false);setManualCode("");if(onBack) onBack(true);}} style={{ ...S.btn,width:"100%",padding:14,background:T.accent,borderRadius:12,color:"#fff",fontSize:14 }}>Готово</button>
     </div>
   </div>;
 
@@ -2030,6 +2030,7 @@ function AppInner() {
   const [tab,setTab]=useState("market"),[page,setPage]=useState(null),[joined,setJoined]=useState({}),[buyData,setBuyData]=useState(null);
   const [deals,setDeals]=useState([]);
   const [unreadCount,setUnreadCount]=useState(0);
+  const [scanToast,setScanToast]=useState(false);
   const [theme,setTheme]=useState(()=>localStorage.getItem("spilnokup_theme")||"ocean");
   applyTheme(theme); S=getS();
   const changeTheme=(id)=>{setTheme(id);localStorage.setItem("spilnokup_theme",id);};
@@ -2086,9 +2087,14 @@ function AppInner() {
     if(page==="qr"&&buyData) return <BuyerQRPage deal={buyData.deal} qty={buyData.qty} orderId={buyData.orderId} onBack={()=>setPage(null)}/>;
     if(page==="createDeal") return <CreateDealPage onBack={()=>setPage(null)} onSave={()=>{loadDeals();setPage(null);}}/>;
     if(page==="settings") return <SettingsMenu user={user} theme={theme} onTheme={changeTheme} onBack={()=>setPage(null)} onLogout={()=>{disconnectSocket();apiLogout();const g={name:"Гість",email:"",phone:"",city:""};localStorage.setItem("spilnokup_user",JSON.stringify(g));setUser(g);setPage(null);setTab("market");setAuthStep("welcome");}}/>;
-    if(page==="scanner") return <QRHub onBack={()=>setPage(null)} isPage autoScan/>;
+    if(page==="scanner") return <QRHub onBack={(scanned)=>{setPage(null);if(scanned){setScanToast(true);setTimeout(()=>setScanToast(false),3000);}}} isPage autoScan/>;
     switch(tab){
-      case"market":return <MarketPage deals={deals} joined={joined} onJoin={onJoin} onOpen={onOpen} user={user} onCreateDeal={()=>setPage("createDeal")} theme={theme} onTheme={changeTheme} onRefresh={loadDeals} onSettings={()=>setPage("settings")} onScan={()=>setPage("scanner")} onChat={()=>setTab("chat")} unreadCount={unreadCount}/>;
+      case"market":return <><MarketPage deals={deals} joined={joined} onJoin={onJoin} onOpen={onOpen} user={user} onCreateDeal={()=>setPage("createDeal")} theme={theme} onTheme={changeTheme} onRefresh={loadDeals} onSettings={()=>setPage("settings")} onScan={()=>setPage("scanner")} onChat={()=>setTab("chat")} unreadCount={unreadCount}/>
+        {scanToast&&<div style={{position:"fixed",top:80,left:"50%",transform:"translateX(-50%)",background:T.green,color:"#fff",padding:"10px 24px",borderRadius:10,fontSize:14,fontWeight:700,zIndex:999,boxShadow:"0 4px 16px rgba(0,0,0,0.2)",...S.flex,gap:8}}>
+          <svg width="18" height="18" fill="none" stroke="#fff" strokeWidth="2.5" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>
+          QR Відскановано
+        </div>}
+      </>;
       case"create":return <CreateDealPage onBack={()=>setTab("market")} onSave={()=>{loadDeals();setTab("market");}}/>;
       case"qr":return <QRHub/>;
       case"chat":return <ChatPage/>;
