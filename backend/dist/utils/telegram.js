@@ -157,10 +157,21 @@ exports.handleSupportReply = handleSupportReply;
 exports.getSupportReplies = getSupportReplies;
 
 function getSupportReplies(phone) {
-    const key = phone.replace(/\D/g, '');
-    const replies = supportReplies.get(key) || [];
-    if (replies.length > 0) supportReplies.delete(key);
-    logger_1.logger.info(`getSupportReplies for ${key}: ${replies.length} replies, keys: ${[...supportReplies.keys()].join(',')}`);
+    const digits = phone.replace(/\D/g, '');
+    // Try all possible keys
+    const keys = [digits];
+    if (digits.startsWith('380')) keys.push(digits.slice(3)); // 964908386
+    if (digits.length === 9) keys.push('380' + digits); // 380964908386
+
+    let replies = [];
+    for (const k of keys) {
+        const r = supportReplies.get(k);
+        if (r && r.length > 0) {
+            replies = replies.concat(r);
+            supportReplies.delete(k);
+        }
+    }
+    if (replies.length > 0) logger_1.logger.info(`getSupportReplies found ${replies.length} for ${digits}`);
     return replies;
 }
 
@@ -225,9 +236,17 @@ async function handleSupportReply(update) {
         logger_1.logger.warn('Support reply: no phone found for msgId ' + replyToId);
         return false;
     }
-    if (!supportReplies.has(phoneKey)) supportReplies.set(phoneKey, []);
-    supportReplies.get(phoneKey).push({ text: msg.text, time: new Date().toISOString(), from: msg.from.first_name || 'Підтримка' });
-    logger_1.logger.info(`Support reply sent to ${ticket.userChatId}`);
+    // Save under all possible phone key formats
+    const replyData = { text: msg.text, time: new Date().toISOString(), from: msg.from.first_name || 'Підтримка' };
+    const allKeys = new Set([phoneKey]);
+    if (phoneKey.startsWith('380')) allKeys.add(phoneKey.slice(3));
+    if (phoneKey.length === 9) allKeys.add('380' + phoneKey);
+    if (phoneKey.length === 10 && phoneKey.startsWith('0')) allKeys.add('380' + phoneKey.slice(1));
+    for (const k of allKeys) {
+        if (!supportReplies.has(k)) supportReplies.set(k, []);
+        supportReplies.get(k).push(replyData);
+    }
+    logger_1.logger.info(`Support reply saved under keys: [${[...allKeys].join(',')}]`);
     return true;
 }
 

@@ -1074,15 +1074,21 @@ function ChatPage() {
 
   const saveSupportMsgs=(msgs)=>{setSupportMessages(msgs);localStorage.setItem("spilnokup_support_msgs",JSON.stringify(msgs));};
 
-  // Poll for support replies every 5 seconds
-  useEffect(()=>{
-    const user=(() => { try { return JSON.parse(localStorage.getItem("spilnokup_user")); } catch { return null; } })();
-    if(!user?.phone) return;
-    // Normalize phone to +380 format
-    let ph=user.phone.replace(/[\s\-\(\)]/g,'');
+  // Normalize phone helper
+  const getNormalizedPhone=()=>{
+    const u=(() => { try { return JSON.parse(localStorage.getItem("spilnokup_user")); } catch { return null; } })();
+    if(!u?.phone) return null;
+    let ph=u.phone.replace(/[\s\-\(\)]/g,'');
     if(ph.startsWith('0')&&ph.length===10) ph='+380'+ph.slice(1);
     if(ph.startsWith('380')) ph='+'+ph;
     if(!ph.startsWith('+')) ph='+'+ph;
+    return ph;
+  };
+
+  // Poll for support replies - runs when Chat tab OR support chat is active
+  useEffect(()=>{
+    const ph=getNormalizedPhone();
+    if(!ph) return;
     const poll=setInterval(async()=>{
       try{
         const res=await fetch(`${API}/telegram/support/replies?phone=${encodeURIComponent(ph)}`);
@@ -1096,9 +1102,9 @@ function ChatPage() {
           });
         }
       }catch{}
-    },5000);
+    },3000);
     return ()=>clearInterval(poll);
-  },[]);
+  },[supportActive]);
 
   useEffect(()=>{
     if(!isLoggedIn()) { setLoading(false); return; }
