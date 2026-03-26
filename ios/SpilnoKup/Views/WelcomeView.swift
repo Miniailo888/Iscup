@@ -372,7 +372,7 @@ struct RegisterView: View {
         loading = true
         Task {
             do {
-                let codeSent = try await APIService.shared.checkTelegram(telegramToken: telegramToken)
+                let _ = try await APIService.shared.checkTelegram(telegramToken: telegramToken)
                 await MainActor.run {
                     loading = false
                     step = 2

@@ -29,6 +29,7 @@ struct CreateDealView: View {
 
                 ScrollView {
                     VStack(spacing: 16) {
+                        Group {
                         // Photo placeholder
                         ZStack {
                             RoundedRectangle(cornerRadius: 10)
@@ -74,6 +75,8 @@ struct CreateDealView: View {
                             }
                         }
 
+                        } // end first Group
+                        Group {
                         HStack(spacing: 12) {
                             ThemedTextField(placeholder: "Одиниця", text: $unit, icon: "scalemass.fill")
                             ThemedTextField(placeholder: "Учасникiв", text: $needed, icon: "person.2.fill")
