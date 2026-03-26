@@ -10,6 +10,7 @@ struct WalletView: View {
     @State private var showSuccess = false
     @State private var successMessage = ""
     @State private var walletTab = "transactions"
+    @State private var showSettings = false
 
     var body: some View {
         NavigationStack {
@@ -26,7 +27,6 @@ struct WalletView: View {
                         } else {
                             fopSection
                         }
-                        themeSection
                         logoutButton
                     }
                     .padding(.top, 8)
@@ -38,8 +38,19 @@ struct WalletView: View {
                 }
             }
             .navigationTitle("Гаманець")
+            .toolbar {
+                ToolbarItem(placement: .navigationBarTrailing) {
+                    Button(action: { showSettings = true }) {
+                        Image(systemName: "gearshape")
+                            .foregroundColor(state.theme.accent)
+                    }
+                }
+            }
             .sheet(isPresented: $showEditProfile) {
                 editProfileSheet
+            }
+            .sheet(isPresented: $showSettings) {
+                settingsSheet
             }
         }
     }
@@ -48,7 +59,7 @@ struct WalletView: View {
 
     var profileCard: some View {
         HStack(spacing: 14) {
-            // Avatar with initials
+            // Avatar with accent color background and white initials
             ZStack {
                 Circle()
                     .fill(state.theme.accent)
@@ -59,7 +70,7 @@ struct WalletView: View {
             }
 
             VStack(alignment: .leading, spacing: 4) {
-                Text(state.user?.name ?? "Гість")
+                Text(state.user?.name ?? "Гiсть")
                     .font(.headline)
                     .foregroundColor(state.theme.text)
                 Text(state.user?.email ?? "")
@@ -79,7 +90,7 @@ struct WalletView: View {
         }
         .padding(14)
         .background(state.theme.card)
-        .cornerRadius(14)
+        .cornerRadius(10)
         .padding(.horizontal)
     }
 
@@ -91,7 +102,7 @@ struct WalletView: View {
         return "\(first)\(last)".uppercased()
     }
 
-    // MARK: - Balance Section (redesigned)
+    // MARK: - Balance Section
 
     var balanceSection: some View {
         VStack(spacing: 14) {
@@ -99,7 +110,7 @@ struct WalletView: View {
                 .font(.caption)
                 .foregroundColor(state.theme.textSec)
 
-            Text("₴\(formattedBalance)")
+            Text("\(formattedBalance) грн")
                 .font(.system(size: 36, weight: .bold))
                 .foregroundColor(state.theme.green)
 
@@ -141,7 +152,7 @@ struct WalletView: View {
                     HStack(spacing: 8) {
                         ForEach([100, 500, 1000, 5000], id: \.self) { amt in
                             Button(action: { topUpAmount = "\(amt)" }) {
-                                Text("₴\(amt)")
+                                Text("\(amt) грн")
                                     .font(.caption.bold())
                                     .foregroundColor(topUpAmount == "\(amt)" ? .white : state.theme.textSec)
                                     .frame(maxWidth: .infinity)
@@ -193,7 +204,7 @@ struct WalletView: View {
         }
         .padding(14)
         .background(state.theme.card)
-        .cornerRadius(14)
+        .cornerRadius(10)
         .padding(.horizontal)
     }
 
@@ -209,7 +220,7 @@ struct WalletView: View {
     var walletSubTabs: some View {
         VStack(spacing: 0) {
             HStack(spacing: 0) {
-                walletTabButton(title: "Транзакції", key: "transactions")
+                walletTabButton(title: "Транзакцii", key: "transactions")
                 walletTabButton(title: "ФОП", key: "fop")
             }
             .background(state.theme.card)
@@ -233,45 +244,94 @@ struct WalletView: View {
         }
     }
 
-    // MARK: - Theme
+    // MARK: - Settings Sheet
 
-    var themeSection: some View {
-        VStack(alignment: .leading, spacing: 10) {
-            Text("Тема оформлення")
-                .font(.headline)
-                .foregroundColor(state.theme.text)
-
-            HStack(spacing: 8) {
-                ForEach(ThemeType.allCases, id: \.self) { t in
-                    Button(action: {
-                        state.themeType = t
-                        state.saveTheme()
-                    }) {
-                        HStack(spacing: 4) {
-                            Text(t.emoji)
-                            Text(t.name)
-                                .font(.caption.bold())
-                        }
-                        .foregroundColor(state.themeType == t ? .white : state.theme.textSec)
-                        .frame(maxWidth: .infinity)
-                        .padding(.vertical, 10)
-                        .background(state.themeType == t ? state.theme.accent : state.theme.cardAlt)
-                        .cornerRadius(10)
+    var settingsSheet: some View {
+        ZStack {
+            state.theme.bg.ignoresSafeArea()
+            VStack(spacing: 20) {
+                HStack {
+                    Text("Налаштування")
+                        .font(.title2.bold())
+                        .foregroundColor(state.theme.text)
+                    Spacer()
+                    Button(action: { showSettings = false }) {
+                        Image(systemName: "xmark.circle.fill")
+                            .font(.title2)
+                            .foregroundColor(state.theme.textMuted)
                     }
                 }
+                .padding(.top, 20)
+
+                // Theme switcher
+                VStack(alignment: .leading, spacing: 10) {
+                    Text("Тема оформлення")
+                        .font(.headline)
+                        .foregroundColor(state.theme.text)
+
+                    ForEach(ThemeType.allCases, id: \.self) { t in
+                        Button(action: {
+                            state.themeType = t
+                            state.saveTheme()
+                        }) {
+                            HStack(spacing: 10) {
+                                Image(systemName: t.sfSymbol)
+                                    .font(.body)
+                                    .foregroundColor(state.themeType == t ? .white : state.theme.accent)
+                                    .frame(width: 32, height: 32)
+                                    .background(state.themeType == t ? state.theme.accent : state.theme.cardAlt)
+                                    .cornerRadius(8)
+                                Text(t.name)
+                                    .font(.subheadline)
+                                    .foregroundColor(state.theme.text)
+                                Spacer()
+                                if state.themeType == t {
+                                    Image(systemName: "checkmark.circle.fill")
+                                        .foregroundColor(state.theme.accent)
+                                }
+                            }
+                            .padding(10)
+                            .background(state.themeType == t ? state.theme.accent.opacity(0.1) : Color.clear)
+                            .cornerRadius(10)
+                        }
+                    }
+                }
+                .padding(14)
+                .background(state.theme.card)
+                .cornerRadius(10)
+
+                // Support button
+                Button(action: {
+                    showSettings = false
+                    // Open support externally or show an alert
+                }) {
+                    HStack(spacing: 8) {
+                        Image(systemName: "headphones")
+                        Text("Пiдтримка")
+                    }
+                    .font(.subheadline.bold())
+                    .foregroundColor(state.theme.accent)
+                    .frame(maxWidth: .infinity)
+                    .padding(.vertical, 14)
+                    .background(state.theme.card)
+                    .cornerRadius(10)
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 10)
+                            .stroke(state.theme.accent.opacity(0.3), lineWidth: 1)
+                    )
+                }
+
+                Spacer()
             }
+            .padding(.horizontal)
         }
-        .padding(14)
-        .background(state.theme.card)
-        .cornerRadius(14)
-        .padding(.horizontal)
     }
 
     // MARK: - Transactions
 
     var transactionsSection: some View {
         VStack(alignment: .leading, spacing: 10) {
-            Text("Історія")
+            Text("Iсторiя")
                 .font(.headline)
                 .foregroundColor(state.theme.text)
 
@@ -295,7 +355,7 @@ struct WalletView: View {
 
                     Spacer()
 
-                    Text("\(tx.type == .withdrawal ? "-" : "+")₴\(tx.amount)")
+                    Text("\(tx.type == .withdrawal ? "-" : "+")\(tx.amount) грн")
                         .font(.subheadline.bold())
                         .foregroundColor(tx.type == .withdrawal ? state.theme.orange : state.theme.green)
                 }
@@ -303,7 +363,7 @@ struct WalletView: View {
         }
         .padding(14)
         .background(state.theme.card)
-        .cornerRadius(14)
+        .cornerRadius(10)
         .padding(.horizontal)
     }
 
@@ -311,18 +371,18 @@ struct WalletView: View {
 
     var fopSection: some View {
         VStack(alignment: .leading, spacing: 10) {
-            Text("Реквізити ФОП")
+            Text("Реквiзити ФОП")
                 .font(.headline)
                 .foregroundColor(state.theme.text)
 
             fopRow("Назва", SampleData.seller.fop)
-            fopRow("ІПН", SampleData.seller.ipn)
+            fopRow("IПН", SampleData.seller.ipn)
             fopRow("IBAN", SampleData.seller.iban)
             fopRow("Банк", SampleData.seller.bank)
         }
         .padding(14)
         .background(state.theme.card)
-        .cornerRadius(14)
+        .cornerRadius(10)
         .padding(.horizontal)
     }
 
@@ -342,7 +402,7 @@ struct WalletView: View {
             .frame(maxWidth: .infinity)
             .padding(.vertical, 14)
             .background(Color(hex: "ef4444").opacity(0.1))
-            .cornerRadius(14)
+            .cornerRadius(10)
         }
         .padding(.horizontal)
     }
@@ -366,13 +426,13 @@ struct WalletView: View {
         ZStack {
             state.theme.bg.ignoresSafeArea()
             VStack(spacing: 16) {
-                Text("Редагувати профіль")
+                Text("Редагувати профiль")
                     .font(.title2.bold())
                     .foregroundColor(state.theme.text)
                     .padding(.top, 20)
 
                 VStack(spacing: 12) {
-                    editField("Ім'я", text: Binding(
+                    editField("Iм'я", text: Binding(
                         get: { state.user?.name ?? "" },
                         set: { state.user?.name = $0 }))
                     editField("Email", text: Binding(
@@ -381,7 +441,7 @@ struct WalletView: View {
                     editField("Телефон", text: Binding(
                         get: { state.user?.phone ?? "" },
                         set: { state.user?.phone = $0 }))
-                    editField("Місто", text: Binding(
+                    editField("Мiсто", text: Binding(
                         get: { state.user?.city ?? "" },
                         set: { state.user?.city = $0 }))
                 }
@@ -397,7 +457,7 @@ struct WalletView: View {
                         .frame(maxWidth: .infinity)
                         .padding(.vertical, 14)
                         .background(state.theme.accent)
-                        .cornerRadius(14)
+                        .cornerRadius(10)
                 }
                 .padding(.horizontal)
 
@@ -411,7 +471,7 @@ struct WalletView: View {
             .foregroundColor(state.theme.text)
             .padding(12)
             .background(state.theme.cardAlt)
-            .cornerRadius(12)
+            .cornerRadius(10)
     }
 
     // MARK: - Actions
@@ -421,7 +481,7 @@ struct WalletView: View {
         state.topUp(amt)
         topUpAmount = ""
         showTopUp = false
-        successMessage = "Поповнено ₴\(amt)!"
+        successMessage = "Поповнено \(amt) грн!"
         showSuccessAnimation()
     }
 
@@ -430,7 +490,7 @@ struct WalletView: View {
         state.withdraw(amt)
         withdrawAmount = ""
         showWithdraw = false
-        successMessage = "Виведено ₴\(amt)!"
+        successMessage = "Виведено \(amt) грн!"
         showSuccessAnimation()
     }
 

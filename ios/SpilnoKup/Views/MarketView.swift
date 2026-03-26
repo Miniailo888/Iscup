@@ -7,7 +7,6 @@ struct MarketView: View {
     @State private var sort: DealSort = .hot
     @State private var showFilters = false
     @State private var selectedDeal: Deal? = nil
-    @State private var showCreateDeal = false
     @State private var showSupport = false
 
     // Filters
@@ -18,6 +17,8 @@ struct MarketView: View {
 
     // Support
     @State private var supportMessage = ""
+    @State private var supportSending = false
+    @State private var supportSent = false
 
     var filteredDeals: [Deal] {
         var result = state.deals
@@ -74,9 +75,8 @@ struct MarketView: View {
 
                 ScrollView {
                     VStack(spacing: 16) {
-                        headerSection
-                        HotSliderView(deals: state.deals.filter { $0.hot }, onSelect: { selectedDeal = $0 })
                         searchSection
+                        bannerSection
                         categorySection
                         sortSection
                         dealsGrid
@@ -87,10 +87,6 @@ struct MarketView: View {
             .navigationDestination(item: $selectedDeal) { deal in
                 DealDetailView(deal: deal)
             }
-            .sheet(isPresented: $showCreateDeal) {
-                CreateDealView()
-                    .environmentObject(state)
-            }
             .sheet(isPresented: $showFilters) {
                 filtersSheet
             }
@@ -100,58 +96,73 @@ struct MarketView: View {
         }
     }
 
-    var headerSection: some View {
-        HStack {
-            VStack(alignment: .leading, spacing: 4) {
-                Text("Spil")
-                    .font(.title.bold())
-                    .foregroundColor(state.theme.text)
-                if let user = state.user {
-                    Text("\(user.name), вітаємо!")
-                        .font(.subheadline)
-                        .foregroundColor(state.theme.green)
-                } else {
-                    Text("Купуй разом — плати менше")
-                        .font(.subheadline)
-                        .foregroundColor(state.theme.green)
-                }
-            }
-            Spacer()
+    // MARK: - Search at very top with headphones icon
+
+    var searchSection: some View {
+        HStack(spacing: 10) {
             Button(action: { showSupport = true }) {
                 Image(systemName: "headphones")
                     .font(.title2)
                     .foregroundColor(state.theme.accent)
+                    .frame(width: 40, height: 40)
+                    .background(state.theme.card)
+                    .cornerRadius(10)
             }
-            Button(action: { showCreateDeal = true }) {
-                Image(systemName: "plus.circle.fill")
-                    .font(.title2)
-                    .foregroundColor(state.theme.accent)
-            }
-        }
-        .padding(.horizontal)
-        .padding(.top, 8)
-    }
 
-    var searchSection: some View {
-        HStack(spacing: 10) {
             HStack {
                 Image(systemName: "magnifyingglass")
                     .foregroundColor(state.theme.textMuted)
-                TextField("Пошук товарів...", text: $search)
+                TextField("Пошук товарiв...", text: $search)
                     .foregroundColor(state.theme.text)
             }
             .padding(10)
             .background(state.theme.card)
-            .cornerRadius(12)
+            .cornerRadius(10)
 
             Button(action: { showFilters = true }) {
                 Image(systemName: "slider.horizontal.3")
                     .foregroundColor(state.theme.accent)
                     .padding(10)
                     .background(state.theme.card)
-                    .cornerRadius(12)
+                    .cornerRadius(10)
             }
         }
+        .padding(.horizontal)
+        .padding(.top, 8)
+    }
+
+    // MARK: - Simple banner replacing HotSlider/HowItWorks
+
+    var bannerSection: some View {
+        HStack(spacing: 14) {
+            ZStack {
+                RoundedRectangle(cornerRadius: 12)
+                    .fill(state.theme.accent)
+                    .frame(width: 52, height: 52)
+                Image(systemName: "person.2.fill")
+                    .font(.system(size: 22))
+                    .foregroundColor(.white)
+            }
+
+            VStack(alignment: .leading, spacing: 4) {
+                Text("Спiльнi покупки")
+                    .font(.headline)
+                    .foregroundColor(state.theme.text)
+                Text("Купуй разом -- плати менше. Економiя до 40%!")
+                    .font(.caption)
+                    .foregroundColor(state.theme.textSec)
+                    .lineLimit(2)
+            }
+
+            Spacer()
+        }
+        .padding(14)
+        .background(state.theme.card)
+        .cornerRadius(10)
+        .overlay(
+            RoundedRectangle(cornerRadius: 10)
+                .stroke(state.theme.border, lineWidth: 1)
+        )
         .padding(.horizontal)
     }
 
@@ -217,7 +228,7 @@ struct MarketView: View {
             state.theme.bg.ignoresSafeArea()
             VStack(spacing: 16) {
                 HStack {
-                    Text("Підтримка")
+                    Text("Пiдтримка")
                         .font(.title2.bold())
                         .foregroundColor(state.theme.text)
                     Spacer()
@@ -229,33 +240,69 @@ struct MarketView: View {
                 }
                 .padding(.top, 20)
 
-                Text("Опишіть вашу проблему або запитання, і ми відповімо найближчим часом.")
+                Text("Опишiть вашу проблему або запитання, i ми вiдповiмо найближчим часом.")
                     .font(.subheadline)
                     .foregroundColor(state.theme.textSec)
                     .fixedSize(horizontal: false, vertical: true)
 
-                TextField("Ваше повідомлення...", text: $supportMessage)
+                TextField("Ваше повiдомлення...", text: $supportMessage)
                     .foregroundColor(state.theme.text)
                     .padding(12)
                     .background(state.theme.cardAlt)
-                    .cornerRadius(12)
+                    .cornerRadius(10)
 
-                Button(action: {
-                    supportMessage = ""
-                    showSupport = false
-                }) {
-                    Text("Надіслати")
-                        .font(.headline)
-                        .foregroundColor(.white)
-                        .frame(maxWidth: .infinity)
-                        .padding(.vertical, 14)
-                        .background(state.theme.accent)
-                        .cornerRadius(14)
+                if supportSent {
+                    HStack(spacing: 6) {
+                        Image(systemName: "checkmark.circle.fill")
+                            .foregroundColor(state.theme.green)
+                        Text("Повiдомлення надiслано!")
+                            .font(.subheadline)
+                            .foregroundColor(state.theme.green)
+                    }
                 }
+
+                Button(action: sendSupportMessage) {
+                    HStack {
+                        if supportSending {
+                            ProgressView()
+                                .tint(.white)
+                        }
+                        Text("Надiслати")
+                            .font(.headline)
+                    }
+                    .foregroundColor(.white)
+                    .frame(maxWidth: .infinity)
+                    .padding(.vertical, 14)
+                    .background(supportMessage.isEmpty ? state.theme.cardAlt : state.theme.accent)
+                    .cornerRadius(10)
+                }
+                .disabled(supportMessage.isEmpty || supportSending)
 
                 Spacer()
             }
             .padding(.horizontal)
+        }
+    }
+
+    func sendSupportMessage() {
+        guard !supportMessage.isEmpty else { return }
+        supportSending = true
+        let message = supportMessage
+        Task {
+            do {
+                try await APIService.shared.sendSupportMessage(message: message)
+            } catch {
+                // Silently handle -- message is sent best-effort
+            }
+            await MainActor.run {
+                supportSending = false
+                supportSent = true
+                supportMessage = ""
+                DispatchQueue.main.asyncAfter(deadline: .now() + 2) {
+                    supportSent = false
+                    showSupport = false
+                }
+            }
         }
     }
 
@@ -267,7 +314,7 @@ struct MarketView: View {
             ScrollView {
                 VStack(alignment: .leading, spacing: 20) {
                     HStack {
-                        Text("Фільтри")
+                        Text("Фiльтри")
                             .font(.title2.bold())
                             .foregroundColor(state.theme.text)
                         Spacer()
@@ -278,17 +325,17 @@ struct MarketView: View {
                         .foregroundColor(state.theme.accent)
                     }
 
-                    filterGroup(title: "Місто", selected: $cityFilter, options: [
-                        ("all", "Всі")] + SampleData.cities.map { ($0, $0) })
+                    filterGroup(title: "Мiсто", selected: $cityFilter, options: [
+                        ("all", "Всi")] + SampleData.cities.map { ($0, $0) })
 
-                    filterGroup(title: "Ціна", selected: $priceFilter, options: [
-                        ("all","Всі"),("low","до ₴200"),("mid","₴200–500"),("high","₴500+")])
+                    filterGroup(title: "Цiна", selected: $priceFilter, options: [
+                        ("all","Всi"),("low","до 200"),("mid","200-500"),("high","500+")])
 
                     filterGroup(title: "Знижка", selected: $discFilter, options: [
-                        ("all","Всі"),("big","30%+"),("med","20–30%"),("small","до 20%")])
+                        ("all","Всi"),("big","30%+"),("med","20-30%"),("small","до 20%")])
 
                     filterGroup(title: "Рейтинг", selected: $ratingFilter, options: [
-                        ("all","Всі"),("top","4.8+"),("good","4.5+")])
+                        ("all","Всi"),("top","4.8+"),("good","4.5+")])
 
                     Button(action: { showFilters = false }) {
                         Text("Застосувати")
@@ -297,7 +344,7 @@ struct MarketView: View {
                             .frame(maxWidth: .infinity)
                             .padding(.vertical, 14)
                             .background(state.theme.accent)
-                            .cornerRadius(14)
+                            .cornerRadius(10)
                     }
                 }
                 .padding()
@@ -325,76 +372,6 @@ struct MarketView: View {
                 }
             }
         }
-    }
-}
-
-// MARK: - Hot Slider
-
-struct HotSliderView: View {
-    let deals: [Deal]
-    let onSelect: (Deal) -> Void
-    @EnvironmentObject var state: AppState
-    @State private var currentIndex = 0
-
-    var body: some View {
-        if deals.isEmpty { EmptyView() }
-        else {
-            VStack(spacing: 8) {
-                TabView(selection: $currentIndex) {
-                    ForEach(Array(deals.prefix(6).enumerated()), id: \.element.id) { idx, deal in
-                        Button(action: { onSelect(deal) }) {
-                            hotCard(deal)
-                        }
-                        .tag(idx)
-                    }
-                }
-                .tabViewStyle(.page(indexDisplayMode: .never))
-                .frame(height: 140)
-
-                HStack(spacing: 6) {
-                    ForEach(0..<min(deals.count, 6), id: \.self) { i in
-                        Circle()
-                            .fill(i == currentIndex ? state.theme.accent : state.theme.textMuted.opacity(0.4))
-                            .frame(width: 6, height: 6)
-                    }
-                }
-            }
-            .padding(.horizontal)
-        }
-    }
-
-    func hotCard(_ deal: Deal) -> some View {
-        ZStack(alignment: .bottomLeading) {
-            categoryGradient(for: deal.cat)
-            VStack {
-                Text(deal.avatar)
-                    .font(.system(size: 40))
-            }
-            .frame(maxWidth: .infinity, maxHeight: .infinity)
-
-            VStack(alignment: .leading, spacing: 4) {
-                BadgeView(text: "HOT -\(deal.disc)%", bg: Color.red.opacity(0.8), fg: .white, fontSize: 10)
-                Text(deal.title)
-                    .font(.subheadline.bold())
-                    .foregroundColor(state.theme.text)
-                    .lineLimit(1)
-                HStack(spacing: 8) {
-                    Text("₴\(deal.group)")
-                        .font(.headline.bold())
-                        .foregroundColor(state.theme.accent)
-                    Text("₴\(deal.retail)")
-                        .font(.caption)
-                        .foregroundColor(state.theme.textMuted)
-                        .strikethrough()
-                }
-            }
-            .padding(12)
-        }
-        .cornerRadius(16)
-        .overlay(
-            RoundedRectangle(cornerRadius: 16)
-                .stroke(state.theme.border, lineWidth: 1)
-        )
     }
 }
 

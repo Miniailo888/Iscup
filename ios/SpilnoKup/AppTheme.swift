@@ -19,13 +19,13 @@ enum ThemeType: String, CaseIterable {
         }
     }
 
-    var emoji: String {
+    var sfSymbol: String {
         switch self {
-        case .light: return "☀️"
-        case .cream: return "🍦"
-        case .ocean: return "🌊"
-        case .dark: return "🌑"
-        case .berry: return "🫐"
+        case .light: return "sun.max.fill"
+        case .cream: return "cup.and.saucer.fill"
+        case .ocean: return "water.waves"
+        case .dark: return "moon.fill"
+        case .berry: return "leaf.fill"
         }
     }
 }
@@ -117,8 +117,8 @@ struct AppTheme {
         text: Color(hex: "1a1a2e"),
         textSec: Color(hex: "6b7280"),
         textMuted: Color(hex: "9ca3af"),
-        accent: Color(hex: "3d8c5c"),
-        green: Color(hex: "2e7d4f"),
+        accent: Color(hex: "1a73e8"),
+        green: Color(hex: "1a8754"),
         greenLight: Color(hex: "e6f4ec"),
         greenBorder: Color(hex: "b8dcc8"),
         orange: Color(hex: "c46a20"),

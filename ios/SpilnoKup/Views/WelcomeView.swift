@@ -3,6 +3,7 @@ import SwiftUI
 struct WelcomeView: View {
     @EnvironmentObject var state: AppState
     @State private var showRegister = false
+    @State private var showLogin = false
 
     var body: some View {
         ZStack {
@@ -11,47 +12,68 @@ struct WelcomeView: View {
             VStack(spacing: 24) {
                 Spacer()
 
-                Text("🛒")
-                    .font(.system(size: 80))
+                ZStack {
+                    RoundedRectangle(cornerRadius: 16)
+                        .fill(state.theme.accent)
+                        .frame(width: 64, height: 64)
+                    Image(systemName: "person.2.fill")
+                        .font(.system(size: 28))
+                        .foregroundColor(.white)
+                }
 
-                Text("Spil")
-                    .font(.system(size: 34, weight: .bold))
-                    .foregroundColor(state.theme.text)
+                VStack(spacing: 8) {
+                    Text("СпsльноКуп")
+                        .font(.system(size: 26, weight: .heavy))
+                        .foregroundColor(state.theme.text)
 
-                Text("Спільні покупки від малого бізнесу України.\nЕкономте до 40% купуючи разом!")
-                    .font(.subheadline)
-                    .foregroundColor(state.theme.textSec)
-                    .multilineTextAlignment(.center)
-                    .padding(.horizontal, 32)
+                    Text("Платформа спsльних покупок\nвsд малого бsзнесу Украsни")
+                        .font(.system(size: 14))
+                        .foregroundColor(state.theme.textSec)
+                        .multilineTextAlignment(.center)
+                }
 
                 Spacer()
 
-                VStack(spacing: 12) {
+                VStack(spacing: 10) {
                     Button(action: { showRegister = true }) {
-                        Text("Увійти через Telegram")
-                            .font(.headline)
+                        Text("Створити акаунт")
+                            .font(.system(size: 15, weight: .semibold))
+                            .foregroundColor(.white)
+                            .frame(maxWidth: .infinity)
+                            .padding(.vertical, 14)
+                            .background(state.theme.accent)
+                            .cornerRadius(10)
+                    }
+
+                    Button(action: { showLogin = true }) {
+                        Text("Увsйти")
+                            .font(.system(size: 15, weight: .semibold))
                             .foregroundColor(.white)
                             .frame(maxWidth: .infinity)
                             .padding(.vertical, 14)
                             .background(Color(hex: "0088cc"))
-                            .cornerRadius(14)
+                            .cornerRadius(10)
                     }
 
-                    Button(action: {
-                        state.isGuest = true
-                    }) {
-                        Text("Гостьовий вхід →")
-                            .font(.subheadline)
+                    Button(action: { state.isGuest = true }) {
+                        Text("Переглянути як гsсть")
+                            .font(.system(size: 13))
                             .foregroundColor(state.theme.textSec)
+                            .frame(maxWidth: .infinity)
+                            .padding(.vertical, 13)
+                            .overlay(RoundedRectangle(cornerRadius: 10).stroke(state.theme.border, lineWidth: 1))
                     }
-                    .padding(.top, 4)
                 }
-                .padding(.horizontal, 24)
+                .padding(.horizontal, 32)
                 .padding(.bottom, 40)
             }
         }
         .sheet(isPresented: $showRegister) {
             RegisterView()
+                .environmentObject(state)
+        }
+        .sheet(isPresented: $showLogin) {
+            LoginView()
                 .environmentObject(state)
         }
     }
@@ -139,7 +161,7 @@ struct RegisterView: View {
                     .frame(maxWidth: .infinity)
                     .padding(.vertical, 14)
                     .background(canProceed ? state.theme.accent : state.theme.cardAlt)
-                    .cornerRadius(14)
+                    .cornerRadius(10)
                 }
                 .disabled(!canProceed || loading)
                 .padding(.horizontal)
@@ -152,14 +174,13 @@ struct RegisterView: View {
 
     var stepInfoView: some View {
         VStack(spacing: 14) {
-            Text("Вхід / Реєстрація")
+            Text("Вхiд / Реєстрацiя")
                 .font(.title2.bold())
                 .foregroundColor(state.theme.text)
 
-            ThemedTextField(placeholder: "📱 +380...", text: $phone)
-            ThemedTextField(placeholder: "👤 Ваше ім'я", text: $name)
-
-            ThemedTextField(placeholder: "📍 Місто", text: $city)
+            ThemedTextField(placeholder: "+380...", text: $phone, icon: "phone.fill")
+            ThemedTextField(placeholder: "Ваше iм'я", text: $name, icon: "person.fill")
+            ThemedTextField(placeholder: "Мiсто", text: $city, icon: "mappin.and.ellipse")
 
             LazyVGrid(columns: [GridItem(.flexible()), GridItem(.flexible()), GridItem(.flexible())], spacing: 8) {
                 ForEach(SampleData.cities, id: \.self) { c in
@@ -185,32 +206,39 @@ struct RegisterView: View {
                 .font(.title2.bold())
                 .foregroundColor(state.theme.text)
 
-            Text("Натисніть кнопку нижче, відкриється Telegram.\nНатисніть Start — бот надішле код.")
+            Text("Натиснiть кнопку нижче, вiдкриється Telegram.\nНатиснiть Start -- бот надiшле код.")
                 .font(.subheadline)
                 .foregroundColor(state.theme.textSec)
                 .multilineTextAlignment(.center)
 
-            Text("✈️")
-                .font(.system(size: 60))
-                .padding(.vertical, 8)
+            // SF Symbol icon instead of emoji
+            ZStack {
+                RoundedRectangle(cornerRadius: 16)
+                    .fill(Color(hex: "0088cc"))
+                    .frame(width: 80, height: 80)
+                Image(systemName: "paperplane.fill")
+                    .font(.system(size: 36))
+                    .foregroundColor(.white)
+            }
+            .padding(.vertical, 8)
 
             Button(action: openTelegram) {
                 HStack(spacing: 8) {
                     Image(systemName: "paperplane.fill")
-                    Text("Відкрити Telegram")
+                    Text("Вiдкрити Telegram")
                 }
                 .font(.headline)
                 .foregroundColor(.white)
                 .frame(maxWidth: .infinity)
                 .padding(.vertical, 14)
                 .background(Color(hex: "0088cc"))
-                .cornerRadius(14)
+                .cornerRadius(10)
             }
 
             VStack(spacing: 6) {
-                Text("1. Натисніть Start в боті")
-                Text("2. Бот надішле 6-значний код")
-                Text("3. Введіть код на наступному кроці")
+                Text("1. Натиснiть Start в ботi")
+                Text("2. Бот надiшле 6-значний код")
+                Text("3. Введiть код на наступному кроцi")
             }
             .font(.caption)
             .foregroundColor(state.theme.textMuted)
@@ -221,14 +249,14 @@ struct RegisterView: View {
 
     var stepCodeView: some View {
         VStack(spacing: 14) {
-            Text("Введіть код")
+            Text("Введiть код")
                 .font(.title2.bold())
                 .foregroundColor(state.theme.text)
 
             HStack(spacing: 6) {
                 Image(systemName: "paperplane.fill")
                     .foregroundColor(Color(hex: "0088cc"))
-                Text("Код надіслано в Telegram")
+                Text("Код надiслано в Telegram")
                     .foregroundColor(state.theme.textSec)
             }
             .font(.subheadline)
@@ -240,16 +268,16 @@ struct RegisterView: View {
                 .multilineTextAlignment(.center)
                 .padding(16)
                 .background(state.theme.cardAlt)
-                .cornerRadius(14)
+                .cornerRadius(10)
                 .overlay(
-                    RoundedRectangle(cornerRadius: 14)
+                    RoundedRectangle(cornerRadius: 10)
                         .stroke(code.isEmpty ? state.theme.border : state.theme.accent, lineWidth: 2)
                 )
                 .onChange(of: code) { newValue in
                     code = String(newValue.prefix(6).filter { $0.isNumber })
                 }
 
-            Text("Введіть 6-значний код з Telegram")
+            Text("Введiть 6-значний код з Telegram")
                 .font(.caption)
                 .foregroundColor(state.theme.textMuted)
         }
@@ -259,10 +287,10 @@ struct RegisterView: View {
 
     var buttonTitle: String {
         switch step {
-        case 0: return loading ? "Зачекайте..." : "Далі"
+        case 0: return loading ? "Зачекайте..." : "Далi"
         case 1: return "Я отримав код"
-        case 2: return loading ? "Перевіряємо..." : "Підтвердити"
-        default: return "Далі"
+        case 2: return loading ? "Перевiряємо..." : "Пiдтвердити"
+        default: return "Далi"
         }
     }
 
@@ -385,6 +413,152 @@ struct RegisterView: View {
                     loading = false
                     self.error = error.localizedDescription
                 }
+            }
+        }
+    }
+}
+
+// MARK: - Login View (phone only)
+
+struct LoginView: View {
+    @EnvironmentObject var state: AppState
+    @Environment(\.presentationMode) var presentationMode
+    @State private var step = 0
+    @State private var phone = ""
+    @State private var code = ""
+    @State private var tgToken = ""
+    @State private var loading = false
+    @State private var error = ""
+
+    var body: some View {
+        ZStack {
+            state.theme.bg.ignoresSafeArea()
+            VStack(spacing: 20) {
+                HStack {
+                    if step > 0 {
+                        Button(action: { step -= 1; error = "" }) {
+                            HStack(spacing: 4) {
+                                Image(systemName: "chevron.left")
+                                Text("Назад")
+                            }
+                            .foregroundColor(state.theme.accent)
+                        }
+                    }
+                    Spacer()
+                }
+                .padding(.horizontal)
+                .padding(.top, 20)
+
+                ScrollView {
+                    VStack(spacing: 16) {
+                        if step == 0 {
+                            VStack(spacing: 14) {
+                                Text("Вхsд")
+                                    .font(.title2.bold())
+                                    .foregroundColor(state.theme.text)
+                                Text("Введsть номер телефону")
+                                    .font(.subheadline)
+                                    .foregroundColor(state.theme.textSec)
+                                ThemedTextField(placeholder: "+380...", text: $phone)
+                            }
+                        } else if step == 1 {
+                            VStack(spacing: 18) {
+                                Text("Отримайте код")
+                                    .font(.title2.bold())
+                                    .foregroundColor(state.theme.text)
+                                Image(systemName: "paperplane.fill")
+                                    .font(.system(size: 40))
+                                    .foregroundColor(state.theme.accent)
+                                    .padding()
+                                Text("Вsдкрийте Telegram та натиснsть Start")
+                                    .font(.subheadline)
+                                    .foregroundColor(state.theme.textSec)
+                                    .multilineTextAlignment(.center)
+                                Button(action: openTelegram) {
+                                    Text("Вsдкрити Telegram")
+                                        .font(.headline)
+                                        .foregroundColor(.white)
+                                        .frame(maxWidth: .infinity)
+                                        .padding(.vertical, 14)
+                                        .background(Color(hex: "0088cc"))
+                                        .cornerRadius(10)
+                                }
+                            }
+                        } else {
+                            VStack(spacing: 14) {
+                                Text("Введsть код")
+                                    .font(.title2.bold())
+                                    .foregroundColor(state.theme.text)
+                                TextField("000000", text: $code)
+                                    .keyboardType(.numberPad)
+                                    .font(.system(size: 28, weight: .bold))
+                                    .foregroundColor(state.theme.text)
+                                    .multilineTextAlignment(.center)
+                                    .padding(16)
+                                    .background(state.theme.cardAlt)
+                                    .cornerRadius(10)
+                                    .onChange(of: code) { v in code = String(v.prefix(6).filter { $0.isNumber }) }
+                            }
+                        }
+                    }
+                    .padding()
+                }
+
+                Spacer()
+                if !error.isEmpty {
+                    Text(error).font(.caption).foregroundColor(.red).padding(.horizontal)
+                }
+                Button(action: nextStep) {
+                    HStack {
+                        if loading { ProgressView().tint(.white) }
+                        Text(step == 0 ? "Далi" : step == 1 ? "Я отримав код" : "Увsйти")
+                            .font(.headline)
+                    }
+                    .foregroundColor(.white)
+                    .frame(maxWidth: .infinity)
+                    .padding(.vertical, 14)
+                    .background(state.theme.accent)
+                    .cornerRadius(10)
+                }
+                .padding(.horizontal)
+                .padding(.bottom, 20)
+            }
+        }
+    }
+
+    func openTelegram() {
+        let bot = APIService.shared.botUsername
+        if !tgToken.isEmpty, let url = URL(string: "tg://resolve?domain=\(bot)&start=\(tgToken)"),
+           UIApplication.shared.canOpenURL(url) { UIApplication.shared.open(url); return }
+        if !tgToken.isEmpty, let url = URL(string: "https://t.me/\(bot)?start=\(tgToken)") { UIApplication.shared.open(url) }
+    }
+
+    func nextStep() {
+        error = ""
+        if step == 0 {
+            guard !phone.isEmpty else { error = "Введsть телефон"; return }
+            loading = true
+            Task {
+                do {
+                    let res = try await APIService.shared.sendOtp(phone: phone)
+                    await MainActor.run { tgToken = res.telegramToken ?? ""; loading = false; step = 1 }
+                } catch { await MainActor.run { loading = false; self.error = error.localizedDescription } }
+            }
+        } else if step == 1 {
+            step = 2
+        } else {
+            guard code.count == 6 else { error = "Введsть 6-значний код"; return }
+            loading = true
+            Task {
+                do {
+                    let res = try await APIService.shared.verifyOtp(phone: phone, otp: code, name: "", city: "")
+                    await MainActor.run {
+                        loading = false
+                        state.user = AppUser(name: res.user?.name ?? "", email: "", phone: phone, city: res.user?.city ?? "")
+                        state.saveUser()
+                        presentationMode.wrappedValue.dismiss()
+                    }
+                } catch { await MainActor.run { loading = false; self.error = error.localizedDescription } }
             }
         }
     }

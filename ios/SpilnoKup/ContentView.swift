@@ -3,6 +3,7 @@ import SwiftUI
 struct ContentView: View {
     @StateObject private var state = AppState()
     @State private var selectedTab = 0
+    @State private var showCreateDeal = false
 
     var isLightTheme: Bool {
         state.themeType == .light || state.themeType == .cream
@@ -25,45 +26,61 @@ struct ContentView: View {
     }
 
     var mainTabView: some View {
-        TabView(selection: $selectedTab) {
-            MarketView()
-                .tabItem {
-                    Image(systemName: "house.fill")
-                    Text("Маркет")
+        ZStack {
+            TabView(selection: $selectedTab) {
+                MarketView()
+                    .tabItem {
+                        Image(systemName: "house.fill")
+                        Text("Головна")
+                    }
+                    .tag(0)
+
+                if state.user != nil {
+                    QRHubView()
+                        .tabItem {
+                            Image(systemName: "qrcode")
+                            Text("QR")
+                        }
+                        .tag(1)
+
+                    // Placeholder view for the "+" tab -- triggers sheet
+                    Color.clear
+                        .tabItem {
+                            Image(systemName: "plus.circle.fill")
+                            Text("+Оголошення")
+                        }
+                        .tag(2)
+
+                    SellerDashboardView()
+                        .tabItem {
+                            Image(systemName: "briefcase.fill")
+                            Text("Бiзнес")
+                        }
+                        .tag(3)
                 }
-                .tag(0)
 
-            if state.user != nil {
-                QRHubView()
+                WalletView()
                     .tabItem {
-                        Image(systemName: "qrcode")
-                        Text("QR")
+                        Image(systemName: "wallet.pass.fill")
+                        Text("Гаманець")
                     }
-                    .tag(1)
-
-                ChatListView()
-                    .tabItem {
-                        Image(systemName: "message.fill")
-                        Text("Чат")
-                    }
-                    .tag(2)
-
-                SellerDashboardView()
-                    .tabItem {
-                        Image(systemName: "briefcase.fill")
-                        Text("Бізнес")
-                    }
-                    .tag(3)
+                    .tag(4)
             }
-
-            WalletView()
-                .tabItem {
-                    Image(systemName: "wallet.pass.fill")
-                    Text("Гаманець")
+            .tint(state.theme.accent)
+            .onChange(of: selectedTab) { newValue in
+                if newValue == 2 {
+                    showCreateDeal = true
+                    // Reset to previous tab so the empty view is not displayed
+                    DispatchQueue.main.async {
+                        selectedTab = 0
+                    }
                 }
-                .tag(4)
+            }
         }
-        .tint(state.theme.accent)
+        .sheet(isPresented: $showCreateDeal) {
+            CreateDealView()
+                .environmentObject(state)
+        }
     }
 }
 
