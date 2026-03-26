@@ -118,10 +118,18 @@ router.post('/', authenticate, async (req: Request, res: Response): Promise<void
       });
     }
 
-    await prisma.deal.update({
+    const updatedDeal = await prisma.deal.update({
       where: { id: dealId },
       data: { joined: { increment: quantity } },
     });
+
+    // Auto-complete deal when goal reached
+    if (updatedDeal.joined >= updatedDeal.needed) {
+      await prisma.deal.update({
+        where: { id: dealId },
+        data: { status: 'COMPLETED' },
+      });
+    }
 
     // Notify wallets
     try {
