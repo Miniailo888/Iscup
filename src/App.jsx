@@ -1162,13 +1162,14 @@ function BuyerQRPage({ deal, qty, onBack, orderId }) {
 }
 
 // ── QR Хаб ──────────────────────────────────────────────────────────────────
-function QRHub() {
+function QRHub({ autoScan }) {
   const [scanning,setScanning]=useState(false),[scanned,setScanned]=useState(null),[confirmed,setConfirmed]=useState(false);
   const [manualCode,setManualCode]=useState(""),[verifyError,setVerifyError]=useState(""),[verifying,setVerifying]=useState(false);
   const [sellerOrders,setSellerOrders]=useState([]);
   const videoRef=useRef(null);
   const canvasRef=useRef(null);
   const scanInterval=useRef(null);
+  const autoScanDone=useRef(false);
 
   useEffect(()=>{
     if(!isLoggedIn()) return;
@@ -1176,6 +1177,14 @@ function QRHub() {
     const unsub=onEvent('deal:update',()=>fetchSellerOrders().then(setSellerOrders).catch(()=>{}));
     return ()=>unsub();
   },[]);
+
+  // Auto-start camera when opened from market scan button
+  useEffect(()=>{
+    if(autoScan&&!autoScanDone.current&&!scanning&&!scanned){
+      autoScanDone.current=true;
+      setTimeout(()=>startCamera(),300);
+    }
+  },[autoScan]);
 
   const doVerify=async(token)=>{
     setVerifying(true);setVerifyError("");
@@ -2079,7 +2088,7 @@ function AppInner() {
     if(page==="qr"&&buyData) return <BuyerQRPage deal={buyData.deal} qty={buyData.qty} orderId={buyData.orderId} onBack={()=>setPage(null)}/>;
     if(page==="createDeal") return <CreateDealPage onBack={()=>setPage(null)} onSave={()=>{loadDeals();setPage(null);}}/>;
     if(page==="settings") return <SettingsMenu user={user} theme={theme} onTheme={changeTheme} onBack={()=>setPage(null)} onLogout={()=>{disconnectSocket();apiLogout();const g={name:"Гість",email:"",phone:"",city:""};localStorage.setItem("spilnokup_user",JSON.stringify(g));setUser(g);setPage(null);setTab("market");setAuthStep("welcome");}}/>;
-    if(page==="scanner") return <QRHub onBack={()=>setPage(null)} isPage/>;
+    if(page==="scanner") return <QRHub onBack={()=>setPage(null)} isPage autoScan/>;
     switch(tab){
       case"market":return <MarketPage deals={deals} joined={joined} onJoin={onJoin} onOpen={onOpen} user={user} onCreateDeal={()=>setPage("createDeal")} theme={theme} onTheme={changeTheme} onRefresh={loadDeals} onSettings={()=>setPage("settings")} onScan={()=>setPage("scanner")} onChat={()=>setTab("chat")} unreadCount={unreadCount}/>;
       case"create":return <CreateDealPage onBack={()=>setTab("market")} onSave={()=>{loadDeals();setTab("market");}}/>;
