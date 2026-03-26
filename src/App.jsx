@@ -1159,7 +1159,7 @@ function BuyerQRPage({ deal, qty, onBack, orderId }) {
 }
 
 // ── QR Хаб ──────────────────────────────────────────────────────────────────
-function QRHub({ autoScan }) {
+function QRHub({ autoScan, onBack }) {
   const [scanning,setScanning]=useState(false),[scanned,setScanned]=useState(null),[confirmed,setConfirmed]=useState(false);
   const [manualCode,setManualCode]=useState(""),[verifyError,setVerifyError]=useState(""),[verifying,setVerifying]=useState(false);
   const [sellerOrders,setSellerOrders]=useState([]);
@@ -1233,13 +1233,13 @@ function QRHub({ autoScan }) {
         {[["Покупець",scanned.buyer],["Товар",scanned.item],["Кількість",`${scanned.quantity} ${scanned.unit}`],["Сума",`₴${scanned.amount}`]].map(([k,v])=><div key={k} style={{ ...S.flex,justifyContent:"space-between",padding:"6px 0",borderBottom:`1px solid ${T.border}11` }}><span style={{ fontSize:12,color:T.textSec }}>{k}</span><span style={{ fontSize:12,fontWeight:700,color:T.text }}>{v}</span></div>)}
       </div>
       <div style={{fontSize:10,color:T.textSec,marginBottom:14}}>Кошти зараховано на ваш баланс</div>
-      <button onClick={()=>{setScanned(null);setConfirmed(false);setManualCode("");}} style={{ ...S.btn,width:"100%",padding:14,background:T.accent,borderRadius:12,color:"#fff",fontSize:14 }}>Готово</button>
+      <button onClick={()=>{setScanned(null);setConfirmed(false);setManualCode("");if(autoScan&&onBack) onBack();}} style={{ ...S.btn,width:"100%",padding:14,background:T.accent,borderRadius:12,color:"#fff",fontSize:14 }}>Готово</button>
     </div>
   </div>;
 
   // Scanner screen
   if(scanning) return <div style={S.page}>
-    <BackBtn onClick={stopCamera}/>
+    <BackBtn onClick={()=>{stopCamera();if(autoScan&&onBack) onBack();}}/>
     <div style={{ ...S.card,textAlign:"center",padding:16 }}>
       <div style={{ fontSize:14,fontWeight:800,color:T.text,marginBottom:10 }}>Наведіть камеру на QR код</div>
       <canvas ref={canvasRef} style={{display:"none"}}/>
