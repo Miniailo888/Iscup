@@ -1979,13 +1979,17 @@ function WalletPage({ user, setUser, theme, onTheme }) {
       </div>}
     </div>
 
-    <div style={{ ...S.card,background:`linear-gradient(135deg,${T.greenLight},${T.greenBorder})`,marginBottom:16,textAlign:"center",padding:20 }}>
-      <div style={{ fontSize:11,color:T.green }}>Баланс</div>
-      <div style={{ fontSize:32,fontWeight:900,color:T.text }}>₴{balance.toLocaleString()}</div>
+    {/* Balance section */}
+    <div style={{ marginBottom:16,padding:"0 4px" }}>
+      <div style={{...S.flex,justifyContent:"space-between",marginBottom:4}}>
+        <div style={{fontSize:12,color:T.textSec}}>Загальний баланс</div>
+      </div>
+      <div style={{ fontSize:36,fontWeight:900,color:T.text,letterSpacing:"-0.02em" }}>₴{balance.toLocaleString()}</div>
       {walletData&&Number(walletData.heldBalance)>0&&<div style={{ fontSize:11,color:T.yellow,marginTop:2 }}>Заморожено: ₴{Number(walletData.heldBalance).toLocaleString()}</div>}
-      <div style={{ display:"flex",gap:8,marginTop:12,justifyContent:"center" }}>
-        <button onClick={()=>setShowPay("topup")} style={{ ...S.btn,padding:"10px 20px",borderRadius:12,fontSize:12,background:T.accent,color:"#fff" }}>+ Поповнити</button>
-        <button onClick={()=>setShowPay("withdraw")} style={{ ...S.btn,padding:"10px 20px",borderRadius:12,fontSize:12,background:T.cardAlt,color:T.text,border:`1px solid ${T.border}44` }}>Вивести</button>
+      <div style={{ display:"flex",gap:8,marginTop:14 }}>
+        <button onClick={()=>setShowPay("topup")} style={{ ...S.btn,flex:1,padding:"11px 0",borderRadius:8,fontSize:13,fontWeight:600,background:T.accent,color:"#fff" }}>Поповнити</button>
+        <button onClick={()=>setShowPay("withdraw")} style={{ ...S.btn,flex:1,padding:"11px 0",borderRadius:8,fontSize:13,fontWeight:600,background:T.cardAlt,color:T.text,border:`1px solid ${T.border}` }}>Вивести</button>
+        <button onClick={()=>{}} style={{ ...S.btn,flex:1,padding:"11px 0",borderRadius:8,fontSize:13,fontWeight:600,background:T.cardAlt,color:T.text,border:`1px solid ${T.border}` }}>Переказ</button>
       </div>
     </div>
 
