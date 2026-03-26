@@ -171,6 +171,6 @@ struct CreateDealRequest {
          "retailPrice": retailPrice, "groupPrice": groupPrice, "unit": unit,
          "minQty": minQty, "maxQty": maxQty, "needed": needed,
          "deadline": deadline, "tags": tags, "city": city, "autoConfirm": autoConfirm,
-         "images": []]
+         "images": [String]()]
     }
 }

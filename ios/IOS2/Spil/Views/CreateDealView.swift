@@ -63,7 +63,9 @@ struct CreateDealView: View {
                                 .foregroundColor(unit == u ? .black : AppTheme.textSec).cornerRadius(8)
                         }}
                     }
+                }
 
+                Group {
                     HStack(spacing: 8) {
                         VStack(alignment: .leading) { label("Учасників"); TextField("", text: $needed, prompt: Text("20").foregroundColor(AppTheme.textMuted)).keyboardType(.numberPad).foregroundColor(.white).modifier(InputStyle()) }
                         VStack(alignment: .leading) { label("Днів"); TextField("", text: $days, prompt: Text("7").foregroundColor(AppTheme.textMuted)).keyboardType(.numberPad).foregroundColor(.white).modifier(InputStyle()) }
