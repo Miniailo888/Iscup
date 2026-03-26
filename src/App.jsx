@@ -1220,8 +1220,8 @@ function ChatPage() {
     return <div style={{display:"flex",flexDirection:"column",height:"100%"}}>
       <div style={{...S.flex,gap:10,padding:"14px 16px",borderBottom:`1px solid ${T.border}22`}}>
         <button onClick={()=>setSupportActive(false)} style={{...S.btn,background:"none",color:T.accent,padding:0}}>{I.back}</button>
-        <Ic emoji="" size={36} name="Підтримка"/>
-        <div style={{flex:1}}><div style={{fontSize:13,fontWeight:800,color:T.text}}>Підтримка</div><div style={{fontSize:9,color:T.green}}>Команда СпільноКуп</div></div>
+        <img src="/support-avatar.png" alt="" style={{width:36,height:36,borderRadius:8,objectFit:"cover"}}/>
+        <div style={{flex:1}}><div style={{fontSize:13,fontWeight:800,color:T.text}}>Служба підтримки</div><div style={{fontSize:9,color:T.green}}>Команда СпільноКуп</div></div>
       </div>
       <div style={{flex:1,overflowY:"auto",padding:"10px 16px",display:"flex",flexDirection:"column",gap:6}}>
         {supportMessages.map((m,i)=>{const mine=m.from!=="support";return <div key={m.id||i} style={{alignSelf:mine?"flex-end":"flex-start",maxWidth:"78%"}}>
@@ -1288,10 +1288,10 @@ function ChatPage() {
     <h2 style={{color:T.text,fontSize:22,fontWeight:900,marginBottom:14}}>Повідомлення</h2>
     {/* Support chat - always on top */}
     {hasSupportChat&&<div onClick={()=>setSupportActive(true)} style={{...S.card,...S.flex,gap:10,marginBottom:8,cursor:"pointer",padding:12,border:`1px solid ${T.accent}33`}}>
-      <Ic emoji="" size={42} name="Підтримка"/>
+      <img src="/support-avatar.png" alt="" style={{width:42,height:42,borderRadius:10,objectFit:"cover"}}/>
       <div style={{flex:1,minWidth:0}}>
         <div style={{...S.flex,justifyContent:"space-between",marginBottom:2}}>
-          <span style={{fontSize:13,fontWeight:700,color:T.text}}>Підтримка</span>
+          <span style={{fontSize:13,fontWeight:700,color:T.text}}>Служба підтримки</span>
           <span style={{fontSize:10,color:T.textMuted}}>{supportMessages.length>0?new Date(supportMessages[supportMessages.length-1].time).toLocaleTimeString("uk",{hour:"2-digit",minute:"2-digit"}):""}</span>
         </div>
         <div style={{fontSize:11,color:T.textSec,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{supportMessages[supportMessages.length-1]?.text||"..."}</div>
