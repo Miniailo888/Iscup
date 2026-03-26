@@ -8,12 +8,12 @@ import QRCodeLib from "qrcode";
 const THEMES = {
   light: {
     name: "Світла", emoji: "☀️",
-    bg:"#f5f5f5",card:"#ffffff",cardAlt:"#eef0f4",border:"#d0d5dd",
-    text:"#1a1a2e",textSec:"#6b7280",textMuted:"#9ca3af",
-    accent:"#3d8c5c",green:"#2e7d4f",greenLight:"#e6f4ec",greenBorder:"#b8dcc8",
-    orange:"#c46a20",yellow:"#b8960a",purple:"#6b5fa8",blue:"#4a78b0",
-    navBg:"rgba(255,255,255,0.85)",navText:"#6b7280",
-    gradA:"#3d8c5c",gradB:"#b8960a",gradC:"#c46a20",
+    bg:"#f8f9fa",card:"#ffffff",cardAlt:"#f1f3f5",border:"#dee2e6",
+    text:"#212529",textSec:"#495057",textMuted:"#adb5bd",
+    accent:"#1a73e8",green:"#1a8754",greenLight:"#e8f5e9",greenBorder:"#a5d6a7",
+    orange:"#e65100",yellow:"#f57f17",purple:"#5e35b1",blue:"#1a73e8",
+    navBg:"rgba(255,255,255,0.97)",navText:"#6c757d",
+    gradA:"#1a73e8",gradB:"#5e35b1",gradC:"#1a8754",
   },
   cream: {
     name: "Кремова", emoji: "🍦",
@@ -53,8 +53,8 @@ const THEMES = {
   },
 };
 
-let T = { ...THEMES.ocean, radius:16, radiusSm:12 };
-function applyTheme(id) { Object.assign(T, THEMES[id], { radius:16, radiusSm:12 }); }
+let T = { ...THEMES.ocean, radius:10, radiusSm:8 };
+function applyTheme(id) { Object.assign(T, THEMES[id], { radius:10, radiusSm:8 }); }
 
 function getS() {
   return {
@@ -111,21 +111,21 @@ const dealPhoto=(d)=>{
 
 // ── Дані ────────────────────────────────────────────────────────────────────
 const CATEGORIES = [
-  { id:"all", label:"Всі", icon:"🏪" },
-  { id:"food", label:"Їжа", icon:"🍽" },
-  { id:"farm", label:"Ферма", icon:"🐔" },
-  { id:"veggies", label:"Городина", icon:"🥬" },
-  { id:"dairy", label:"Молочне", icon:"🥛" },
-  { id:"bakery", label:"Випічка", icon:"🍞" },
-  { id:"drinks", label:"Напої", icon:"☕" },
-  { id:"sport", label:"Спорт", icon:"⚽" },
-  { id:"electronics", label:"Електроніка", icon:"📱" },
-  { id:"services", label:"Послуги", icon:"🛠" },
-  { id:"clothing", label:"Одяг", icon:"👕" },
-  { id:"handmade", label:"Handmade", icon:"🧵" },
-  { id:"beauty", label:"Краса", icon:"💄" },
-  { id:"home", label:"Дім", icon:"🏠" },
-  { id:"other", label:"Інше", icon:"📦" },
+  { id:"all", label:"Всі", icon:"" },
+  { id:"food", label:"Їжа", icon:"" },
+  { id:"farm", label:"Ферма", icon:"" },
+  { id:"veggies", label:"Городина", icon:"" },
+  { id:"dairy", label:"Молочне", icon:"" },
+  { id:"bakery", label:"Випічка", icon:"" },
+  { id:"drinks", label:"Напої", icon:"" },
+  { id:"sport", label:"Спорт", icon:"" },
+  { id:"electronics", label:"Електроніка", icon:"" },
+  { id:"services", label:"Послуги", icon:"" },
+  { id:"clothing", label:"Одяг", icon:"" },
+  { id:"handmade", label:"Handmade", icon:"" },
+  { id:"beauty", label:"Краса", icon:"" },
+  { id:"home", label:"Дім", icon:"" },
+  { id:"other", label:"Інше", icon:"" },
 ];
 
 const INIT_DEALS = [
@@ -207,11 +207,14 @@ function ProgressBar({ value, color = T.accent, h = 5 }) {
 function BackBtn({ onClick }) {
   return <button onClick={onClick} style={{ ...S.btn,...S.flex,gap:4,background:"none",color:T.green,fontSize:14,padding:0,marginBottom:16 }}>{I.back} Назад</button>;
 }
-function Ic({ emoji, size = 36 }) {
-  return <div style={{ fontSize:size*0.5,width:size,height:size,background:T.cardAlt,borderRadius:size>40?T.radius:8,...S.flex,justifyContent:"center",border:`1px solid ${T.border}22` }}>{emoji}</div>;
+function Ic({ emoji, size = 36, name="" }) {
+  const colors=["#1a73e8","#1a8754","#e65100","#5e35b1","#c44569","#2d6a4f","#6f4e37","#457b9d"];
+  const initial=(name||emoji||"?")[0]?.toUpperCase()||"?";
+  const ci=initial.charCodeAt(0)%colors.length;
+  return <div style={{ fontSize:size*0.38,fontWeight:700,width:size,height:size,background:colors[ci],color:"#fff",borderRadius:size>40?T.radius:8,...S.flex,justifyContent:"center" }}>{initial}</div>;
 }
 function Input({ value, onChange, placeholder, icon, type="text", area }) {
-  const common = { width:"100%",background:T.card,border:`1px solid ${T.border}`,borderRadius:14,padding:icon?"12px 16px 12px 42px":"12px 16px",color:T.text,fontSize:14,boxSizing:"border-box",outline:"none",fontFamily:"inherit",WebkitAppearance:"none",position:"relative",zIndex:1 };
+  const common = { width:"100%",background:T.card,border:`1px solid ${T.border}`,borderRadius:8,padding:icon?"12px 16px 12px 42px":"12px 16px",color:T.text,fontSize:14,boxSizing:"border-box",outline:"none",fontFamily:"inherit",WebkitAppearance:"none",position:"relative",zIndex:1 };
   return <div style={{ position:"relative" }}>
     {icon&&<div style={{ position:"absolute",left:14,top:area?14:"50%",transform:area?"none":"translateY(-50%)",color:T.textMuted,zIndex:2,pointerEvents:"none" }}>{icon}</div>}
     {area ? <textarea value={value} onChange={onChange} placeholder={placeholder} rows={3} style={{ ...common,resize:"vertical" }}/> :
@@ -239,16 +242,14 @@ function Nav({ tab, setTab }) {
 
 // ── Welcome + Реєстрація ────────────────────────────────────────────────────
 function WelcomeScreen({ onStart, onGuest }) {
-  return <div style={{ minHeight:"100%",display:"flex",flexDirection:"column",justifyContent:"center",padding:24,textAlign:"center" }}>
-    <div style={{ fontSize:56,marginBottom:12 }}>🛒</div>
-    <h1 style={{ fontSize:28,fontWeight:900,color:T.text,marginBottom:6 }}>Spil</h1>
-    <p style={{ fontSize:13,color:T.textSec,marginBottom:28,lineHeight:1.6 }}>Спільні покупки від малого бізнесу України.<br/>Економте до 40% купуючи разом!</p>
-    <button onClick={onStart} style={{ ...S.btn,width:"100%",padding:15,background:"#0088cc",color:"#fff",borderRadius:14,fontSize:15,marginBottom:10 }}>Увійти через Telegram</button>
-    <button onClick={onGuest} style={{ ...S.btn,width:"100%",padding:14,background:T.cardAlt,color:T.textSec,borderRadius:14,fontSize:13 }}>Увійти як гість</button>
-    <div style={{ marginTop:28,background:T.cardAlt,borderRadius:T.radius,padding:14,textAlign:"left" }}>
-      <div style={{ ...S.flex,gap:6,fontSize:12,fontWeight:700,color:T.text,marginBottom:6 }}>{I.down} Додати на екран:</div>
-      <div style={{ fontSize:11,color:T.textSec,lineHeight:1.8 }}><b>Android:</b> Chrome → ⋮ → «На головний екран»<br/><b>iPhone:</b> Safari → ⬆ → «На Початковий екран»</div>
+  return <div style={{ minHeight:"100%",display:"flex",flexDirection:"column",justifyContent:"center",padding:32,textAlign:"center" }}>
+    <div style={{width:64,height:64,borderRadius:16,background:T.accent,margin:"0 auto 20px",...S.flex,justifyContent:"center"}}>
+      <svg width="32" height="32" fill="none" stroke="#fff" strokeWidth="2" viewBox="0 0 24 24"><path d="M16 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="8.5" cy="7" r="4"/><line x1="20" y1="8" x2="20" y2="14"/><line x1="23" y1="11" x2="17" y2="11"/></svg>
     </div>
+    <h1 style={{ fontSize:26,fontWeight:800,color:T.text,marginBottom:8,letterSpacing:"-0.02em" }}>СпільноКуп</h1>
+    <p style={{ fontSize:14,color:T.textSec,marginBottom:36,lineHeight:1.6 }}>Платформа спільних покупок<br/>від малого бізнесу України</p>
+    <button onClick={onStart} style={{ ...S.btn,width:"100%",padding:14,background:T.accent,color:"#fff",borderRadius:8,fontSize:15,marginBottom:10,letterSpacing:"0.01em" }}>Увійти</button>
+    <button onClick={onGuest} style={{ ...S.btn,width:"100%",padding:13,background:"transparent",color:T.textSec,borderRadius:8,fontSize:13,border:`1px solid ${T.border}` }}>Переглянути як гість</button>
   </div>;
 }
 
@@ -301,9 +302,11 @@ function RegisterScreen({ onDone }) {
     <BackBtn onClick={()=>setStep(0)}/>
     <h2 style={{ fontSize:22,fontWeight:900,color:T.text,marginBottom:4 }}>Отримайте код</h2>
     <p style={{ fontSize:13,color:T.textSec,marginBottom:20 }}>Крок 2 з 3</p>
-    <div style={{ fontSize:60,margin:"20px 0" }}>✈️</div>
+    <div style={{width:56,height:56,borderRadius:12,background:T.accent,margin:"20px auto",...S.flex,justifyContent:"center"}}>
+      <svg width="28" height="28" fill="none" stroke="#fff" strokeWidth="2" viewBox="0 0 24 24"><path d="M22 2L11 13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
+    </div>
     <p style={{ fontSize:13,color:T.textSec,marginBottom:20,lineHeight:1.6 }}>Натисніть кнопку нижче — відкриється Telegram.<br/>Натисніть <b>Start</b> — бот надішле код.</p>
-    <a href={tgLink} target="_blank" rel="noopener noreferrer" style={{ ...S.btn,display:"block",width:"100%",padding:15,background:"#0088cc",color:"#fff",borderRadius:14,fontSize:15,marginBottom:14,textAlign:"center",textDecoration:"none",boxSizing:"border-box" }}>✈ Відкрити Telegram</a>
+    <a href={tgLink} target="_blank" rel="noopener noreferrer" style={{ ...S.btn,display:"block",width:"100%",padding:14,background:T.accent,color:"#fff",borderRadius:8,fontSize:14,marginBottom:14,textAlign:"center",textDecoration:"none",boxSizing:"border-box" }}>Відкрити Telegram</a>
     <div style={{ fontSize:11,color:T.textMuted,lineHeight:1.6,marginBottom:20 }}>1. Натисніть Start в боті<br/>2. Бот надішле 6-значний код<br/>3. Введіть код на наступному кроці</div>
     {error&&<div style={{ color:"#ef4444",fontSize:12,marginBottom:8 }}>{error}</div>}
     <button onClick={()=>setStep(3)} style={{ ...S.btn,width:"100%",padding:15,background:T.accent,color:"#fff",borderRadius:14,fontSize:15 }}>Я отримав код</button>
@@ -316,7 +319,7 @@ function RegisterScreen({ onDone }) {
     <p style={{ fontSize:13,color:T.textSec,marginBottom:20 }}>Крок 3 з 3</p>
     <div style={{ ...S.card,background:T.greenLight,textAlign:"center",marginBottom:16,...S.flex,justifyContent:"center",gap:6 }}>
       <span style={{ fontSize:16 }}>✈️</span>
-      <span style={{ fontSize:12,color:T.green }}>Код надіслано в Telegram</span>
+      <span style={{ fontSize:12,color:T.green }}>Код надіслано через месенджер</span>
     </div>
     <div style={{ ...S.flex,justifyContent:"center",gap:10,marginBottom:20 }}>
       {[0,1,2,3,4,5].map(i=><input key={i} maxLength={1} inputMode="numeric" pattern="[0-9]*" value={code[i]||""} onChange={e=>{const v=e.target.value.replace(/\D/g,"");const nc=code.split("");nc[i]=v;setCode(nc.join(""));if(v&&i<5)e.target.nextSibling?.focus();}} onKeyDown={e=>{if(e.key==="Backspace"&&!code[i]&&i>0){const nc=code.split("");nc[i-1]="";setCode(nc.join(""));e.target.previousSibling?.focus();}}}
@@ -330,14 +333,12 @@ function RegisterScreen({ onDone }) {
 
 // ── Картка угоди ────────────────────────────────────────────────────────────
 function DealPhoto({ deal, h=90 }) {
-  // Real photo from DB
-  if(deal.photo && typeof deal.photo==="string" && deal.photo.startsWith("data:")) return <div style={{width:"100%",height:h,borderRadius:8,overflow:"hidden"}}><img src={deal.photo} alt="" style={{width:"100%",height:"100%",objectFit:"cover"}}/></div>;
-  // Fallback gradient
-  const cats={farm:["#1a2010","#2a3518"],food:["#201510","#302518"],veggies:["#102010","#1a3018"],dairy:["#1a1a20","#2a2a30"],bakery:["#201510","#302518"],drinks:["#1a1510","#2a2018"],sport:["#0a1520","#1a2530"],electronics:["#101520","#1a2530"],services:["#151018","#251828"],clothing:["#1a1020","#2a1a30"],handmade:["#1a1020","#2a1a30"],beauty:["#1a0a18","#2a1a28"],home:["#141410","#242418"],other:["#1a1a20","#2a2a30"]};
-  const c=cats[deal.cat]||["#1a1a20","#2a2a30"];
-  return <div style={{width:"100%",height:h,borderRadius:8,background:`linear-gradient(135deg,${c[0]},${c[1]})`,...getS().flex,justifyContent:"center",flexDirection:"column",gap:4}}>
-    <span style={{fontSize:28}}>{CATEGORIES.find(ct=>ct.id===deal.cat)?.icon||"📦"}</span>
-    <span style={{fontSize:8,color:T.textMuted,fontWeight:600}}>{deal.title?.length>20?deal.title.slice(0,20)+"...":deal.title}</span>
+  if(deal.photo && typeof deal.photo==="string" && deal.photo.startsWith("data:")) return <div style={{width:"100%",height:h,borderRadius:6,overflow:"hidden"}}><img src={deal.photo} alt="" style={{width:"100%",height:"100%",objectFit:"cover"}}/></div>;
+  const catColors={farm:"#2d6a4f",food:"#9c6644",veggies:"#40916c",dairy:"#457b9d",bakery:"#bc6c25",drinks:"#6d6875",sport:"#1d3557",electronics:"#343a40",services:"#495057",clothing:"#6c757d",handmade:"#7b2d8e",beauty:"#c44569",home:"#2b9348",honey:"#e09f3e",cafe:"#6f4e37",other:"#495057"};
+  const bg=catColors[deal.cat]||"#495057";
+  const initial=deal.title?deal.title[0].toUpperCase():"?";
+  return <div style={{width:"100%",height:h,borderRadius:6,background:bg,...getS().flex,justifyContent:"center"}}>
+    <span style={{fontSize:h>50?22:16,fontWeight:700,color:"#fff",opacity:0.9}}>{initial}</span>
   </div>;
 }
 
@@ -507,13 +508,18 @@ function MarketPage({ deals, joined, onJoin, onOpen, user, onCreateDeal, theme, 
     </div>
 
     <div style={{ padding:"0 16px 12px" }}>
-      <HowItWorks/>
+      <div style={{background:T.card,borderRadius:T.radius,padding:"12px 16px",border:`1px solid ${T.border}44`,...S.flex,gap:12}}>
+        <div style={{width:36,height:36,borderRadius:8,background:T.accent,...S.flex,justifyContent:"center",flexShrink:0}}>
+          <svg width="18" height="18" fill="none" stroke="#fff" strokeWidth="2" viewBox="0 0 24 24"><path d="M16 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="8.5" cy="7" r="4"/><line x1="20" y1="8" x2="20" y2="14"/><line x1="23" y1="11" x2="17" y2="11"/></svg>
+        </div>
+        <div><div style={{fontSize:13,fontWeight:700,color:T.text}}>Спільні покупки</div><div style={{fontSize:11,color:T.textSec}}>Об'єднуйтесь та купуйте вигідніше</div></div>
+      </div>
     </div>
 
     <HotSlider deals={deals} onOpen={onOpen}/>
 
     <div style={{ display:"flex",gap:6,padding:"0 16px 10px",overflowX:"auto",scrollbarWidth:"none" }}>
-      {CATEGORIES.map(c=><button key={c.id} onClick={()=>setCat(c.id)} style={{ ...S.btn,whiteSpace:"nowrap",padding:"6px 12px",borderRadius:12,fontSize:11,background:cat===c.id?T.accent:T.card,color:cat===c.id?"#fff":T.textSec,border:`1px solid ${cat===c.id?T.accent:T.border}` }}>{c.icon} {c.label}</button>)}
+      {CATEGORIES.map(c=><button key={c.id} onClick={()=>setCat(c.id)} style={{ ...S.btn,whiteSpace:"nowrap",padding:"6px 14px",borderRadius:6,fontSize:12,fontWeight:cat===c.id?600:400,background:cat===c.id?T.accent:"transparent",color:cat===c.id?"#fff":T.text,border:`1px solid ${cat===c.id?T.accent:T.border}`,letterSpacing:"0.01em" }}>{c.label}</button>)}
     </div>
 
     <div style={{ ...S.flex,gap:4,padding:"0 16px 10px",flexWrap:"wrap" }}>
@@ -1631,7 +1637,7 @@ function WalletPage({ user, setUser, theme, onTheme }) {
         <button onClick={()=>setAuthStep(2)} style={{ ...S.btn,width:"100%",padding:14,background:T.accent,color:"#fff",borderRadius:14,fontSize:14 }}>Я отримав код</button>
       </>:<>
         <h2 style={{ fontSize:20,fontWeight:900,color:T.text,marginBottom:4 }}>Код підтвердження</h2>
-        <div style={{ ...S.card,background:T.greenLight,textAlign:"center",marginBottom:16,...S.flex,justifyContent:"center",gap:6 }}><span style={{fontSize:16}}>✈️</span><span style={{ fontSize:12,color:T.green }}>Код надіслано в Telegram</span></div>
+        <div style={{ ...S.card,background:T.greenLight,textAlign:"center",marginBottom:16,...S.flex,justifyContent:"center",gap:6 }}><svg width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path d="M22 2L11 13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg><span style={{ fontSize:12,color:T.green }}>Код надіслано через месенджер</span></div>
         <div style={{ ...S.flex,justifyContent:"center",gap:8,marginBottom:20 }}>
           {[0,1,2,3,4,5].map(i=><input key={i} maxLength={1} inputMode="numeric" pattern="[0-9]*" value={authCode[i]||""} onChange={e=>{const v=e.target.value.replace(/\D/g,"");const nc=authCode.split("");nc[i]=v;setAuthCode(nc.join(""));if(v&&i<5)e.target.nextSibling?.focus();}} onKeyDown={e=>{if(e.key==="Backspace"&&!authCode[i]&&i>0){const nc=authCode.split("");nc[i-1]="";setAuthCode(nc.join(""));e.target.previousSibling?.focus();}}}
             style={{ width:46,height:54,textAlign:"center",fontSize:24,fontWeight:900,border:`2px solid ${authCode[i]?T.accent:T.border}`,borderRadius:12,outline:"none",color:T.text,fontFamily:"inherit",background:T.card }}/>)}
@@ -1678,7 +1684,7 @@ function WalletPage({ user, setUser, theme, onTheme }) {
         <button onClick={()=>setAuthStep(3)} style={{ ...S.btn,width:"100%",padding:14,background:T.accent,color:"#fff",borderRadius:14,fontSize:14 }}>Я отримав код</button>
       </>:<>
         <h2 style={{ fontSize:20,fontWeight:900,color:T.text,marginBottom:4 }}>Код підтвердження</h2>
-        <div style={{ ...S.card,background:T.greenLight,textAlign:"center",marginBottom:16,...S.flex,justifyContent:"center",gap:6 }}><span style={{fontSize:16}}>✈️</span><span style={{ fontSize:12,color:T.green }}>Код надіслано в Telegram</span></div>
+        <div style={{ ...S.card,background:T.greenLight,textAlign:"center",marginBottom:16,...S.flex,justifyContent:"center",gap:6 }}><svg width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path d="M22 2L11 13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg><span style={{ fontSize:12,color:T.green }}>Код надіслано через месенджер</span></div>
         <div style={{ ...S.flex,justifyContent:"center",gap:8,marginBottom:20 }}>
           {[0,1,2,3,4,5].map(i=><input key={i} maxLength={1} inputMode="numeric" pattern="[0-9]*" value={authCode[i]||""} onChange={e=>{const v=e.target.value.replace(/\D/g,"");const nc=authCode.split("");nc[i]=v;setAuthCode(nc.join(""));if(v&&i<5)e.target.nextSibling?.focus();}} onKeyDown={e=>{if(e.key==="Backspace"&&!authCode[i]&&i>0){const nc=authCode.split("");nc[i-1]="";setAuthCode(nc.join(""));e.target.previousSibling?.focus();}}}
             style={{ width:46,height:54,textAlign:"center",fontSize:24,fontWeight:900,border:`2px solid ${authCode[i]?T.accent:T.border}`,borderRadius:12,outline:"none",color:T.text,fontFamily:"inherit",background:T.card }}/>)}
