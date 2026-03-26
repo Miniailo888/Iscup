@@ -1067,6 +1067,22 @@ function ChatPage() {
   const [loading,setLoading]=useState(!chatCache.loaded);
   const userId=(() => { try { return JSON.parse(localStorage.getItem("spilnokup_user"))?.id; } catch { return null; } })();
 
+  // Support chat state
+  const [supportMessages,setSupportMessages]=useState(()=>{try{return JSON.parse(localStorage.getItem("spilnokup_support_msgs"))||[];}catch{return [];}});
+  const [supportActive,setSupportActive]=useState(false);
+  const hasSupportChat=supportMessages.length>0;
+
+  const saveSupportMsgs=(msgs)=>{setSupportMessages(msgs);localStorage.setItem("spilnokup_support_msgs",JSON.stringify(msgs));};
+
+  // Listen for support replies via WebSocket or polling
+  useEffect(()=>{
+    const unsub=onEvent('support:reply',(data)=>{
+      const newMsg={id:Date.now(),text:data.text||data.message,from:"support",time:new Date().toISOString()};
+      setSupportMessages(prev=>{const u=[...prev,newMsg];localStorage.setItem("spilnokup_support_msgs",JSON.stringify(u));return u;});
+    });
+    return ()=>unsub();
+  },[]);
+
   useEffect(()=>{
     if(!isLoggedIn()) { setLoading(false); return; }
     // Load in background without blocking UI if cached
@@ -1105,6 +1121,44 @@ function ChatPage() {
 
   const fmtTime=(d)=>{const dt=new Date(d);return `${dt.getHours()}:${String(dt.getMinutes()).padStart(2,"0")}`;};
 
+  // Support chat view
+  if(supportActive){
+    const user=(() => { try { return JSON.parse(localStorage.getItem("spilnokup_user")); } catch { return null; } })();
+    return <div style={{display:"flex",flexDirection:"column",height:"100%"}}>
+      <div style={{...S.flex,gap:10,padding:"14px 16px",borderBottom:`1px solid ${T.border}22`}}>
+        <button onClick={()=>setSupportActive(false)} style={{...S.btn,background:"none",color:T.accent,padding:0}}>{I.back}</button>
+        <Ic emoji="💬" size={36}/>
+        <div style={{flex:1}}><div style={{fontSize:13,fontWeight:800,color:T.text}}>Підтримка</div><div style={{fontSize:9,color:T.green}}>Команда СпільноКуп</div></div>
+      </div>
+      <div style={{flex:1,overflowY:"auto",padding:"10px 16px",display:"flex",flexDirection:"column",gap:6}}>
+        {supportMessages.map((m,i)=>{const mine=m.from!=="support";return <div key={m.id||i} style={{alignSelf:mine?"flex-end":"flex-start",maxWidth:"78%"}}>
+          <div style={{background:mine?T.accent+"22":T.cardAlt,borderRadius:12,padding:"8px 12px",borderBottomRightRadius:mine?4:12,borderBottomLeftRadius:mine?12:4}}>
+            <div style={{fontSize:12,color:T.text,lineHeight:1.4}}>{m.text}</div>
+          </div>
+          <div style={{fontSize:8,color:T.textMuted,marginTop:2,textAlign:mine?"right":"left"}}>{m.time?new Date(m.time).toLocaleTimeString("uk",{hour:"2-digit",minute:"2-digit"}):""}</div>
+        </div>;})}
+      </div>
+      <div style={{...S.flex,gap:8,padding:"10px 16px",borderTop:`1px solid ${T.border}22`}}>
+        <input value={msg} onChange={e=>setMsg(e.target.value)} onKeyDown={e=>{if(e.key==="Enter"&&msg.trim()){
+          const newMsg={id:Date.now(),text:msg.trim(),from:"me",time:new Date().toISOString()};
+          const updated=[...supportMessages,newMsg];saveSupportMsgs(updated);
+          fetch(`${API}/telegram/support`,{method:"POST",headers:{"Content-Type":"application/json"},
+            body:JSON.stringify({message:msg.trim(),userName:user?.name||"User",userPhone:user?.phone||""})}).catch(()=>{});
+          setMsg("");}}} placeholder="Повідомлення..."
+          style={{flex:1,background:T.cardAlt,border:"none",borderRadius:20,padding:"10px 16px",color:T.text,fontSize:13,outline:"none",fontFamily:"inherit"}}/>
+        <button onClick={()=>{if(!msg.trim()) return;
+          const user2=(() => { try { return JSON.parse(localStorage.getItem("spilnokup_user")); } catch { return null; } })();
+          const newMsg={id:Date.now(),text:msg.trim(),from:"me",time:new Date().toISOString()};
+          const updated=[...supportMessages,newMsg];saveSupportMsgs(updated);
+          fetch(`${API}/telegram/support`,{method:"POST",headers:{"Content-Type":"application/json"},
+            body:JSON.stringify({message:msg.trim(),userName:user2?.name||"User",userPhone:user2?.phone||""})}).catch(()=>{});
+          setMsg("");}} style={{...S.btn,width:38,height:38,borderRadius:"50%",background:msg.trim()?T.accent:T.cardAlt,color:msg.trim()?"#fff":T.textMuted,...S.flex,justifyContent:"center"}}>
+          <svg width="18" height="18" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" viewBox="0 0 24 24"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
+        </button>
+      </div>
+    </div>;
+  }
+
   if(!isLoggedIn()) return <div style={S.page}>
     <h2 style={{color:T.text,fontSize:22,fontWeight:900,marginBottom:14}}>Повідомлення</h2>
     <div style={{...S.card,textAlign:"center",padding:30}}><div style={{fontSize:14,color:T.textSec}}>Створіть акаунт щоб спілкуватись з продавцями</div></div>
@@ -1138,8 +1192,20 @@ function ChatPage() {
 
   return <div style={S.page}>
     <h2 style={{color:T.text,fontSize:22,fontWeight:900,marginBottom:14}}>Повідомлення</h2>
+    {/* Support chat - always on top */}
+    {hasSupportChat&&<div onClick={()=>setSupportActive(true)} style={{...S.card,...S.flex,gap:10,marginBottom:8,cursor:"pointer",padding:12,border:`1px solid ${T.accent}33`}}>
+      <Ic emoji="💬" size={42}/>
+      <div style={{flex:1,minWidth:0}}>
+        <div style={{...S.flex,justifyContent:"space-between",marginBottom:2}}>
+          <span style={{fontSize:13,fontWeight:700,color:T.text}}>Підтримка</span>
+          <span style={{fontSize:10,color:T.textMuted}}>{supportMessages.length>0?new Date(supportMessages[supportMessages.length-1].time).toLocaleTimeString("uk",{hour:"2-digit",minute:"2-digit"}):""}</span>
+        </div>
+        <div style={{fontSize:11,color:T.textSec,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{supportMessages[supportMessages.length-1]?.text||"..."}</div>
+      </div>
+      {supportMessages.filter(m=>m.from==="support"&&!m.read).length>0&&<div style={{width:20,height:20,borderRadius:"50%",background:T.accent,...S.flex,justifyContent:"center",fontSize:10,fontWeight:800,color:"#fff",flexShrink:0}}>{supportMessages.filter(m=>m.from==="support"&&!m.read).length}</div>}
+    </div>}
     {loading?<div style={{textAlign:"center",color:T.textSec,padding:20}}>Завантаження...</div>
-    :chats.length===0?<div style={{...S.card,textAlign:"center",padding:30}}><div style={{fontSize:14,color:T.textSec}}>Поки немає повідомлень</div><div style={{fontSize:11,color:T.textMuted,marginTop:4}}>Долучіться до покупки щоб почати чат</div></div>
+    :chats.length===0&&!hasSupportChat?<div style={{...S.card,textAlign:"center",padding:30}}><div style={{fontSize:14,color:T.textSec}}>Поки немає повідомлень</div><div style={{fontSize:11,color:T.textMuted,marginTop:4}}>Долучіться до покупки щоб почати чат</div></div>
     :chats.map(ch=><div key={ch.id} onClick={()=>openChat(ch.id)} style={{...S.card,...S.flex,gap:10,marginBottom:8,cursor:"pointer",padding:12}}>
       <Ic emoji={ch.other?.avatarUrl||"💬"} size={42}/>
       <div style={{flex:1,minWidth:0}}>
@@ -1546,7 +1612,7 @@ function WalletPage({ user, setUser, theme, onTheme }) {
     {supportSent?<div style={{ ...S.card,textAlign:"center",padding:30 }}>
       <div style={{ fontSize:48,marginBottom:12 }}>✅</div>
       <div style={{ fontSize:16,fontWeight:800,color:T.text,marginBottom:6 }}>Повідомлення надіслано!</div>
-      <div style={{ fontSize:12,color:T.textSec }}>Ми відповімо вам у Telegram.</div>
+      <div style={{ fontSize:12,color:T.textSec,lineHeight:1.6 }}>Відповідь прийде у вкладку <b>Чат</b> → <b>Підтримка</b></div>
       <button onClick={()=>{setSupportSent(false);setSupportMsg("");}} style={{ ...S.btn,marginTop:16,padding:"10px 20px",borderRadius:12,background:T.accent,color:"#fff",fontSize:13 }}>Написати ще</button>
     </div>:<>
       <textarea value={supportMsg} onChange={e=>setSupportMsg(e.target.value)} placeholder="Напишіть ваше повідомлення..." rows={5}
@@ -1558,6 +1624,10 @@ function WalletPage({ user, setUser, theme, onTheme }) {
           const token=localStorage.getItem("spilnokup_token");
           await fetch(`${API}/telegram/support`,{method:"POST",headers:{"Content-Type":"application/json",...(token?{Authorization:`Bearer ${token}`}:{})},
             body:JSON.stringify({message:supportMsg,userName:user?.name||"Гість",userPhone:user?.phone||""})});
+          // Save to support chat
+          const newMsg={id:Date.now(),text:supportMsg.trim(),from:"me",time:new Date().toISOString()};
+          const prev=JSON.parse(localStorage.getItem("spilnokup_support_msgs")||"[]");
+          localStorage.setItem("spilnokup_support_msgs",JSON.stringify([...prev,newMsg]));
           setSupportSent(true);
         }catch(e){}
         setSupportLoading(false);
