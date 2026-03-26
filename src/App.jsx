@@ -209,7 +209,10 @@ function BackBtn({ onClick }) {
 }
 function Ic({ emoji, size = 36, name="" }) {
   const colors=["#1a73e8","#1a8754","#e65100","#5e35b1","#c44569","#2d6a4f","#6f4e37","#457b9d"];
-  const initial=(name||emoji||"?")[0]?.toUpperCase()||"?";
+  // Get first letter from name, or first ASCII letter from emoji, fallback to "S"
+  const src=name||emoji||"";
+  const letters=src.replace(/[^\p{L}\p{N}]/gu,"");
+  const initial=letters.length>0?letters[0].toUpperCase():"S";
   const ci=initial.charCodeAt(0)%colors.length;
   return <div style={{ fontSize:size*0.38,fontWeight:700,width:size,height:size,background:colors[ci],color:"#fff",borderRadius:size>40?T.radius:8,...S.flex,justifyContent:"center" }}>{initial}</div>;
 }
@@ -834,7 +837,7 @@ function DealDetail({ deal, onBack, joined, onJoin, onBuy, onChat, onRefresh }) 
       </div>
       <h1 style={{ fontSize:22,fontWeight:900,color:T.text,margin:"0 0 14px",lineHeight:1.3 }}>{deal.title}</h1>
       <div style={{ ...S.card,background:T.greenLight,...S.flex,gap:12 }}>
-        <Ic emoji={deal.avatar} size={48}/>
+        <Ic emoji={deal.avatar} size={48} name={deal.seller}/>
         <div style={{ flex:1 }}>
           <div style={{ fontSize:14,fontWeight:800,color:T.text }}>{deal.seller}</div>
           <div style={{ ...S.flex,gap:4,fontSize:11,color:T.textSec,marginTop:2 }}>{I.pin} {deal.city}</div>
@@ -905,7 +908,7 @@ function MyDealsPage({ deals, joined, onOpen }) {
     <p style={{ color:T.textSec,fontSize:12,marginBottom:16 }}>{my.length} активних</p>
     {my.length===0?<div style={{ textAlign:"center",padding:60 }}><div style={{ fontSize:48 }}>🛒</div><div style={{ color:T.textMuted,marginTop:12,fontSize:13 }}>Ще нічого немає</div></div>:
     <div style={{ display:"flex",flexDirection:"column",gap:10 }}>{my.map(d=>{const p=pct(d);return <div key={d.id} onClick={()=>onOpen(d)} style={{ ...S.card,cursor:"pointer" }}>
-      <div style={{ ...S.flex,gap:10,marginBottom:8 }}><Ic emoji={d.avatar} size={40}/><div style={{ flex:1 }}><div style={{ fontSize:13,fontWeight:800,color:T.text }}>{d.title}</div><div style={{ fontSize:10,color:T.textSec }}>{d.seller}</div></div><div style={{ textAlign:"right" }}><div style={{ fontSize:16,fontWeight:900,color:T.green }}>₴{d.group}</div></div></div>
+      <div style={{ ...S.flex,gap:10,marginBottom:8 }}><Ic emoji={d.avatar} size={40} name={d.seller}/><div style={{ flex:1 }}><div style={{ fontSize:13,fontWeight:800,color:T.text }}>{d.title}</div><div style={{ fontSize:10,color:T.textSec }}>{d.seller}</div></div><div style={{ textAlign:"right" }}><div style={{ fontSize:16,fontWeight:900,color:T.green }}>₴{d.group}</div></div></div>
       <div style={{ ...S.flex,gap:10 }}><div style={{ flex:1 }}><ProgressBar value={p} color={pCol(p)}/></div><Badge>В групі</Badge></div>
     </div>;})}</div>}
   </div>;
@@ -1083,7 +1086,7 @@ function QRHub() {
     {paidOrders.length>0&&<>
       <h3 style={{fontSize:13,fontWeight:800,color:T.text,marginBottom:8}}>Очікують видачі ({paidOrders.length})</h3>
       {paidOrders.map(o=><div key={o.id} style={{ ...S.card,...S.flex,gap:10,marginBottom:8 }}>
-        <Ic emoji="📦" size={40}/>
+        <Ic emoji="" size={40} name="Замовлення"/>
         <div style={{ flex:1 }}><div style={{ fontSize:12,fontWeight:700,color:T.text }}>{o.buyer?.name||"Покупець"}</div><div style={{ fontSize:10,color:T.textSec }}>{o.deal?.title} × {o.quantity} {o.deal?.unit}</div></div>
         <div style={{ textAlign:"right" }}><div style={{ fontSize:13,fontWeight:800,color:T.green }}>₴{Number(o.amount)}</div><Badge bg="#fef9c3" color="#a16207">Оплачено</Badge></div>
       </div>)}
@@ -1092,7 +1095,7 @@ function QRHub() {
     {doneOrders.length>0&&<>
       <h3 style={{fontSize:13,fontWeight:800,color:T.text,margin:"12px 0 8px"}}>Видані ({doneOrders.length})</h3>
       {doneOrders.slice(0,5).map(o=><div key={o.id} style={{ ...S.card,...S.flex,gap:10,marginBottom:8,opacity:.5 }}>
-        <Ic emoji="✅" size={36}/>
+        <Ic emoji="" size={36} name="Готово"/>
         <div style={{ flex:1 }}><div style={{ fontSize:11,fontWeight:700,color:T.text }}>{o.buyer?.name||"Покупець"}</div><div style={{ fontSize:10,color:T.textSec }}>{o.deal?.title}</div></div>
         <Badge>Видано</Badge>
       </div>)}
@@ -1217,7 +1220,7 @@ function ChatPage() {
     return <div style={{display:"flex",flexDirection:"column",height:"100%"}}>
       <div style={{...S.flex,gap:10,padding:"14px 16px",borderBottom:`1px solid ${T.border}22`}}>
         <button onClick={()=>setSupportActive(false)} style={{...S.btn,background:"none",color:T.accent,padding:0}}>{I.back}</button>
-        <Ic emoji="💬" size={36}/>
+        <Ic emoji="" size={36} name="Підтримка"/>
         <div style={{flex:1}}><div style={{fontSize:13,fontWeight:800,color:T.text}}>Підтримка</div><div style={{fontSize:9,color:T.green}}>Команда СпільноКуп</div></div>
       </div>
       <div style={{flex:1,overflowY:"auto",padding:"10px 16px",display:"flex",flexDirection:"column",gap:6}}>
@@ -1260,7 +1263,7 @@ function ChatPage() {
     return <div style={{display:"flex",flexDirection:"column",height:"100%"}}>
       <div style={{...S.flex,gap:10,padding:"14px 16px",borderBottom:`1px solid ${T.border}22`}}>
         <button onClick={()=>setActiveChat(null)} style={{...S.btn,background:"none",color:T.accent,padding:0}}>{I.back}</button>
-        <Ic emoji={ch?.other?.avatarUrl||"💬"} size={36}/>
+        <Ic emoji={ch?.other?.avatarUrl} size={36} name={ch?.other?.name||"Чат"}/>
         <div style={{flex:1}}><div style={{fontSize:13,fontWeight:800,color:T.text}}>{ch?.other?.name||"Чат"}</div>{ch?.deal&&<div style={{fontSize:9,color:T.green}}>{ch.deal.title}</div>}</div>
       </div>
       <div style={{flex:1,overflowY:"auto",padding:"10px 16px",display:"flex",flexDirection:"column",gap:6}}>
@@ -1285,7 +1288,7 @@ function ChatPage() {
     <h2 style={{color:T.text,fontSize:22,fontWeight:900,marginBottom:14}}>Повідомлення</h2>
     {/* Support chat - always on top */}
     {hasSupportChat&&<div onClick={()=>setSupportActive(true)} style={{...S.card,...S.flex,gap:10,marginBottom:8,cursor:"pointer",padding:12,border:`1px solid ${T.accent}33`}}>
-      <Ic emoji="💬" size={42}/>
+      <Ic emoji="" size={42} name="Підтримка"/>
       <div style={{flex:1,minWidth:0}}>
         <div style={{...S.flex,justifyContent:"space-between",marginBottom:2}}>
           <span style={{fontSize:13,fontWeight:700,color:T.text}}>Підтримка</span>
@@ -1298,7 +1301,7 @@ function ChatPage() {
     {loading?<div style={{textAlign:"center",color:T.textSec,padding:20}}>Завантаження...</div>
     :chats.length===0&&!hasSupportChat?<div style={{...S.card,textAlign:"center",padding:30}}><div style={{fontSize:14,color:T.textSec}}>Поки немає повідомлень</div><div style={{fontSize:11,color:T.textMuted,marginTop:4}}>Долучіться до покупки щоб почати чат</div></div>
     :chats.map(ch=><div key={ch.id} onClick={()=>openChat(ch.id)} style={{...S.card,...S.flex,gap:10,marginBottom:8,cursor:"pointer",padding:12}}>
-      <Ic emoji={ch.other?.avatarUrl||"💬"} size={42}/>
+      <Ic emoji={ch.other?.avatarUrl} size={42} name={ch.other?.name||"Чат"}/>
       <div style={{flex:1,minWidth:0}}>
         <div style={{...S.flex,justifyContent:"space-between",marginBottom:2}}>
           <span style={{fontSize:13,fontWeight:700,color:T.text}}>{ch.other?.name||"Чат"}</span>
@@ -1338,7 +1341,7 @@ function MyOrderCard({ order: o, onRefresh }) {
 
   return <div style={{...S.card}}>
     <div style={{...S.flex,gap:10,marginBottom:8}}>
-      <Ic emoji="📦" size={36}/>
+      <Ic emoji="" size={36} name="Замовлення"/>
       <div style={{flex:1}}><div style={{fontSize:12,fontWeight:800,color:T.text}}>{d?.title||"Товар"}</div><div style={{fontSize:10,color:T.textSec}}>{d?.seller?.name||""} · {o.quantity} {d?.unit||"шт"}</div></div>
       <div style={{fontSize:15,fontWeight:900,color:T.green}}>₴{Number(o.amount)}</div>
     </div>
@@ -1425,7 +1428,7 @@ function SellerDashboard({ deals, joined, onOpen, onBuy }) {
         {myDone.length>0&&<><h3 style={{fontSize:13,fontWeight:800,color:T.text,marginTop:8}}>Отримані ({myDone.length})</h3>
         {myDone.map(o=><div key={o.id} style={{...S.card,opacity:.6}}>
           <div style={{...S.flex,gap:10}}>
-            <Ic emoji="✅" size={32}/>
+            <Ic emoji="" size={32} name="Готово"/>
             <div style={{flex:1}}><div style={{fontSize:12,fontWeight:700,color:T.text}}>{o.deal?.title||"Товар"}</div><div style={{fontSize:10,color:T.textSec}}>{o.quantity} {o.deal?.unit||"шт"}</div></div>
             <Badge>Отримано</Badge>
           </div>
@@ -1452,7 +1455,7 @@ function SellerDashboard({ deals, joined, onOpen, onBuy }) {
     <h3 style={{fontSize:13,fontWeight:800,color:T.text,marginBottom:8}}>Мої оголошення ({sellerDeals.length})</h3>
     {sellerDeals.map(d=>{const p=Math.min(100,Math.round((d.joined/d.needed)*100));return <div key={d.id} style={{...S.card,marginBottom:8}}>
       <div style={{...S.flex,gap:10,marginBottom:6}}>
-        <Ic emoji="📦" size={36}/>
+        <Ic emoji="" size={36} name="Замовлення"/>
         <div style={{flex:1}}><div style={{fontSize:12,fontWeight:800,color:T.text}}>{d.title}</div><div style={{fontSize:10,color:T.textSec}}>₴{Number(d.groupPrice)} · {d.city}</div></div>
         <Badge bg={d.status==="ACTIVE"?T.greenLight:T.cardAlt} color={d.status==="ACTIVE"?T.green:T.textMuted}>{d.status==="ACTIVE"?"Активне":"Закрите"}</Badge>
       </div>
@@ -1467,7 +1470,7 @@ function SellerDashboard({ deals, joined, onOpen, onBuy }) {
     {actSeller.length>0&&<>
     <h3 style={{fontSize:13,fontWeight:800,color:T.text,margin:"14px 0 8px"}}>Нові замовлення ({actSeller.length})</h3>
     {actSeller.map(o=><div key={o.id} style={{...S.card,...S.flex,gap:10,marginBottom:8}}>
-      <Ic emoji="👤" size={36}/>
+      <Ic emoji="" size={36} name="Користувач"/>
       <div style={{flex:1}}>
         <div style={{fontSize:11,fontWeight:700,color:T.text}}>{o.buyer?.name||"Покупець"}</div>
         <div style={{fontSize:10,color:T.textSec}}>{o.deal?.title} × {o.quantity} {o.deal?.unit}</div>
@@ -1478,7 +1481,7 @@ function SellerDashboard({ deals, joined, onOpen, onBuy }) {
     {doneSeller.length>0&&<>
     <h3 style={{fontSize:13,fontWeight:800,color:T.text,margin:"14px 0 8px"}}>Видані ({doneSeller.length})</h3>
     {doneSeller.map(o=><div key={o.id} style={{...S.card,...S.flex,gap:10,marginBottom:8,opacity:.55}}>
-      <Ic emoji="✅" size={32}/>
+      <Ic emoji="" size={32} name="Готово"/>
       <div style={{flex:1}}><div style={{fontSize:11,fontWeight:700,color:T.text}}>{o.buyer?.name||"Покупець"}</div><div style={{fontSize:10,color:T.textSec}}>{o.deal?.title}</div></div>
       <Badge>Видано</Badge>
     </div>)}</>}
@@ -1754,7 +1757,7 @@ function WalletPage({ user, setUser, theme, onTheme }) {
     <div style={{ ...S.card,marginBottom:16,textAlign:"center",position:"relative",overflow:"hidden" }}>
       <div style={{ position:"absolute",top:0,left:0,right:0,height:80,background:`linear-gradient(135deg,${T.accent},${T.purple},${T.blue})` }}/>
       <div style={{ position:"relative",paddingTop:40 }}>
-        <div style={{ width:72,height:72,borderRadius:"50%",background:`linear-gradient(135deg,${T.greenLight},#e0e7ff)`,border:"3px solid #fff",margin:"0 auto 10px",...S.flex,justifyContent:"center",fontSize:24,fontWeight:900,color:T.green,boxShadow:"0 4px 12px rgba(0,0,0,0.1)" }}>
+        <div style={{ width:72,height:72,borderRadius:"50%",background:T.accent,border:"3px solid #fff",margin:"0 auto 10px",...S.flex,justifyContent:"center",fontSize:24,fontWeight:900,color:"#fff",boxShadow:"0 4px 12px rgba(0,0,0,0.2)" }}>
           {initials}
         </div>
         <div style={{ fontSize:18,fontWeight:900,color:T.text }}>{user?.name||"Гість"}</div>
