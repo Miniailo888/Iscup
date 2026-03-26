@@ -23,9 +23,13 @@ struct Deal: Identifiable, Equatable {
     let tags: [String]
     let hot: Bool
     var photoData: Data?
+    var apiId: String?
 
     var pct: Int { min(100, Int(round(Double(joined) / Double(needed) * 100))) }
-    var disc: Int { Int(round(Double(retail - group) / Double(retail) * 100)) }
+    var disc: Int {
+        guard retail > 0 else { return 0 }
+        return Int(round(Double(retail - group) / Double(retail) * 100))
+    }
     var savings: Int { retail - group }
 
     static func == (lhs: Deal, rhs: Deal) -> Bool { lhs.id == rhs.id }

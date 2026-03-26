@@ -15,6 +15,8 @@ struct CreateDealView: View {
     @State private var city = ""
     @State private var desc = ""
     @State private var tags = ""
+    @State private var isPublishing = false
+    @State private var publishError: String? = nil
 
     var canPublish: Bool {
         !title.isEmpty && !groupPrice.isEmpty && !retailPrice.isEmpty && !city.isEmpty && !desc.isEmpty
@@ -117,16 +119,29 @@ struct CreateDealView: View {
 
                         ThemedTextField(placeholder: "Теги (через кому)", text: $tags, icon: "tag.fill")
 
-                        Button(action: publish) {
-                            Text("Опублiкувати")
-                                .font(.headline)
-                                .foregroundColor(.white)
-                                .frame(maxWidth: .infinity)
-                                .padding(.vertical, 14)
-                                .background(canPublish ? state.theme.accent : state.theme.cardAlt)
-                                .cornerRadius(10)
+                        // Error message
+                        if let error = publishError {
+                            Text(error)
+                                .font(.caption)
+                                .foregroundColor(Color(hex: "ef4444"))
                         }
-                        .disabled(!canPublish)
+
+                        Button(action: publish) {
+                            HStack {
+                                if isPublishing {
+                                    ProgressView()
+                                        .tint(.white)
+                                }
+                                Text("Опублiкувати")
+                                    .font(.headline)
+                            }
+                            .foregroundColor(.white)
+                            .frame(maxWidth: .infinity)
+                            .padding(.vertical, 14)
+                            .background(canPublish && !isPublishing ? state.theme.accent : state.theme.cardAlt)
+                            .cornerRadius(10)
+                        }
+                        .disabled(!canPublish || isPublishing)
                     }
                     .padding()
                     .padding(.bottom, 40)
@@ -144,6 +159,9 @@ struct CreateDealView: View {
     }
 
     func publish() {
+        isPublishing = true
+        publishError = nil
+
         let deal = Deal(
             id: Int(Date().timeIntervalSince1970),
             cat: category,
@@ -165,7 +183,11 @@ struct CreateDealView: View {
             tags: tags.components(separatedBy: ",").map { $0.trimmingCharacters(in: .whitespaces) }.filter { !$0.isEmpty },
             hot: false
         )
+
+        // addDeal will both add locally and push to API
         state.addDeal(deal)
+
+        isPublishing = false
         presentationMode.wrappedValue.dismiss()
     }
 }

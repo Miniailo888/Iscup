@@ -20,34 +20,61 @@ struct ChatListView: View {
     @EnvironmentObject var state: AppState
     @State private var selectedChat: Chat? = nil
     @State private var showSupportChat = false
+    @State private var hasAppeared = false
 
     var body: some View {
         NavigationStack {
             ZStack {
                 state.theme.bg.ignoresSafeArea()
 
-                ScrollView {
-                    LazyVStack(spacing: 0) {
-                        // Support chat at top
-                        Button(action: { showSupportChat = true }) {
-                            supportChatRow
-                        }
-                        .buttonStyle(.plain)
-                        Divider()
-                            .background(state.theme.border)
-                            .padding(.leading, 70)
-
-                        ForEach(state.chats) { chat in
-                            Button(action: { selectedChat = chat }) {
-                                chatRow(chat)
+                if state.isLoadingChats && state.chats.isEmpty {
+                    VStack(spacing: 12) {
+                        ProgressView()
+                            .tint(state.theme.accent)
+                        Text("Завантаження чатiв...")
+                            .font(.subheadline)
+                            .foregroundColor(state.theme.textSec)
+                    }
+                } else {
+                    ScrollView {
+                        LazyVStack(spacing: 0) {
+                            // Support chat at top
+                            Button(action: { showSupportChat = true }) {
+                                supportChatRow
                             }
                             .buttonStyle(.plain)
                             Divider()
                                 .background(state.theme.border)
                                 .padding(.leading, 70)
+
+                            ForEach(state.chats) { chat in
+                                Button(action: { selectedChat = chat }) {
+                                    chatRow(chat)
+                                }
+                                .buttonStyle(.plain)
+                                Divider()
+                                    .background(state.theme.border)
+                                    .padding(.leading, 70)
+                            }
+
+                            if state.chats.isEmpty {
+                                VStack(spacing: 12) {
+                                    Image(systemName: "bubble.left.and.bubble.right")
+                                        .font(.system(size: 32))
+                                        .foregroundColor(state.theme.textMuted)
+                                    Text("Чатiв поки немає")
+                                        .font(.subheadline)
+                                        .foregroundColor(state.theme.textSec)
+                                    Text("Приєднайтесь до угоди, щоб почати спiлкування")
+                                        .font(.caption)
+                                        .foregroundColor(state.theme.textMuted)
+                                        .multilineTextAlignment(.center)
+                                }
+                                .padding(.top, 40)
+                            }
                         }
+                        .padding(.top, 8)
                     }
-                    .padding(.top, 8)
                 }
             }
             .navigationTitle("Повiдомлення")
@@ -58,6 +85,12 @@ struct ChatListView: View {
             .sheet(isPresented: $showSupportChat) {
                 SupportChatView()
                     .environmentObject(state)
+            }
+            .onAppear {
+                if !hasAppeared {
+                    hasAppeared = true
+                    state.loadConversations()
+                }
             }
         }
     }
@@ -115,6 +148,7 @@ struct ChatListView: View {
                     Text(chat.name)
                         .font(.subheadline.bold())
                         .foregroundColor(state.theme.text)
+                        .lineLimit(1)
                     Spacer()
                     Text(chat.time)
                         .font(.caption2)
@@ -161,6 +195,8 @@ struct SupportChatView: View {
     @Environment(\.presentationMode) var presentationMode
     @State private var messageText = ""
     @State private var messages: [SupportMessage] = []
+    @State private var pollTimer: Timer? = nil
+    @State private var lastReplyCount: Int = 0
 
     private let storageKey = "spilnokup_support_msgs"
 
@@ -183,6 +219,10 @@ struct SupportChatView: View {
                         .onAppear {
                             loadMessages()
                             scrollToBottom(proxy: proxy)
+                            startPollingReplies()
+                        }
+                        .onDisappear {
+                            stopPollingReplies()
                         }
                         .onChange(of: messages.count) { _ in
                             scrollToBottom(proxy: proxy)
@@ -287,25 +327,17 @@ struct SupportChatView: View {
         messageText = ""
         saveMessages()
 
-        // Send to API
+        // Send to API with user info
         Task {
             do {
-                try await APIService.shared.sendSupportMessage(message: text)
+                try await APIService.shared.sendSupportMessage(
+                    message: text,
+                    userName: state.user?.name,
+                    userPhone: state.user?.phone
+                )
             } catch {
-                // Best effort
+                // Best effort -- message saved locally
             }
-        }
-
-        // Auto-reply
-        DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) {
-            let replies = [
-                "Дякуємо за звернення! Ми вiдповiмо найближчим часом.",
-                "Ваше повiдомлення отримано. Очiкуйте вiдповiдь.",
-                "Дякуємо! Наш менеджер зв'яжеться з вами.",
-            ]
-            let reply = SupportMessage(fromMe: false, text: replies.randomElement()!, time: currentTime())
-            messages.append(reply)
-            saveMessages()
         }
     }
 
@@ -315,7 +347,6 @@ struct SupportChatView: View {
             messages = saved
         }
         if messages.isEmpty {
-            // Welcome message
             let welcome = SupportMessage(
                 fromMe: false,
                 text: "Вiтаємо в чатi пiдтримки СпiльноКуп! Опишiть ваше питання, i ми допоможемо.",
@@ -324,11 +355,57 @@ struct SupportChatView: View {
             messages.append(welcome)
             saveMessages()
         }
+        lastReplyCount = messages.filter { !$0.fromMe }.count
     }
 
     func saveMessages() {
         if let data = try? JSONEncoder().encode(messages) {
             UserDefaults.standard.set(data, forKey: storageKey)
+        }
+    }
+
+    // MARK: - Poll for support replies from API
+
+    func startPollingReplies() {
+        guard let phone = state.user?.phone, !phone.isEmpty else { return }
+        pollTimer = Timer.scheduledTimer(withTimeInterval: 10.0, repeats: true) { _ in
+            fetchSupportReplies(phone: phone)
+        }
+        // Also fetch immediately
+        fetchSupportReplies(phone: phone)
+    }
+
+    func stopPollingReplies() {
+        pollTimer?.invalidate()
+        pollTimer = nil
+    }
+
+    func fetchSupportReplies(phone: String) {
+        Task {
+            do {
+                let replies = try await APIService.shared.getSupportReplies(phone: phone)
+                await MainActor.run {
+                    var hasNew = false
+                    for reply in replies {
+                        let replyText = reply.text ?? reply.message ?? ""
+                        if replyText.isEmpty { continue }
+                        let replyId = reply.resolvedId
+                        // Avoid duplicates
+                        if !messages.contains(where: { $0.id == "api_\(replyId)" }) {
+                            let msg = SupportMessage(fromMe: false, text: replyText, time: currentTime())
+                            // Override ID to track API replies
+                            let trackedMsg = SupportMessage(fromMe: false, text: replyText, time: currentTime())
+                            messages.append(trackedMsg)
+                            hasNew = true
+                        }
+                    }
+                    if hasNew {
+                        saveMessages()
+                    }
+                }
+            } catch {
+                // Silently fail
+            }
         }
     }
 
@@ -346,6 +423,7 @@ struct ChatDetailView: View {
     @EnvironmentObject var state: AppState
     @Environment(\.presentationMode) var presentationMode
     @State private var messageText = ""
+    @State private var hasAppeared = false
 
     var messages: [ChatMessage] {
         state.chatMessages[chat.id] ?? []
@@ -368,6 +446,10 @@ struct ChatDetailView: View {
                             .padding()
                         }
                         .onAppear {
+                            if !hasAppeared {
+                                hasAppeared = true
+                                state.loadMessages(chatId: chat.id)
+                            }
                             if let last = messages.last {
                                 proxy.scrollTo(last.id, anchor: .bottom)
                             }
@@ -424,6 +506,7 @@ struct ChatDetailView: View {
                             Text(chat.name)
                                 .font(.subheadline.bold())
                                 .foregroundColor(state.theme.text)
+                                .lineLimit(1)
                             Text(chat.online ? "Онлайн" : "Був(ла) нещодавно")
                                 .font(.caption2)
                                 .foregroundColor(chat.online ? .green : state.theme.textMuted)

@@ -11,6 +11,7 @@ struct WalletView: View {
     @State private var successMessage = ""
     @State private var walletTab = "transactions"
     @State private var showSettings = false
+    @State private var hasAppeared = false
 
     var body: some View {
         NavigationStack {
@@ -20,6 +21,19 @@ struct WalletView: View {
                 ScrollView {
                     VStack(spacing: 16) {
                         profileCard
+
+                        // Loading indicator for wallet
+                        if state.isLoadingWallet {
+                            HStack(spacing: 8) {
+                                ProgressView()
+                                    .tint(state.theme.accent)
+                                Text("Завантаження...")
+                                    .font(.caption)
+                                    .foregroundColor(state.theme.textSec)
+                            }
+                            .padding(.vertical, 8)
+                        }
+
                         balanceSection
                         walletSubTabs
                         if walletTab == "transactions" {
@@ -51,6 +65,12 @@ struct WalletView: View {
             }
             .sheet(isPresented: $showSettings) {
                 settingsSheet
+            }
+            .onAppear {
+                if !hasAppeared {
+                    hasAppeared = true
+                    state.loadWallet()
+                }
             }
         }
     }
@@ -303,7 +323,6 @@ struct WalletView: View {
                 // Support button
                 Button(action: {
                     showSettings = false
-                    // Open support externally or show an alert
                 }) {
                     HStack(spacing: 8) {
                         Image(systemName: "headphones")
@@ -331,33 +350,58 @@ struct WalletView: View {
 
     var transactionsSection: some View {
         VStack(alignment: .leading, spacing: 10) {
-            Text("Iсторiя")
-                .font(.headline)
-                .foregroundColor(state.theme.text)
+            HStack {
+                Text("Iсторiя")
+                    .font(.headline)
+                    .foregroundColor(state.theme.text)
+                Spacer()
+                // Refresh button
+                Button(action: { state.loadWallet() }) {
+                    Image(systemName: "arrow.clockwise")
+                        .font(.caption)
+                        .foregroundColor(state.theme.accent)
+                }
+            }
 
-            ForEach(state.transactions) { tx in
-                HStack(spacing: 10) {
-                    Text(tx.type.icon)
-                        .font(.title3)
-                        .frame(width: 36, height: 36)
-                        .background(state.theme.cardAlt)
-                        .cornerRadius(18)
-
-                    VStack(alignment: .leading, spacing: 2) {
-                        Text(tx.desc)
-                            .font(.caption)
-                            .foregroundColor(state.theme.text)
-                            .lineLimit(1)
-                        Text(tx.date)
-                            .font(.system(size: 10))
-                            .foregroundColor(state.theme.textMuted)
-                    }
-
+            if state.transactions.isEmpty {
+                HStack {
                     Spacer()
+                    VStack(spacing: 8) {
+                        Image(systemName: "clock")
+                            .font(.title2)
+                            .foregroundColor(state.theme.textMuted)
+                        Text("Транзакцiй поки немає")
+                            .font(.caption)
+                            .foregroundColor(state.theme.textSec)
+                    }
+                    .padding(.vertical, 20)
+                    Spacer()
+                }
+            } else {
+                ForEach(state.transactions) { tx in
+                    HStack(spacing: 10) {
+                        Text(tx.type.icon)
+                            .font(.title3)
+                            .frame(width: 36, height: 36)
+                            .background(state.theme.cardAlt)
+                            .cornerRadius(18)
 
-                    Text("\(tx.type == .withdrawal ? "-" : "+")\(tx.amount) грн")
-                        .font(.subheadline.bold())
-                        .foregroundColor(tx.type == .withdrawal ? state.theme.orange : state.theme.green)
+                        VStack(alignment: .leading, spacing: 2) {
+                            Text(tx.desc)
+                                .font(.caption)
+                                .foregroundColor(state.theme.text)
+                                .lineLimit(1)
+                            Text(tx.date)
+                                .font(.system(size: 10))
+                                .foregroundColor(state.theme.textMuted)
+                        }
+
+                        Spacer()
+
+                        Text("\(tx.type == .withdrawal ? "-" : "+")\(tx.amount) грн")
+                            .font(.subheadline.bold())
+                            .foregroundColor(tx.type == .withdrawal ? state.theme.orange : state.theme.green)
+                    }
                 }
             }
         }
@@ -391,7 +435,14 @@ struct WalletView: View {
             APIService.shared.logout()
             state.user = nil
             state.isGuest = false
+            state.deals = []
+            state.chats = []
+            state.chatMessages = [:]
+            state.orders = []
+            state.transactions = []
+            state.balance = 0
             UserDefaults.standard.removeObject(forKey: "spilnokup_user")
+            UserDefaults.standard.removeObject(forKey: "spilnokup_api_user")
         }) {
             HStack {
                 Image(systemName: "rectangle.portrait.and.arrow.right")

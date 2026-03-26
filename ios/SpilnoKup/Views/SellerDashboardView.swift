@@ -4,11 +4,15 @@ struct SellerDashboardView: View {
     @EnvironmentObject var state: AppState
     @State private var tab = 0
     @State private var selectedDeal: Deal? = nil
+    @State private var hasAppeared = false
 
     var revenue: [Int] { [2400, 3100, 1800, 4200, 2900, 3600, 1500] }
     var dayLabels: [String] { ["Пн","Вт","Ср","Чт","Пт","Сб","Нд"] }
     var maxRev: Int { revenue.max() ?? 1 }
-    var totalRev: Int { revenue.reduce(0, +) }
+    var totalRev: Int {
+        let orderTotal = state.orders.reduce(0) { $0 + $1.amount }
+        return orderTotal > 0 ? orderTotal : revenue.reduce(0, +)
+    }
 
     var paidOrders: [Order] { state.orders.filter { $0.status == .paid } }
     var doneOrders: [Order] { state.orders.filter { $0.status == .done } }
@@ -43,6 +47,13 @@ struct SellerDashboardView: View {
             .navigationDestination(item: $selectedDeal) { deal in
                 DealDetailView(deal: deal)
             }
+            .onAppear {
+                if !hasAppeared {
+                    hasAppeared = true
+                    state.loadSellerData()
+                    state.loadMyOrders()
+                }
+            }
         }
     }
 
@@ -60,6 +71,18 @@ struct SellerDashboardView: View {
 
     var businessTab: some View {
         VStack(spacing: 16) {
+            // Loading indicator
+            if state.isLoadingSellerData {
+                HStack(spacing: 8) {
+                    ProgressView()
+                        .tint(state.theme.accent)
+                    Text("Завантаження...")
+                        .font(.caption)
+                        .foregroundColor(state.theme.textSec)
+                }
+                .padding(.vertical, 8)
+            }
+
             // Seller card with initials
             HStack(spacing: 12) {
                 ZStack {
@@ -71,7 +94,7 @@ struct SellerDashboardView: View {
                         .foregroundColor(.white)
                 }
                 VStack(alignment: .leading, spacing: 4) {
-                    Text(SampleData.seller.name)
+                    Text(state.user?.name ?? SampleData.seller.name)
                         .font(.headline)
                         .foregroundColor(state.theme.text)
                     HStack(spacing: 2) {
@@ -81,12 +104,19 @@ struct SellerDashboardView: View {
                         Text(String(format: "%.1f", SampleData.seller.rating))
                             .font(.caption)
                             .foregroundColor(state.theme.textSec)
-                        Text("- \(SampleData.seller.city)")
+                        Text("- \(state.user?.city ?? SampleData.seller.city)")
                             .font(.caption)
                             .foregroundColor(state.theme.textMuted)
                     }
                 }
                 Spacer()
+
+                // Refresh button
+                Button(action: { state.loadSellerData() }) {
+                    Image(systemName: "arrow.clockwise")
+                        .font(.caption)
+                        .foregroundColor(state.theme.accent)
+                }
             }
             .padding(14)
             .background(state.theme.card)
@@ -131,6 +161,15 @@ struct SellerDashboardView: View {
             .cornerRadius(10)
             .padding(.horizontal)
 
+            // Seller's deals
+            if !state.sellerDeals.isEmpty {
+                sectionHeader("Моi угоди")
+                ForEach(state.sellerDeals) { deal in
+                    DealCardView(deal: deal) { selectedDeal = deal }
+                        .padding(.horizontal)
+                }
+            }
+
             // Awaiting delivery
             if !paidOrders.isEmpty {
                 sectionHeader("Очiкують видачi")
@@ -147,11 +186,25 @@ struct SellerDashboardView: View {
                         .opacity(0.6)
                 }
             }
+
+            // Empty state
+            if state.orders.isEmpty && !state.isLoadingSellerData {
+                VStack(spacing: 12) {
+                    Image(systemName: "briefcase")
+                        .font(.system(size: 32))
+                        .foregroundColor(state.theme.textMuted)
+                    Text("Замовлень поки немає")
+                        .font(.subheadline)
+                        .foregroundColor(state.theme.textSec)
+                }
+                .padding(.top, 20)
+            }
         }
     }
 
     var sellerInitials: String {
-        let parts = SampleData.seller.name.components(separatedBy: " ")
+        let name = state.user?.name ?? SampleData.seller.name
+        let parts = name.components(separatedBy: " ")
         let first = parts.first?.prefix(1) ?? ""
         let last = parts.count > 1 ? parts[1].prefix(1) : ""
         return "\(first)\(last)".uppercased()

@@ -9,6 +9,7 @@ struct MarketView: View {
     @State private var selectedDeal: Deal? = nil
     @State private var showSupport = false
     @State private var showChat = false
+    @State private var hasAppeared = false
 
     // Filters
     @State private var cityFilter = "all"
@@ -57,10 +58,55 @@ struct MarketView: View {
                     VStack(spacing: 12) {
                         topBar
                         bannerCard
-                        hotSlider
-                        categoryPills
-                        sortRow
-                        dealsList
+
+                        // Loading indicator
+                        if state.isLoadingDeals && state.deals.isEmpty {
+                            VStack(spacing: 12) {
+                                ProgressView()
+                                    .tint(state.theme.accent)
+                                Text("Завантаження...")
+                                    .font(.subheadline)
+                                    .foregroundColor(state.theme.textSec)
+                            }
+                            .padding(.vertical, 40)
+                        } else {
+                            hotSlider
+                            categoryPills
+                            sortRow
+
+                            // Pull to refresh hint
+                            if state.isLoadingDeals {
+                                HStack(spacing: 8) {
+                                    ProgressView()
+                                        .tint(state.theme.accent)
+                                    Text("Оновлення...")
+                                        .font(.caption)
+                                        .foregroundColor(state.theme.textSec)
+                                }
+                                .padding(.vertical, 4)
+                            }
+
+                            dealsList
+
+                            // Refresh button at bottom
+                            Button(action: { state.loadDeals() }) {
+                                HStack(spacing: 6) {
+                                    Image(systemName: "arrow.clockwise")
+                                    Text("Оновити")
+                                }
+                                .font(.subheadline)
+                                .foregroundColor(state.theme.accent)
+                                .padding(.vertical, 10)
+                                .frame(maxWidth: .infinity)
+                                .background(state.theme.card)
+                                .cornerRadius(10)
+                                .overlay(
+                                    RoundedRectangle(cornerRadius: 10)
+                                        .stroke(state.theme.border, lineWidth: 1)
+                                )
+                            }
+                            .padding(.horizontal, 12)
+                        }
                     }
                     .padding(.bottom, 20)
                 }
@@ -73,6 +119,12 @@ struct MarketView: View {
             .sheet(isPresented: $showSupport) { supportSheet }
             .sheet(isPresented: $showChat) {
                 ChatListView().environmentObject(state)
+            }
+            .onAppear {
+                if !hasAppeared {
+                    hasAppeared = true
+                    state.loadDeals()
+                }
             }
         }
     }
@@ -218,7 +270,7 @@ struct MarketView: View {
                 Text(deal.seller)
                     .font(.system(size: 10))
                     .foregroundColor(state.theme.textMuted)
-                Text("·")
+                Text(".")
                     .foregroundColor(state.theme.textMuted)
                 Text(deal.city)
                     .font(.system(size: 10))
@@ -229,7 +281,7 @@ struct MarketView: View {
                 Text("\(deal.joined)/\(deal.needed)")
                     .font(.system(size: 9))
                     .foregroundColor(state.theme.textMuted)
-                Text("· \(deal.days) дн.")
+                Text(". \(deal.days) дн.")
                     .font(.system(size: 9))
                     .foregroundColor(state.theme.textMuted)
                 Spacer()
@@ -311,6 +363,18 @@ struct MarketView: View {
                 DealCardView(deal: deal) { selectedDeal = deal }
                     .padding(.horizontal, 12)
             }
+
+            if filteredDeals.isEmpty && !state.isLoadingDeals {
+                VStack(spacing: 12) {
+                    Image(systemName: "magnifyingglass")
+                        .font(.system(size: 32))
+                        .foregroundColor(state.theme.textMuted)
+                    Text("Нiчого не знайдено")
+                        .font(.subheadline)
+                        .foregroundColor(state.theme.textSec)
+                }
+                .padding(.vertical, 30)
+            }
         }
     }
 
@@ -378,7 +442,13 @@ struct MarketView: View {
         supportSending = true
         let msg = supportMessage
         Task {
-            do { try await APIService.shared.sendSupportMessage(message: msg) } catch {}
+            do {
+                try await APIService.shared.sendSupportMessage(
+                    message: msg,
+                    userName: state.user?.name,
+                    userPhone: state.user?.phone
+                )
+            } catch {}
             await MainActor.run {
                 supportSending = false
                 supportSent = true
@@ -411,8 +481,8 @@ struct MarketView: View {
                     }
 
                     filterGroup(title: "Місто", selected: $cityFilter, options: [("all", "Всі")] + SampleData.cities.map { ($0, $0) })
-                    filterGroup(title: "Ціна", selected: $priceFilter, options: [("all","Всі"),("low","до 200"),("mid","200–500"),("high","500+")])
-                    filterGroup(title: "Знижка", selected: $discFilter, options: [("all","Всі"),("big","30%+"),("med","20–30%"),("small","до 20%")])
+                    filterGroup(title: "Ціна", selected: $priceFilter, options: [("all","Всі"),("low","до 200"),("mid","200-500"),("high","500+")])
+                    filterGroup(title: "Знижка", selected: $discFilter, options: [("all","Всі"),("big","30%+"),("med","20-30%"),("small","до 20%")])
                     filterGroup(title: "Рейтинг", selected: $ratingFilter, options: [("all","Всі"),("top","4.8+"),("good","4.5+")])
 
                     Button(action: { showFilters = false }) {

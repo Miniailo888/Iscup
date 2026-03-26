@@ -402,10 +402,15 @@ struct RegisterView: View {
                             phone: phone,
                             city: apiUser.city ?? city
                         )
+                        state.saveAPIUser(apiUser)
                     } else {
                         state.user = AppUser(name: name, email: "", phone: phone, city: city)
                     }
                     state.saveUser()
+                    // Trigger data loads after login
+                    state.loadDeals()
+                    state.loadWallet()
+                    state.loadConversations()
                     presentationMode.wrappedValue.dismiss()
                 }
             } catch {
@@ -555,7 +560,14 @@ struct LoginView: View {
                     await MainActor.run {
                         loading = false
                         state.user = AppUser(name: res.user?.name ?? "", email: "", phone: phone, city: res.user?.city ?? "")
+                        if let apiUser = res.user {
+                            state.saveAPIUser(apiUser)
+                        }
                         state.saveUser()
+                        // Trigger data loads after login
+                        state.loadDeals()
+                        state.loadWallet()
+                        state.loadConversations()
                         presentationMode.wrappedValue.dismiss()
                     }
                 } catch { await MainActor.run { loading = false; self.error = error.localizedDescription } }

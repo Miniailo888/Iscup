@@ -22,6 +22,10 @@ struct ContentView: View {
         .onAppear {
             state.loadUser()
             state.loadTheme()
+            // Load deals on startup (even before login, for guest mode)
+            if state.deals.isEmpty {
+                state.loadDeals()
+            }
         }
     }
 

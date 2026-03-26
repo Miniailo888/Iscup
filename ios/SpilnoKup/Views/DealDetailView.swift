@@ -5,6 +5,8 @@ struct DealDetailView: View {
     @EnvironmentObject var state: AppState
     @Environment(\.dismiss) var dismiss
     @State private var qty: Int = 1
+    @State private var isJoining = false
+    @State private var joinError: String? = nil
 
     var total: Int { deal.group * qty }
     var isJoined: Bool { state.isJoined(deal.id) }
@@ -200,6 +202,14 @@ struct DealDetailView: View {
                             .cornerRadius(10)
                         }
 
+                        // Error message
+                        if let error = joinError {
+                            Text(error)
+                                .font(.caption)
+                                .foregroundColor(Color(hex: "ef4444"))
+                                .padding(.horizontal, 4)
+                        }
+
                         // Share
                         Button(action: share) {
                             HStack {
@@ -222,19 +232,22 @@ struct DealDetailView: View {
             // Bottom action
             VStack {
                 Spacer()
-                Button(action: {
-                    if !isJoined {
-                        state.joinDeal(deal.id)
+                Button(action: joinDealAction) {
+                    HStack {
+                        if isJoining {
+                            ProgressView()
+                                .tint(.white)
+                        }
+                        Text(isJoined ? "Ви долучились" : "Долучитись - \(total) грн")
+                            .font(.headline)
                     }
-                }) {
-                    Text(isJoined ? "Ви долучились" : "Долучитись - \(total) грн")
-                        .font(.headline)
-                        .foregroundColor(.white)
-                        .frame(maxWidth: .infinity)
-                        .padding(.vertical, 16)
-                        .background(isJoined ? state.theme.green : state.theme.accent)
-                        .cornerRadius(10)
+                    .foregroundColor(.white)
+                    .frame(maxWidth: .infinity)
+                    .padding(.vertical, 16)
+                    .background(isJoined ? state.theme.green : state.theme.accent)
+                    .cornerRadius(10)
                 }
+                .disabled(isJoined || isJoining)
                 .padding(.horizontal)
                 .padding(.bottom, 8)
                 .background(
@@ -245,6 +258,20 @@ struct DealDetailView: View {
         }
         .navigationBarTitleDisplayMode(.inline)
         .onAppear { qty = deal.minQty }
+    }
+
+    func joinDealAction() {
+        guard !isJoined else { return }
+        isJoining = true
+        joinError = nil
+
+        // Optimistic UI update
+        state.joinDeal(deal.id)
+
+        // The API call is handled inside state.joinDeal
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
+            isJoining = false
+        }
     }
 
     var sellerInitials: String {
