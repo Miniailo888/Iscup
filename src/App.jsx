@@ -495,22 +495,26 @@ function MarketPage({ deals, joined, onJoin, onOpen, user, onCreateDeal, theme, 
   else if(daysF==="later") list=list.filter(d=>d.days>3);
   list=[...list].sort(sort==="new"?(a,b)=>b.id-a.id:sort==="disc"?(a,b)=>disc(b)-disc(a):sort==="price"?(a,b)=>a.group-b.group:sort==="rating"?(a,b)=>b.rating-a.rating:(a,b)=>pct(b)-pct(a));
 
+  const [showMarketSupport,setShowMarketSupport]=useState(false);
+
   return <div style={{ position:"relative" }}>
-    <div style={{ padding:"16px 16px 12px" }}>
-      <div style={{ ...S.flex,justifyContent:"space-between",marginBottom:12 }}>
-        <div>
-          <div style={{ fontSize:22,fontWeight:900,color:T.text }}>Spil</div>
-          <div style={{ fontSize:11,color:T.green }}>{user?`${user.name}, вітаємо!`:"Купуй разом — плати менше"}</div>
-        </div>
-        <button onClick={()=>onTheme(theme==="light"?"ocean":"light")} style={{ ...S.btn,width:40,height:40,borderRadius:12,background:T.cardAlt,color:T.text,fontSize:20,...S.flex,justifyContent:"center" }}>
-          {theme==="light"?"☀️":"🌙"}
-        </button>
+    {/* Search bar + support icon at the very top */}
+    <div style={{ ...S.flex,gap:8,padding:"16px 16px 10px" }}>
+      <button onClick={()=>setShowMarketSupport(true)} style={{ ...S.btn,width:40,height:40,borderRadius:12,background:T.card,border:`1px solid ${T.border}`,...S.flex,justifyContent:"center",flexShrink:0 }}>
+        <svg width="20" height="20" fill="none" stroke={T.accent} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24"><path d="M3 18v-6a9 9 0 0118 0v6"/><path d="M21 19a2 2 0 01-2 2h-1a2 2 0 01-2-2v-3a2 2 0 012-2h3v5zM3 19a2 2 0 002 2h1a2 2 0 002-2v-3a2 2 0 00-2-2H3v5z"/></svg>
+      </button>
+      <input value={search} onChange={e=>setSearch(e.target.value)} placeholder="Пошук..." style={{ flex:1,background:T.card,border:`1px solid ${T.border}`,borderRadius:12,padding:"10px 14px",color:T.text,fontSize:13,boxSizing:"border-box",outline:"none",fontFamily:"inherit" }}/>
+    </div>
+
+    <div style={{ padding:"0 16px 12px" }}>
+      <div style={{ marginBottom:10 }}>
+        <div style={{ fontSize:22,fontWeight:900,color:T.text }}>Spil</div>
+        <div style={{ fontSize:11,color:T.green }}>{user?`${user.name}, вітаємо!`:"Купуй разом — плати менше"}</div>
       </div>
       <HowItWorks/>
     </div>
 
     <HotSlider deals={deals} onOpen={onOpen}/>
-    <div style={{ padding:"0 16px 10px" }}><input value={search} onChange={e=>setSearch(e.target.value)} placeholder="Пошук..." style={{ width:"100%",background:T.card,border:`1px solid ${T.border}`,borderRadius:12,padding:"10px 14px",color:T.text,fontSize:13,boxSizing:"border-box",outline:"none",fontFamily:"inherit" }}/></div>
 
     <div style={{ display:"flex",gap:6,padding:"0 16px 10px",overflowX:"auto",scrollbarWidth:"none" }}>
       {CATEGORIES.map(c=><button key={c.id} onClick={()=>setCat(c.id)} style={{ ...S.btn,whiteSpace:"nowrap",padding:"6px 12px",borderRadius:12,fontSize:11,background:cat===c.id?T.accent:T.card,color:cat===c.id?"#fff":T.textSec,border:`1px solid ${cat===c.id?T.accent:T.border}` }}>{c.icon} {c.label}</button>)}
@@ -567,7 +571,50 @@ function MarketPage({ deals, joined, onJoin, onOpen, user, onCreateDeal, theme, 
     </div>
 
     <button onClick={onCreateDeal} style={{ ...S.btn,position:"fixed",bottom:84,right:20,width:52,height:52,borderRadius:"50%",background:`linear-gradient(135deg,${T.accent},${T.green})`,color:"#fff",boxShadow:"0 4px 20px rgba(34,197,94,0.3)",zIndex:90,...S.flex,justifyContent:"center" }}>{I.plus}</button>
+
+    {/* Support modal */}
+    {showMarketSupport&&<div style={{ position:"fixed",top:0,left:0,right:0,bottom:0,background:"rgba(0,0,0,0.5)",zIndex:200,...S.flex,justifyContent:"center",alignItems:"center" }} onClick={()=>setShowMarketSupport(false)}>
+      <div style={{ background:T.bg,borderRadius:20,padding:24,maxWidth:360,width:"90%",maxHeight:"80vh",overflowY:"auto" }} onClick={e=>e.stopPropagation()}>
+        <div style={{ ...S.flex,justifyContent:"space-between",marginBottom:16 }}>
+          <h3 style={{ fontSize:18,fontWeight:900,color:T.text,margin:0 }}>Підтримка</h3>
+          <button onClick={()=>setShowMarketSupport(false)} style={{ ...S.btn,background:"none",color:T.textMuted,fontSize:20,padding:0 }}>✕</button>
+        </div>
+        <SupportForm user={user} onDone={()=>setShowMarketSupport(false)}/>
+      </div>
+    </div>}
   </div>;
+}
+
+function SupportForm({ user, onDone }) {
+  const [msg,setMsg]=useState(""),[sent,setSent]=useState(false),[loading,setLoading]=useState(false);
+  if(sent) return <div style={{ textAlign:"center" }}>
+    <div style={{ fontSize:48,marginBottom:12 }}>✅</div>
+    <div style={{ fontSize:16,fontWeight:800,color:T.text,marginBottom:6 }}>Надіслано!</div>
+    <div style={{ fontSize:12,color:T.textSec }}>Відповідь прийде у Чат → Підтримка</div>
+    <button onClick={onDone} style={{ ...S.btn,marginTop:16,padding:"10px 20px",borderRadius:12,background:T.accent,color:"#fff",fontSize:13 }}>Закрити</button>
+  </div>;
+  return <>
+    <textarea value={msg} onChange={e=>setMsg(e.target.value)} placeholder="Опишіть проблему..." rows={4}
+      style={{ width:"100%",padding:14,borderRadius:14,border:`1px solid ${T.border}`,background:T.card,color:T.text,fontSize:14,fontFamily:"inherit",resize:"vertical",outline:"none",boxSizing:"border-box" }}/>
+    <button onClick={async()=>{
+      if(!msg.trim()) return;
+      setLoading(true);
+      try{
+        const u=(()=>{try{return JSON.parse(localStorage.getItem("spilnokup_user"));}catch{return null;}})();
+        const token=localStorage.getItem("spilnokup_token");
+        await fetch(`${API}/telegram/support`,{method:"POST",headers:{"Content-Type":"application/json",...(token?{Authorization:`Bearer ${token}`}:{})},
+          body:JSON.stringify({message:msg,userName:user?.name||u?.name||"Гість",userPhone:user?.phone||"",userDisplayId:u?.displayId||""})});
+        const newMsg={id:Date.now(),text:msg.trim(),from:"me",time:new Date().toISOString()};
+        const prev=JSON.parse(localStorage.getItem("spilnokup_support_msgs")||"[]");
+        localStorage.setItem("spilnokup_support_msgs",JSON.stringify([...prev,newMsg]));
+        setSent(true);
+      }catch{}
+      setLoading(false);
+    }} disabled={!msg.trim()||loading}
+      style={{ ...S.btn,width:"100%",padding:14,borderRadius:14,background:msg.trim()?T.accent:T.cardAlt,color:msg.trim()?"#fff":T.textMuted,fontSize:14,marginTop:12 }}>
+      {loading?"Надсилаємо...":"Надіслати"}
+    </button>
+  </>;
 }
 
 // ── Створення оголошення ────────────────────────────────────────────────────
