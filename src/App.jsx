@@ -1714,6 +1714,7 @@ function WalletPage({ user, setUser, theme, onTheme }) {
   const [balance,setBalance]=useState(0);
   const [walletData,setWalletData]=useState(null);
   const [showPay,setShowPay]=useState(null); // "topup" | "withdraw"
+  const [walletTab,setWalletTab]=useState("transactions");
   const [payMethod,setPayMethod]=useState(null);
   const [payAmount,setPayAmount]=useState("");
   const [payDone,setPayDone]=useState(false);
@@ -2004,34 +2005,40 @@ function WalletPage({ user, setUser, theme, onTheme }) {
       <div style={{ display:"flex",gap:8,marginTop:14 }}>
         <button onClick={()=>setShowPay("topup")} style={{ ...S.btn,flex:1,padding:"11px 0",borderRadius:8,fontSize:13,fontWeight:600,background:T.accent,color:"#fff" }}>Поповнити</button>
         <button onClick={()=>setShowPay("withdraw")} style={{ ...S.btn,flex:1,padding:"11px 0",borderRadius:8,fontSize:13,fontWeight:600,background:T.cardAlt,color:T.text,border:`1px solid ${T.border}` }}>Вивести</button>
-        <button onClick={()=>{}} style={{ ...S.btn,flex:1,padding:"11px 0",borderRadius:8,fontSize:13,fontWeight:600,background:T.cardAlt,color:T.text,border:`1px solid ${T.border}` }}>Переказ</button>
       </div>
     </div>
 
-    <h3 style={{ color:T.text,fontSize:14,fontWeight:800,marginBottom:10 }}>Історія транзакцій</h3>
-    {(walletData?.transactions||[]).length>0?(walletData.transactions||[]).map((t,idx)=>{
-      try{
-        const isIncome=t.type==='PAYMENT_RELEASE';
-        const isHold=t.type==='PAYMENT_HOLD'&&(t.description||'').startsWith('Очікує');
-        const icon=isIncome?"↓":isHold?"◷":"↑";
-        const color=isIncome?T.green:isHold?T.yellow:T.orange;
-        const sign=isIncome?"+":"−";
-        const d=t.createdAt?new Date(t.createdAt):new Date();
-        const ds=`${String(d.getDate()).padStart(2,'0')}.${String(d.getMonth()+1).padStart(2,'0')} · ${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`;
-        return <div key={t.id||idx} style={{...S.card,...S.flex,gap:10,marginBottom:8}}>
-          <div style={{width:36,height:36,borderRadius:10,background:color+"18",...S.flex,justifyContent:"center",fontSize:16,fontWeight:900,color}}>{icon}</div>
-          <div style={{flex:1}}><div style={{fontSize:12,fontWeight:700,color:T.text}}>{t.description||t.type||"Транзакція"}</div><div style={{fontSize:10,color:T.textSec}}>{ds}</div></div>
-          <div style={{fontSize:14,fontWeight:800,color}}>{sign}₴{Number(t.amount)||0}</div>
-        </div>;
-      }catch{return null;}
-    }):<div style={{...S.card,textAlign:"center",padding:20}}><div style={{fontSize:12,color:T.textMuted}}>Поки немає транзакцій</div></div>}
-
-    <div style={{ ...S.card,marginTop:14 }}>
-      <h3 style={{ color:T.text,fontSize:14,fontWeight:800,marginBottom:10 }}>ФОП</h3>
-      {[["Назва",SELLER.fop],["ІПН",SELLER.ipn],["IBAN",SELLER.iban],["Банк",SELLER.bank]].map(([k,v])=>
-        <div key={k} style={{ ...S.flex,justifyContent:"space-between",padding:"6px 0",borderBottom:`1px solid ${T.border}22` }}><span style={{ fontSize:11,color:T.textSec }}>{k}</span><span style={{ fontSize:11,fontWeight:700,color:T.text,textAlign:"right",maxWidth:"60%",wordBreak:"break-all" }}>{v}</span></div>
+    {/* Sub-tabs */}
+    <div style={{...S.flex,gap:0,borderBottom:`1px solid ${T.border}44`,marginBottom:14}}>
+      {[["transactions","Транзакції"],["fop","ФОП"]].map(([id,label])=>
+        <button key={id} onClick={()=>setWalletTab(id)} style={{...S.btn,flex:1,padding:"10px 0",fontSize:13,fontWeight:walletTab===id?700:400,color:walletTab===id?T.text:T.textMuted,background:"transparent",borderBottom:walletTab===id?`2px solid ${T.accent}`:"2px solid transparent"}}>{label}</button>
       )}
     </div>
+
+    {walletTab==="transactions"&&<>
+      {(walletData?.transactions||[]).length>0?(walletData.transactions||[]).map((t,idx)=>{
+        try{
+          const isIncome=t.type==='PAYMENT_RELEASE';
+          const isHold=t.type==='PAYMENT_HOLD'&&(t.description||'').startsWith('Очікує');
+          const icon=isIncome?"↓":isHold?"◷":"↑";
+          const color=isIncome?T.green:isHold?T.yellow:T.orange;
+          const sign=isIncome?"+":"−";
+          const d=t.createdAt?new Date(t.createdAt):new Date();
+          const ds=`${String(d.getDate()).padStart(2,'0')}.${String(d.getMonth()+1).padStart(2,'0')} · ${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`;
+          return <div key={t.id||idx} style={{...S.card,...S.flex,gap:10,marginBottom:8}}>
+            <div style={{width:36,height:36,borderRadius:10,background:color+"18",...S.flex,justifyContent:"center",fontSize:16,fontWeight:900,color}}>{icon}</div>
+            <div style={{flex:1}}><div style={{fontSize:12,fontWeight:700,color:T.text}}>{t.description||t.type||"Транзакція"}</div><div style={{fontSize:10,color:T.textSec}}>{ds}</div></div>
+            <div style={{fontSize:14,fontWeight:800,color}}>{sign}₴{Number(t.amount)||0}</div>
+          </div>;
+        }catch{return null;}
+      }):<div style={{...S.card,textAlign:"center",padding:20}}><div style={{fontSize:12,color:T.textMuted}}>Поки немає транзакцій</div></div>}
+    </>}
+
+    {walletTab==="fop"&&<div style={{ ...S.card }}>
+      {[["Назва",SELLER.fop],["ІПН",SELLER.ipn],["IBAN",SELLER.iban],["Банк",SELLER.bank]].map(([k,v])=>
+        <div key={k} style={{ ...S.flex,justifyContent:"space-between",padding:"8px 0",borderBottom:`1px solid ${T.border}22` }}><span style={{ fontSize:12,color:T.textSec }}>{k}</span><span style={{ fontSize:12,fontWeight:700,color:T.text,textAlign:"right",maxWidth:"60%",wordBreak:"break-all" }}>{v}</span></div>
+      )}
+    </div>}
   </div>;
 }
 
