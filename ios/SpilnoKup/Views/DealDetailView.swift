@@ -169,6 +169,7 @@ struct DealDetailView: View {
                         }
                         .font(.subheadline)
 
+                        Group {
                         // Quantity selector
                         if !isJoined {
                             VStack(spacing: 10) {
@@ -223,6 +224,7 @@ struct DealDetailView: View {
                             .background(state.theme.card)
                             .cornerRadius(10)
                         }
+                        } // Group
                     }
                     .padding(.horizontal)
                     .padding(.bottom, 100)
