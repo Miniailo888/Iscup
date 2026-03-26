@@ -156,7 +156,9 @@ exports.handleSupportReply = handleSupportReply;
 
 async function sendSupportMessage(userChatId, userName, userPhone, message) {
     try {
-        const text = `📩 *Звернення в підтримку*\n\n👤 ${userName}\n📱 ${userPhone}\n\n💬 ${message}\n\n_Відповідайте reply на це повідомлення_`;
+        // Include chatId in text so we can extract it from reply
+        const chatIdTag = userChatId ? `[uid:${userChatId}]` : `[phone:${(userPhone||'').replace(/\D/g,'')}]`;
+        const text = `📩 *Звернення в підтримку*\n\n👤 ${userName}\n📱 ${userPhone||'не вказано'}\n\n💬 ${message}\n\n_Відповідайте reply на це повідомлення_\n${chatIdTag}`;
         const res = await fetch(`https://api.telegram.org/bot${BOT_TOKEN}/sendMessage`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
@@ -165,9 +167,10 @@ async function sendSupportMessage(userChatId, userName, userPhone, message) {
         const data = await res.json();
         if (data.ok) {
             supportTickets.set(data.result.message_id, { userChatId, userName, userPhone });
-            logger_1.logger.info(`Support message sent to group, msgId: ${data.result.message_id}`);
+            logger_1.logger.info(`Support msg sent, msgId: ${data.result.message_id}, chatId: ${userChatId}`);
             return true;
         }
+        logger_1.logger.error('Support send fail:', data);
         return false;
     } catch (err) {
         logger_1.logger.error('Support send error:', err);
@@ -180,11 +183,28 @@ async function handleSupportReply(update) {
     if (!msg || !msg.reply_to_message || msg.chat.id !== SUPPORT_GROUP_ID) return false;
     if (msg.from.is_bot) return false;
 
+    // Try to find ticket in memory
     const replyToId = msg.reply_to_message.message_id;
-    const ticket = supportTickets.get(replyToId);
-    if (!ticket) return false;
+    let ticket = supportTickets.get(replyToId);
 
-    const replyText = `📬 *Відповідь від підтримки:*\n\n${msg.text}\n\n_Якщо маєте ще питання — напишіть в підтримку в додатку._`;
+    // If not in memory, extract chatId from the original message text
+    if (!ticket && msg.reply_to_message.text) {
+        const uidMatch = msg.reply_to_message.text.match(/\[uid:(\d+)\]/);
+        const phoneMatch = msg.reply_to_message.text.match(/\[phone:(\d+)\]/);
+        if (uidMatch) {
+            ticket = { userChatId: parseInt(uidMatch[1]) };
+        } else if (phoneMatch) {
+            const chatId = getChatId(phoneMatch[1]);
+            if (chatId) ticket = { userChatId: chatId };
+        }
+    }
+
+    if (!ticket || !ticket.userChatId) {
+        logger_1.logger.warn('Support reply: no ticket/chatId found for msgId ' + replyToId);
+        return false;
+    }
+
+    const replyText = `📬 *Відповідь від підтримки:*\n\n${msg.text}`;
     await sendTelegramMessage(ticket.userChatId, replyText);
     logger_1.logger.info(`Support reply sent to ${ticket.userChatId}`);
     return true;
