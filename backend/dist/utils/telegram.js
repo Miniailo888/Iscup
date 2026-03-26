@@ -159,7 +159,8 @@ exports.getSupportReplies = getSupportReplies;
 function getSupportReplies(phone) {
     const key = phone.replace(/\D/g, '');
     const replies = supportReplies.get(key) || [];
-    supportReplies.delete(key); // Clear after reading
+    if (replies.length > 0) supportReplies.delete(key);
+    logger_1.logger.info(`getSupportReplies for ${key}: ${replies.length} replies, keys: ${[...supportReplies.keys()].join(',')}`);
     return replies;
 }
 
@@ -196,26 +197,34 @@ async function handleSupportReply(update) {
     const replyToId = msg.reply_to_message.message_id;
     let ticket = supportTickets.get(replyToId);
 
-    // If not in memory, extract chatId from the original message text
+    // If not in memory, extract phone from the original message text
     if (!ticket && msg.reply_to_message.text) {
-        const uidMatch = msg.reply_to_message.text.match(/\[uid:(\d+)\]/);
         const phoneMatch = msg.reply_to_message.text.match(/\[phone:(\d+)\]/);
-        if (uidMatch) {
+        const uidMatch = msg.reply_to_message.text.match(/\[uid:(\d+)\]/);
+        if (phoneMatch) {
+            ticket = { userPhone: phoneMatch[1], userChatId: getChatId(phoneMatch[1]) };
+        } else if (uidMatch) {
             ticket = { userChatId: parseInt(uidMatch[1]) };
-        } else if (phoneMatch) {
-            const chatId = getChatId(phoneMatch[1]);
-            if (chatId) ticket = { userChatId: chatId };
         }
     }
 
-    if (!ticket || !ticket.userChatId) {
-        logger_1.logger.warn('Support reply: no ticket/chatId found for msgId ' + replyToId);
-        return false;
+    // Extract phone from original message text as fallback
+    let phoneKey = '';
+    if (ticket?.userPhone) {
+        phoneKey = ticket.userPhone.replace(/\D/g, '');
+    } else if (msg.reply_to_message.text) {
+        const directPhone = msg.reply_to_message.text.match(/📱\s*\+?(\d+)/);
+        if (directPhone) phoneKey = directPhone[1];
     }
 
-    // Save reply to in-app support chat (not Telegram)
-    const phone = ticket.userPhone || '';
-    const phoneKey = phone.replace(/\D/g, '') || String(ticket.userChatId);
+    if (!phoneKey && ticket?.userChatId) {
+        phoneKey = String(ticket.userChatId);
+    }
+
+    if (!phoneKey) {
+        logger_1.logger.warn('Support reply: no phone found for msgId ' + replyToId);
+        return false;
+    }
     if (!supportReplies.has(phoneKey)) supportReplies.set(phoneKey, []);
     supportReplies.get(phoneKey).push({ text: msg.text, time: new Date().toISOString(), from: msg.from.first_name || 'Підтримка' });
     logger_1.logger.info(`Support reply sent to ${ticket.userChatId}`);
