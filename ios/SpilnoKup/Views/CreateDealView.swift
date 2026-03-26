@@ -145,6 +145,7 @@ struct CreateDealView: View {
                             .cornerRadius(10)
                         }
                         .disabled(!canPublish || isPublishing)
+                        } // end second Group
                     }
                     .padding()
                     .padding(.bottom, 40)
