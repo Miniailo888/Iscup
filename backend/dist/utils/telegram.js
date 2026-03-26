@@ -157,12 +157,13 @@ exports.handleSupportReply = handleSupportReply;
 exports.getSupportReplies = getSupportReplies;
 
 function getSupportReplies(phone) {
-    const digits = phone.replace(/\D/g, '');
-    // Try all possible keys
-    const keys = [digits];
-    if (digits.startsWith('380')) keys.push(digits.slice(3)); // 964908386
-    if (digits.length === 9) keys.push('380' + digits); // 380964908386
+    let digits = phone.replace(/\D/g, '');
+    // Normalize: 0964908386 -> 964908386, 380964908386 -> 964908386
+    if (digits.startsWith('380')) digits = digits.slice(3);
+    if (digits.startsWith('0')) digits = digits.slice(1);
+    // Now digits = 964908386 (9 digits without prefix)
 
+    const keys = [digits, '380' + digits, '0' + digits];
     let replies = [];
     for (const k of keys) {
         const r = supportReplies.get(k);
@@ -236,17 +237,15 @@ async function handleSupportReply(update) {
         logger_1.logger.warn('Support reply: no phone found for msgId ' + replyToId);
         return false;
     }
-    // Save under all possible phone key formats
+    // Normalize to 9-digit key (without 380 or 0 prefix)
+    let normalizedKey = phoneKey;
+    if (normalizedKey.startsWith('380')) normalizedKey = normalizedKey.slice(3);
+    if (normalizedKey.startsWith('0')) normalizedKey = normalizedKey.slice(1);
+
     const replyData = { text: msg.text, time: new Date().toISOString(), from: msg.from.first_name || 'Підтримка' };
-    const allKeys = new Set([phoneKey]);
-    if (phoneKey.startsWith('380')) allKeys.add(phoneKey.slice(3));
-    if (phoneKey.length === 9) allKeys.add('380' + phoneKey);
-    if (phoneKey.length === 10 && phoneKey.startsWith('0')) allKeys.add('380' + phoneKey.slice(1));
-    for (const k of allKeys) {
-        if (!supportReplies.has(k)) supportReplies.set(k, []);
-        supportReplies.get(k).push(replyData);
-    }
-    logger_1.logger.info(`Support reply saved under keys: [${[...allKeys].join(',')}]`);
+    if (!supportReplies.has(normalizedKey)) supportReplies.set(normalizedKey, []);
+    supportReplies.get(normalizedKey).push(replyData);
+    logger_1.logger.info(`Support reply saved under key: ${normalizedKey}`);
     return true;
 }
 
