@@ -389,13 +389,13 @@ struct SupportChatView: View {
                     for reply in replies {
                         let replyText = reply.text ?? reply.message ?? ""
                         if replyText.isEmpty { continue }
-                        let replyId = reply.resolvedId
-                        // Avoid duplicates
-                        if !messages.contains(where: { $0.id == "api_\(replyId)" }) {
+                        // Avoid duplicates by checking if text already exists in recent messages
+                        let alreadyExists = messages.suffix(20).contains(where: {
+                            !$0.fromMe && $0.text == replyText
+                        })
+                        if !alreadyExists {
                             let msg = SupportMessage(fromMe: false, text: replyText, time: currentTime())
-                            // Override ID to track API replies
-                            let trackedMsg = SupportMessage(fromMe: false, text: replyText, time: currentTime())
-                            messages.append(trackedMsg)
+                            messages.append(msg)
                             hasNew = true
                         }
                     }
