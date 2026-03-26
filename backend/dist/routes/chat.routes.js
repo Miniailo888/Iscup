@@ -138,5 +138,37 @@ router.post('/:id/messages', auth_middleware_1.authenticate, async (req, res) =>
         res.status(500).json({ error: 'Помилка сервера' });
     }
 });
+// DELETE /api/chat/messages/:messageId
+router.delete('/messages/:messageId', auth_middleware_1.authenticate, async (req, res) => {
+    try {
+        const msg = await prisma_1.prisma.message.findUnique({ where: { id: req.params.messageId } });
+        if (!msg || msg.senderId !== req.user.userId) {
+            res.status(403).json({ error: 'Не можна видалити' });
+            return;
+        }
+        await prisma_1.prisma.message.delete({ where: { id: msg.id } });
+        try {
+            (0, socket_1.getIO)().to(`conversation:${msg.conversationId}`).emit('chat:delete', { messageId: msg.id, conversationId: msg.conversationId });
+        }
+        catch { }
+        res.json({ success: true });
+    }
+    catch (err) {
+        logger_1.logger.error('DELETE message error:', err);
+        res.status(500).json({ error: 'Помилка сервера' });
+    }
+});
+// GET /api/chat/unread — count unread messages
+router.get('/unread', auth_middleware_1.authenticate, async (req, res) => {
+    try {
+        const count = await prisma_1.prisma.message.count({
+            where: { conversation: { OR: [{ buyerId: req.user.userId }, { sellerId: req.user.userId }] }, senderId: { not: req.user.userId }, isRead: false },
+        });
+        res.json({ unread: count });
+    }
+    catch {
+        res.json({ unread: 0 });
+    }
+});
 exports.default = router;
 //# sourceMappingURL=chat.routes.js.map

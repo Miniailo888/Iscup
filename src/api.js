@@ -121,6 +121,14 @@ export async function sendMessageApi(conversationId, text) {
   return request(`/chat/${conversationId}/messages`, { method: 'POST', body: JSON.stringify({ text }) });
 }
 
+export async function deleteMessage(messageId) {
+  return request(`/chat/messages/${messageId}`, { method: 'DELETE' });
+}
+
+export async function fetchUnreadCount() {
+  return request('/chat/unread');
+}
+
 // Wallet
 export async function fetchWallet() {
   return request('/wallet');

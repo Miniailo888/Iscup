@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback, useRef } from "react";
-import { fetchDeals as apiFetchDeals, sendOtp, verifyOtp, logout as apiLogout, createOrder, createDeal, deleteDeal, fetchMyOrders, fetchSellerOrders, fetchSellerDeals, fetchWallet, generateQR, verifyQR, fetchConversations, createConversation, fetchMessages, sendMessageApi, isLoggedIn, API } from "./api";
+import { fetchDeals as apiFetchDeals, sendOtp, verifyOtp, logout as apiLogout, createOrder, createDeal, deleteDeal, fetchMyOrders, fetchSellerOrders, fetchSellerDeals, fetchWallet, generateQR, verifyQR, fetchConversations, createConversation, fetchMessages, sendMessageApi, deleteMessage, fetchUnreadCount, isLoggedIn, API } from "./api";
 import { connectSocket, disconnectSocket, reconnectWithAuth, onEvent, joinDeal, joinConversation } from "./socket";
 import jsQR from "jsqr";
 import QRCodeLib from "qrcode";
@@ -228,14 +228,15 @@ function Input({ value, onChange, placeholder, icon, type="text", area }) {
 // ── Навігація (напівпрозора + анімація) ─────────────────────────────────────
 const NAV = [["market",I.home,"Маркет"],["qr",I.qr,"QR"],["chat",I.msg,"Чат"],["seller",I.chart,"Бізнес"],["wallet",I.wallet,"Гаманець"]];
 
-function Nav({ tab, setTab }) {
+function Nav({ tab, setTab, unread }) {
   const isCenter=(t)=>t==="chat";
   const logged=isLoggedIn();
   const guestTabs=["market","wallet"];
   return <div style={{ position:"absolute",bottom:0,left:0,right:0,height:68,background:T.navBg,backdropFilter:"blur(32px)",WebkitBackdropFilter:"blur(32px)",borderTop:`1px solid ${T.border}22`,...S.flex,zIndex:100,padding:"0 4px" }}>
     {NAV.filter(([t])=>logged||guestTabs.includes(t)).map(([t,icon,label])=>(
-      <button key={t} onClick={()=>setTab(t)} style={{ ...S.btn,flex:1,display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",gap:isCenter(t)?2:3,background:"transparent",color:tab===t?T.accent:T.navText,transition:"all .25s",transform:tab===t?"scale(1.15)":"scale(1)",marginTop:isCenter(t)?-8:0 }}>
+      <button key={t} onClick={()=>setTab(t)} style={{ ...S.btn,flex:1,display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",gap:isCenter(t)?2:3,background:"transparent",color:tab===t?T.accent:T.navText,transition:"all .25s",transform:tab===t?"scale(1.15)":"scale(1)",marginTop:isCenter(t)?-8:0,position:"relative" }}>
         <div style={{ opacity:tab===t?1:0.45,transform:isCenter(t)?"scale(1.2)":"scale(1)" }}>{icon}</div>
+        {t==="chat"&&unread>0&&<div style={{position:"absolute",top:6,right:"calc(50% - 16px)",width:16,height:16,borderRadius:"50%",background:"#ef4444",fontSize:9,fontWeight:800,color:"#fff",display:"flex",alignItems:"center",justifyContent:"center"}}>{unread>9?"9+":unread}</div>}
         <span style={{ fontSize:isCenter(t)?10:9,fontWeight:tab===t?800:500,opacity:tab===t?1:0.45 }}>{label}</span>
         {tab===t&&<div style={{ width:20,height:3,background:`linear-gradient(90deg,${T.gradA},${T.gradB})`,borderRadius:2,marginTop:-1 }}/>}
       </button>
@@ -1210,13 +1211,16 @@ function ChatPage() {
     }catch(e){alert(e.message);}
   };
 
-  // WebSocket for live messages in active chat
+  // WebSocket for live messages + deletes in active chat
   useEffect(()=>{
     if(!activeChat) return;
-    const unsub=onEvent('chat:message',(data)=>{
+    const unsub1=onEvent('chat:message',(data)=>{
       if(data.senderId!==userId) setMessages(prev=>[...prev,data]);
     });
-    return ()=>unsub();
+    const unsub2=onEvent('chat:delete',(data)=>{
+      if(data.conversationId===activeChat) setMessages(prev=>prev.filter(m=>m.id!==data.messageId));
+    });
+    return ()=>{unsub1();unsub2();};
   },[activeChat,userId]);
 
   const fmtTime=(d)=>{const dt=new Date(d);return `${dt.getHours()}:${String(dt.getMinutes()).padStart(2,"0")}`;};
@@ -1278,7 +1282,9 @@ function ChatPage() {
         <div style={{flex:1}}><div style={{fontSize:13,fontWeight:800,color:T.text}}>{ch?.other?.name||"Чат"}</div>{ch?.deal&&<div style={{fontSize:9,color:T.green}}>{ch.deal.title}</div>}</div>
       </div>
       <div style={{flex:1,overflowY:"auto",padding:"10px 16px",display:"flex",flexDirection:"column",gap:6}}>
-        {messages.map((m,i)=>{const mine=m.senderId===userId||m.sender?.id===userId;return <div key={m.id||i} style={{alignSelf:mine?"flex-end":"flex-start",maxWidth:"78%"}}>
+        {messages.map((m,i)=>{const mine=m.senderId===userId||m.sender?.id===userId;return <div key={m.id||i} style={{alignSelf:mine?"flex-end":"flex-start",maxWidth:"78%",position:"relative"}}
+          onContextMenu={e=>{if(mine&&m.id){e.preventDefault();if(confirm("Видалити повідомлення?")){deleteMessage(m.id).then(()=>setMessages(prev=>prev.filter(x=>x.id!==m.id))).catch(()=>{});}}}}
+        >
           <div style={{background:mine?T.accent+"22":T.cardAlt,borderRadius:12,padding:"8px 12px",borderBottomRightRadius:mine?4:12,borderBottomLeftRadius:mine?12:4}}>
             <div style={{fontSize:12,color:T.text,lineHeight:1.4}}>{m.text}</div>
           </div>
@@ -1843,6 +1849,7 @@ function AppInner() {
   const [authStep,setAuthStep]=useState(user?null:"welcome");
   const [tab,setTab]=useState("market"),[page,setPage]=useState(null),[joined,setJoined]=useState({}),[buyData,setBuyData]=useState(null);
   const [deals,setDeals]=useState([]);
+  const [unreadCount,setUnreadCount]=useState(0);
   const [theme,setTheme]=useState(()=>localStorage.getItem("spilnokup_theme")||"ocean");
   applyTheme(theme); S=getS();
   const changeTheme=(id)=>{setTheme(id);localStorage.setItem("spilnokup_theme",id);};
@@ -1874,7 +1881,10 @@ function AppInner() {
     const unsub4=onEvent('deal:deleted',(data)=>{
       setDeals(prev=>prev.filter(d=>d.id!==data.dealId&&d.dbId!==data.dealId));
     });
-    return ()=>{unsub1();unsub2();unsub3();unsub4();};
+    const unsub5=onEvent('chat:new',()=>{if(isLoggedIn())fetchUnreadCount().then(d=>setUnreadCount(d.unread||0)).catch(()=>{});});
+    // Load unread count
+    if(isLoggedIn()) fetchUnreadCount().then(d=>setUnreadCount(d.unread||0)).catch(()=>{});
+    return ()=>{unsub1();unsub2();unsub3();unsub4();unsub5();};
   },[user]);
 
   const onJoin=id=>setJoined(j=>({...j,[id]:!j[id]}));
@@ -1908,7 +1918,7 @@ function AppInner() {
     <div style={{ width:isMobile?"100%":390,height:isMobile?"100vh":820,background:T.card,borderRadius:isMobile?0:44,overflow:"hidden",boxShadow:isMobile?"none":"0 20px 60px rgba(0,0,0,0.08)",position:"relative",transition:"background .3s" }}>
       <BgDecor/>
       <div style={{ position:"relative",zIndex:1,height:showNav?"calc(100% - 72px)":"100%",overflowY:"auto" }}>{render()}</div>
-      {showNav&&<Nav tab={tab} setTab={setTab}/>}
+      {showNav&&<Nav tab={tab} setTab={setTab} unread={unreadCount}/>}
     </div>
   </div>;
 }

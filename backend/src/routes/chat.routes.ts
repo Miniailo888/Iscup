@@ -153,4 +153,33 @@ router.post('/:id/messages', authenticate, async (req: Request, res: Response): 
   }
 });
 
+// DELETE /api/chat/messages/:messageId
+router.delete('/messages/:messageId', authenticate, async (req: Request, res: Response): Promise<void> => {
+  try {
+    const msg = await prisma.message.findUnique({ where: { id: req.params.messageId as string } });
+    if (!msg || msg.senderId !== req.user!.userId) {
+      res.status(403).json({ error: 'Не можна видалити' });
+      return;
+    }
+    await prisma.message.delete({ where: { id: msg.id } });
+    try { getIO().to(`conversation:${msg.conversationId}`).emit('chat:delete', { messageId: msg.id, conversationId: msg.conversationId }); } catch {}
+    res.json({ success: true });
+  } catch (err) {
+    logger.error('DELETE message error:', err);
+    res.status(500).json({ error: 'Помилка сервера' });
+  }
+});
+
+// GET /api/chat/unread — count unread messages
+router.get('/unread', authenticate, async (req: Request, res: Response): Promise<void> => {
+  try {
+    const count = await prisma.message.count({
+      where: { conversation: { OR: [{ buyerId: req.user!.userId }, { sellerId: req.user!.userId }] }, senderId: { not: req.user!.userId }, isRead: false },
+    });
+    res.json({ unread: count });
+  } catch {
+    res.json({ unread: 0 });
+  }
+});
+
 export default router;
