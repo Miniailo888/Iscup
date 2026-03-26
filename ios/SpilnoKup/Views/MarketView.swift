@@ -8,12 +8,16 @@ struct MarketView: View {
     @State private var showFilters = false
     @State private var selectedDeal: Deal? = nil
     @State private var showCreateDeal = false
+    @State private var showSupport = false
 
     // Filters
     @State private var cityFilter = "all"
     @State private var priceFilter = "all"
     @State private var discFilter = "all"
     @State private var ratingFilter = "all"
+
+    // Support
+    @State private var supportMessage = ""
 
     var filteredDeals: [Deal] {
         var result = state.deals
@@ -90,6 +94,9 @@ struct MarketView: View {
             .sheet(isPresented: $showFilters) {
                 filtersSheet
             }
+            .sheet(isPresented: $showSupport) {
+                supportSheet
+            }
         }
     }
 
@@ -110,6 +117,11 @@ struct MarketView: View {
                 }
             }
             Spacer()
+            Button(action: { showSupport = true }) {
+                Image(systemName: "headphones")
+                    .font(.title2)
+                    .foregroundColor(state.theme.accent)
+            }
             Button(action: { showCreateDeal = true }) {
                 Image(systemName: "plus.circle.fill")
                     .font(.title2)
@@ -197,6 +209,57 @@ struct MarketView: View {
             }
         }
     }
+
+    // MARK: - Support Sheet
+
+    var supportSheet: some View {
+        ZStack {
+            state.theme.bg.ignoresSafeArea()
+            VStack(spacing: 16) {
+                HStack {
+                    Text("Підтримка")
+                        .font(.title2.bold())
+                        .foregroundColor(state.theme.text)
+                    Spacer()
+                    Button(action: { showSupport = false }) {
+                        Image(systemName: "xmark.circle.fill")
+                            .font(.title2)
+                            .foregroundColor(state.theme.textMuted)
+                    }
+                }
+                .padding(.top, 20)
+
+                Text("Опишіть вашу проблему або запитання, і ми відповімо найближчим часом.")
+                    .font(.subheadline)
+                    .foregroundColor(state.theme.textSec)
+                    .fixedSize(horizontal: false, vertical: true)
+
+                TextField("Ваше повідомлення...", text: $supportMessage)
+                    .foregroundColor(state.theme.text)
+                    .padding(12)
+                    .background(state.theme.cardAlt)
+                    .cornerRadius(12)
+
+                Button(action: {
+                    supportMessage = ""
+                    showSupport = false
+                }) {
+                    Text("Надіслати")
+                        .font(.headline)
+                        .foregroundColor(.white)
+                        .frame(maxWidth: .infinity)
+                        .padding(.vertical, 14)
+                        .background(state.theme.accent)
+                        .cornerRadius(14)
+                }
+
+                Spacer()
+            }
+            .padding(.horizontal)
+        }
+    }
+
+    // MARK: - Filters Sheet
 
     var filtersSheet: some View {
         ZStack {
@@ -310,7 +373,7 @@ struct HotSliderView: View {
             .frame(maxWidth: .infinity, maxHeight: .infinity)
 
             VStack(alignment: .leading, spacing: 4) {
-                BadgeView(text: "🔥 HOT -\(deal.disc)%", bg: Color.red.opacity(0.8), fg: .white, fontSize: 10)
+                BadgeView(text: "HOT -\(deal.disc)%", bg: Color.red.opacity(0.8), fg: .white, fontSize: 10)
                 Text(deal.title)
                     .font(.subheadline.bold())
                     .foregroundColor(state.theme.text)

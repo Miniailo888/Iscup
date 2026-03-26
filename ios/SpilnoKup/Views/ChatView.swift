@@ -114,6 +114,11 @@ struct ChatDetailView: View {
                             }
                             .padding()
                         }
+                        .onAppear {
+                            if let last = messages.last {
+                                proxy.scrollTo(last.id, anchor: .bottom)
+                            }
+                        }
                         .onChange(of: messages.count) { _ in
                             if let last = messages.last {
                                 withAnimation {
@@ -177,6 +182,8 @@ struct ChatDetailView: View {
                 Text(msg.text)
                     .font(.subheadline)
                     .foregroundColor(state.theme.text)
+                    .lineLimit(nil)
+                    .fixedSize(horizontal: false, vertical: true)
                     .padding(.horizontal, 14)
                     .padding(.vertical, 8)
                     .background(msg.from == .me ? state.theme.accent.opacity(0.3) : state.theme.cardAlt)

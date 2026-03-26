@@ -8,11 +8,15 @@ struct DealCardView: View {
     var body: some View {
         Button(action: onTap) {
             HStack(spacing: 0) {
-                // Photo (left)
+                // Avatar with first letter in colored circle (left)
                 ZStack {
                     categoryGradient(for: deal.cat)
-                    Text(deal.avatar)
-                        .font(.system(size: 26))
+                    Circle()
+                        .fill(categorySolidColor(for: deal.cat))
+                        .frame(width: 40, height: 40)
+                    Text(String(deal.title.prefix(1)).uppercased())
+                        .font(.system(size: 18, weight: .bold))
+                        .foregroundColor(.white)
                 }
                 .frame(width: 72, height: 62)
                 .cornerRadius(10)
@@ -109,6 +113,30 @@ struct DealCardView: View {
             )
         }
         .buttonStyle(.plain)
+    }
+}
+
+// MARK: - Category Solid Color
+
+func categorySolidColor(for cat: DealCategory) -> Color {
+    switch cat {
+    case .farm: return Color(hex: "1a3020")
+    case .honey: return Color(hex: "2a2510")
+    case .veggies: return Color(hex: "102a15")
+    case .dairy: return Color(hex: "1a2030")
+    case .food: return Color(hex: "2a1a10")
+    case .bakery: return Color(hex: "2a1a10")
+    case .drinks: return Color(hex: "1a1510")
+    case .sport: return Color(hex: "102020")
+    case .electronics: return Color(hex: "101a2a")
+    case .services: return Color(hex: "1a1a20")
+    case .clothing: return Color(hex: "201a20")
+    case .handmade: return Color(hex: "201a2a")
+    case .beauty: return Color(hex: "2a1020")
+    case .home: return Color(hex: "1a2020")
+    case .cafe: return Color(hex: "1a1510")
+    case .other: return Color(hex: "1a1a1a")
+    case .all: return Color(hex: "151c2c")
     }
 }
 

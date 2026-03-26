@@ -9,6 +9,7 @@ struct WalletView: View {
     @State private var withdrawAmount = ""
     @State private var showSuccess = false
     @State private var successMessage = ""
+    @State private var walletTab = "transactions"
 
     var body: some View {
         NavigationStack {
@@ -18,10 +19,14 @@ struct WalletView: View {
                 ScrollView {
                     VStack(spacing: 16) {
                         profileCard
-                        balanceCard
+                        balanceSection
+                        walletSubTabs
+                        if walletTab == "transactions" {
+                            transactionsSection
+                        } else {
+                            fopSection
+                        }
                         themeSection
-                        transactionsSection
-                        fopSection
                         logoutButton
                     }
                     .padding(.top, 8)
@@ -86,21 +91,17 @@ struct WalletView: View {
         return "\(first)\(last)".uppercased()
     }
 
-    // MARK: - Balance Card
+    // MARK: - Balance Section (redesigned)
 
-    var balanceCard: some View {
+    var balanceSection: some View {
         VStack(spacing: 14) {
-            VStack(spacing: 4) {
-                Text("Баланс")
-                    .font(.caption)
-                    .foregroundColor(state.theme.textSec)
-                Text("₴\(formattedBalance)")
-                    .font(.system(size: 36, weight: .bold))
-                    .foregroundColor(state.theme.green)
-                Text("Доступно: ₴\(state.availableBalance)")
-                    .font(.caption)
-                    .foregroundColor(state.theme.textMuted)
-            }
+            Text("Загальний баланс")
+                .font(.caption)
+                .foregroundColor(state.theme.textSec)
+
+            Text("₴\(formattedBalance)")
+                .font(.system(size: 36, weight: .bold))
+                .foregroundColor(state.theme.green)
 
             HStack(spacing: 12) {
                 Button(action: { showTopUp = true }) {
@@ -201,6 +202,35 @@ struct WalletView: View {
         f.numberStyle = .decimal
         f.groupingSeparator = ","
         return f.string(from: NSNumber(value: state.balance)) ?? "\(state.balance)"
+    }
+
+    // MARK: - Wallet Sub-Tabs
+
+    var walletSubTabs: some View {
+        VStack(spacing: 0) {
+            HStack(spacing: 0) {
+                walletTabButton(title: "Транзакції", key: "transactions")
+                walletTabButton(title: "ФОП", key: "fop")
+            }
+            .background(state.theme.card)
+            .cornerRadius(10)
+        }
+        .padding(.horizontal)
+    }
+
+    func walletTabButton(title: String, key: String) -> some View {
+        Button(action: { walletTab = key }) {
+            VStack(spacing: 6) {
+                Text(title)
+                    .font(.subheadline.bold())
+                    .foregroundColor(walletTab == key ? state.theme.accent : state.theme.textMuted)
+                    .frame(maxWidth: .infinity)
+                    .padding(.top, 10)
+                Rectangle()
+                    .fill(walletTab == key ? state.theme.accent : Color.clear)
+                    .frame(height: 2)
+            }
+        }
     }
 
     // MARK: - Theme
